@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 class Sources extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get fileName => text()();
-  TextColumn get filePath => text()();
+  TextColumn get filePath => text().unique()();
   IntColumn get fileSize => integer().nullable()();
   IntColumn get pageCount => integer().nullable()();
   TextColumn get title => text().nullable()();

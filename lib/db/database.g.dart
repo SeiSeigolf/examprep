@@ -42,6 +42,7 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _fileSizeMeta = const VerificationMeta(
     'fileSize',
@@ -487,7 +488,7 @@ class $SourceSegmentsTable extends SourceSegments
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES sources (id)',
+      'REFERENCES sources (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _pageNumberMeta = const VerificationMeta(
@@ -525,6 +526,20 @@ class $SourceSegmentsTable extends SourceSegments
     requiredDuringInsert: false,
     defaultValue: const Constant('page'),
   );
+  static const VerificationMeta _contentConfidenceMeta = const VerificationMeta(
+    'contentConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> contentConfidence =
+      GeneratedColumn<String>(
+        'content_confidence',
+        aliasedName,
+        false,
+        check: () => contentConfidence.isIn(const ['H', 'M', 'L']),
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('M'),
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -544,6 +559,7 @@ class $SourceSegmentsTable extends SourceSegments
     pageNumber,
     content,
     segmentType,
+    contentConfidence,
     createdAt,
   ];
   @override
@@ -592,6 +608,15 @@ class $SourceSegmentsTable extends SourceSegments
         ),
       );
     }
+    if (data.containsKey('content_confidence')) {
+      context.handle(
+        _contentConfidenceMeta,
+        contentConfidence.isAcceptableOrUnknown(
+          data['content_confidence']!,
+          _contentConfidenceMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -627,6 +652,10 @@ class $SourceSegmentsTable extends SourceSegments
         DriftSqlType.string,
         data['${effectivePrefix}segment_type'],
       )!,
+      contentConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_confidence'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -646,6 +675,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
   final int pageNumber;
   final String content;
   final String segmentType;
+  final String contentConfidence;
   final DateTime createdAt;
   const SourceSegment({
     required this.id,
@@ -653,6 +683,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     required this.pageNumber,
     required this.content,
     required this.segmentType,
+    required this.contentConfidence,
     required this.createdAt,
   });
   @override
@@ -663,6 +694,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     map['page_number'] = Variable<int>(pageNumber);
     map['content'] = Variable<String>(content);
     map['segment_type'] = Variable<String>(segmentType);
+    map['content_confidence'] = Variable<String>(contentConfidence);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -674,6 +706,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       pageNumber: Value(pageNumber),
       content: Value(content),
       segmentType: Value(segmentType),
+      contentConfidence: Value(contentConfidence),
       createdAt: Value(createdAt),
     );
   }
@@ -689,6 +722,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       pageNumber: serializer.fromJson<int>(json['pageNumber']),
       content: serializer.fromJson<String>(json['content']),
       segmentType: serializer.fromJson<String>(json['segmentType']),
+      contentConfidence: serializer.fromJson<String>(json['contentConfidence']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -701,6 +735,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       'pageNumber': serializer.toJson<int>(pageNumber),
       'content': serializer.toJson<String>(content),
       'segmentType': serializer.toJson<String>(segmentType),
+      'contentConfidence': serializer.toJson<String>(contentConfidence),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -711,6 +746,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     int? pageNumber,
     String? content,
     String? segmentType,
+    String? contentConfidence,
     DateTime? createdAt,
   }) => SourceSegment(
     id: id ?? this.id,
@@ -718,6 +754,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     pageNumber: pageNumber ?? this.pageNumber,
     content: content ?? this.content,
     segmentType: segmentType ?? this.segmentType,
+    contentConfidence: contentConfidence ?? this.contentConfidence,
     createdAt: createdAt ?? this.createdAt,
   );
   SourceSegment copyWithCompanion(SourceSegmentsCompanion data) {
@@ -731,6 +768,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       segmentType: data.segmentType.present
           ? data.segmentType.value
           : this.segmentType,
+      contentConfidence: data.contentConfidence.present
+          ? data.contentConfidence.value
+          : this.contentConfidence,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -743,14 +783,22 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
           ..write('pageNumber: $pageNumber, ')
           ..write('content: $content, ')
           ..write('segmentType: $segmentType, ')
+          ..write('contentConfidence: $contentConfidence, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, sourceId, pageNumber, content, segmentType, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    sourceId,
+    pageNumber,
+    content,
+    segmentType,
+    contentConfidence,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -760,6 +808,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
           other.pageNumber == this.pageNumber &&
           other.content == this.content &&
           other.segmentType == this.segmentType &&
+          other.contentConfidence == this.contentConfidence &&
           other.createdAt == this.createdAt);
 }
 
@@ -769,6 +818,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
   final Value<int> pageNumber;
   final Value<String> content;
   final Value<String> segmentType;
+  final Value<String> contentConfidence;
   final Value<DateTime> createdAt;
   const SourceSegmentsCompanion({
     this.id = const Value.absent(),
@@ -776,6 +826,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     this.pageNumber = const Value.absent(),
     this.content = const Value.absent(),
     this.segmentType = const Value.absent(),
+    this.contentConfidence = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   SourceSegmentsCompanion.insert({
@@ -784,6 +835,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     required int pageNumber,
     this.content = const Value.absent(),
     this.segmentType = const Value.absent(),
+    this.contentConfidence = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : sourceId = Value(sourceId),
        pageNumber = Value(pageNumber);
@@ -793,6 +845,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     Expression<int>? pageNumber,
     Expression<String>? content,
     Expression<String>? segmentType,
+    Expression<String>? contentConfidence,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -801,6 +854,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
       if (pageNumber != null) 'page_number': pageNumber,
       if (content != null) 'content': content,
       if (segmentType != null) 'segment_type': segmentType,
+      if (contentConfidence != null) 'content_confidence': contentConfidence,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -811,6 +865,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     Value<int>? pageNumber,
     Value<String>? content,
     Value<String>? segmentType,
+    Value<String>? contentConfidence,
     Value<DateTime>? createdAt,
   }) {
     return SourceSegmentsCompanion(
@@ -819,6 +874,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
       pageNumber: pageNumber ?? this.pageNumber,
       content: content ?? this.content,
       segmentType: segmentType ?? this.segmentType,
+      contentConfidence: contentConfidence ?? this.contentConfidence,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -841,6 +897,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     if (segmentType.present) {
       map['segment_type'] = Variable<String>(segmentType.value);
     }
+    if (contentConfidence.present) {
+      map['content_confidence'] = Variable<String>(contentConfidence.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -855,6 +914,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
           ..write('pageNumber: $pageNumber, ')
           ..write('content: $content, ')
           ..write('segmentType: $segmentType, ')
+          ..write('contentConfidence: $contentConfidence, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -924,6 +984,19 @@ class $ExamUnitsTable extends ExamUnits
     requiredDuringInsert: false,
     defaultValue: const Constant('medium'),
   );
+  static const VerificationMeta _examConfidenceMeta = const VerificationMeta(
+    'examConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> examConfidence = GeneratedColumn<String>(
+    'exam_confidence',
+    aliasedName,
+    false,
+    check: () => examConfidence.isIn(const ['H', 'M', 'L']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('M'),
+  );
   static const VerificationMeta _auditStatusMeta = const VerificationMeta(
     'auditStatus',
   );
@@ -932,9 +1005,16 @@ class $ExamUnitsTable extends ExamUnits
     'audit_status',
     aliasedName,
     false,
+    check: () => auditStatus.isIn(const [
+      'Covered',
+      'Partial',
+      'Uncovered',
+      'Conflict',
+      'LowConfidence',
+    ]),
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultValue: const Constant('uncovered'),
+    defaultValue: const Constant('Uncovered'),
   );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
@@ -979,6 +1059,7 @@ class $ExamUnitsTable extends ExamUnits
     unitType,
     description,
     confidenceLevel,
+    examConfidence,
     auditStatus,
     sortOrder,
     createdAt,
@@ -1028,6 +1109,15 @@ class $ExamUnitsTable extends ExamUnits
         confidenceLevel.isAcceptableOrUnknown(
           data['confidence_level']!,
           _confidenceLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exam_confidence')) {
+      context.handle(
+        _examConfidenceMeta,
+        examConfidence.isAcceptableOrUnknown(
+          data['exam_confidence']!,
+          _examConfidenceMeta,
         ),
       );
     }
@@ -1087,6 +1177,10 @@ class $ExamUnitsTable extends ExamUnits
         DriftSqlType.string,
         data['${effectivePrefix}confidence_level'],
       )!,
+      examConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exam_confidence'],
+      )!,
       auditStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}audit_status'],
@@ -1118,6 +1212,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
   final String unitType;
   final String? description;
   final String confidenceLevel;
+  final String examConfidence;
   final String auditStatus;
   final int sortOrder;
   final DateTime createdAt;
@@ -1128,6 +1223,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     required this.unitType,
     this.description,
     required this.confidenceLevel,
+    required this.examConfidence,
     required this.auditStatus,
     required this.sortOrder,
     required this.createdAt,
@@ -1143,6 +1239,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       map['description'] = Variable<String>(description);
     }
     map['confidence_level'] = Variable<String>(confidenceLevel);
+    map['exam_confidence'] = Variable<String>(examConfidence);
     map['audit_status'] = Variable<String>(auditStatus);
     map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1159,6 +1256,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
           ? const Value.absent()
           : Value(description),
       confidenceLevel: Value(confidenceLevel),
+      examConfidence: Value(examConfidence),
       auditStatus: Value(auditStatus),
       sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
@@ -1177,6 +1275,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       unitType: serializer.fromJson<String>(json['unitType']),
       description: serializer.fromJson<String?>(json['description']),
       confidenceLevel: serializer.fromJson<String>(json['confidenceLevel']),
+      examConfidence: serializer.fromJson<String>(json['examConfidence']),
       auditStatus: serializer.fromJson<String>(json['auditStatus']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1192,6 +1291,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       'unitType': serializer.toJson<String>(unitType),
       'description': serializer.toJson<String?>(description),
       'confidenceLevel': serializer.toJson<String>(confidenceLevel),
+      'examConfidence': serializer.toJson<String>(examConfidence),
       'auditStatus': serializer.toJson<String>(auditStatus),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1205,6 +1305,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     String? unitType,
     Value<String?> description = const Value.absent(),
     String? confidenceLevel,
+    String? examConfidence,
     String? auditStatus,
     int? sortOrder,
     DateTime? createdAt,
@@ -1215,6 +1316,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     unitType: unitType ?? this.unitType,
     description: description.present ? description.value : this.description,
     confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+    examConfidence: examConfidence ?? this.examConfidence,
     auditStatus: auditStatus ?? this.auditStatus,
     sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
@@ -1231,6 +1333,9 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       confidenceLevel: data.confidenceLevel.present
           ? data.confidenceLevel.value
           : this.confidenceLevel,
+      examConfidence: data.examConfidence.present
+          ? data.examConfidence.value
+          : this.examConfidence,
       auditStatus: data.auditStatus.present
           ? data.auditStatus.value
           : this.auditStatus,
@@ -1248,6 +1353,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
           ..write('unitType: $unitType, ')
           ..write('description: $description, ')
           ..write('confidenceLevel: $confidenceLevel, ')
+          ..write('examConfidence: $examConfidence, ')
           ..write('auditStatus: $auditStatus, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
@@ -1263,6 +1369,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     unitType,
     description,
     confidenceLevel,
+    examConfidence,
     auditStatus,
     sortOrder,
     createdAt,
@@ -1277,6 +1384,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
           other.unitType == this.unitType &&
           other.description == this.description &&
           other.confidenceLevel == this.confidenceLevel &&
+          other.examConfidence == this.examConfidence &&
           other.auditStatus == this.auditStatus &&
           other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
@@ -1289,6 +1397,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
   final Value<String> unitType;
   final Value<String?> description;
   final Value<String> confidenceLevel;
+  final Value<String> examConfidence;
   final Value<String> auditStatus;
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
@@ -1299,6 +1408,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     this.unitType = const Value.absent(),
     this.description = const Value.absent(),
     this.confidenceLevel = const Value.absent(),
+    this.examConfidence = const Value.absent(),
     this.auditStatus = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1310,6 +1420,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     this.unitType = const Value.absent(),
     this.description = const Value.absent(),
     this.confidenceLevel = const Value.absent(),
+    this.examConfidence = const Value.absent(),
     this.auditStatus = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1321,6 +1432,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     Expression<String>? unitType,
     Expression<String>? description,
     Expression<String>? confidenceLevel,
+    Expression<String>? examConfidence,
     Expression<String>? auditStatus,
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
@@ -1332,6 +1444,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
       if (unitType != null) 'unit_type': unitType,
       if (description != null) 'description': description,
       if (confidenceLevel != null) 'confidence_level': confidenceLevel,
+      if (examConfidence != null) 'exam_confidence': examConfidence,
       if (auditStatus != null) 'audit_status': auditStatus,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
@@ -1345,6 +1458,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     Value<String>? unitType,
     Value<String?>? description,
     Value<String>? confidenceLevel,
+    Value<String>? examConfidence,
     Value<String>? auditStatus,
     Value<int>? sortOrder,
     Value<DateTime>? createdAt,
@@ -1356,6 +1470,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
       unitType: unitType ?? this.unitType,
       description: description ?? this.description,
       confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+      examConfidence: examConfidence ?? this.examConfidence,
       auditStatus: auditStatus ?? this.auditStatus,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
@@ -1381,6 +1496,9 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     if (confidenceLevel.present) {
       map['confidence_level'] = Variable<String>(confidenceLevel.value);
     }
+    if (examConfidence.present) {
+      map['exam_confidence'] = Variable<String>(examConfidence.value);
+    }
     if (auditStatus.present) {
       map['audit_status'] = Variable<String>(auditStatus.value);
     }
@@ -1404,6 +1522,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
           ..write('unitType: $unitType, ')
           ..write('description: $description, ')
           ..write('confidenceLevel: $confidenceLevel, ')
+          ..write('examConfidence: $examConfidence, ')
           ..write('auditStatus: $auditStatus, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
@@ -1442,7 +1561,7 @@ class $ClaimsTable extends Claims with TableInfo<$ClaimsTable, Claim> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES exam_units (id)',
+      'REFERENCES exam_units (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _contentMeta = const VerificationMeta(
@@ -1456,6 +1575,20 @@ class $ClaimsTable extends Claims with TableInfo<$ClaimsTable, Claim> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _contentConfidenceMeta = const VerificationMeta(
+    'contentConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> contentConfidence =
+      GeneratedColumn<String>(
+        'content_confidence',
+        aliasedName,
+        false,
+        check: () => contentConfidence.isIn(const ['H', 'M', 'L']),
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('M'),
+      );
   static const VerificationMeta _confidenceLevelMeta = const VerificationMeta(
     'confidenceLevel',
   );
@@ -1497,6 +1630,7 @@ class $ClaimsTable extends Claims with TableInfo<$ClaimsTable, Claim> {
     id,
     examUnitId,
     content,
+    contentConfidence,
     confidenceLevel,
     createdBy,
     createdAt,
@@ -1534,6 +1668,15 @@ class $ClaimsTable extends Claims with TableInfo<$ClaimsTable, Claim> {
       );
     } else if (isInserting) {
       context.missing(_contentMeta);
+    }
+    if (data.containsKey('content_confidence')) {
+      context.handle(
+        _contentConfidenceMeta,
+        contentConfidence.isAcceptableOrUnknown(
+          data['content_confidence']!,
+          _contentConfidenceMeta,
+        ),
+      );
     }
     if (data.containsKey('confidence_level')) {
       context.handle(
@@ -1577,6 +1720,10 @@ class $ClaimsTable extends Claims with TableInfo<$ClaimsTable, Claim> {
         DriftSqlType.string,
         data['${effectivePrefix}content'],
       )!,
+      contentConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_confidence'],
+      )!,
       confidenceLevel: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}confidence_level'],
@@ -1602,6 +1749,7 @@ class Claim extends DataClass implements Insertable<Claim> {
   final int id;
   final int examUnitId;
   final String content;
+  final String contentConfidence;
   final String confidenceLevel;
   final String createdBy;
   final DateTime createdAt;
@@ -1609,6 +1757,7 @@ class Claim extends DataClass implements Insertable<Claim> {
     required this.id,
     required this.examUnitId,
     required this.content,
+    required this.contentConfidence,
     required this.confidenceLevel,
     required this.createdBy,
     required this.createdAt,
@@ -1619,6 +1768,7 @@ class Claim extends DataClass implements Insertable<Claim> {
     map['id'] = Variable<int>(id);
     map['exam_unit_id'] = Variable<int>(examUnitId);
     map['content'] = Variable<String>(content);
+    map['content_confidence'] = Variable<String>(contentConfidence);
     map['confidence_level'] = Variable<String>(confidenceLevel);
     map['created_by'] = Variable<String>(createdBy);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1630,6 +1780,7 @@ class Claim extends DataClass implements Insertable<Claim> {
       id: Value(id),
       examUnitId: Value(examUnitId),
       content: Value(content),
+      contentConfidence: Value(contentConfidence),
       confidenceLevel: Value(confidenceLevel),
       createdBy: Value(createdBy),
       createdAt: Value(createdAt),
@@ -1645,6 +1796,7 @@ class Claim extends DataClass implements Insertable<Claim> {
       id: serializer.fromJson<int>(json['id']),
       examUnitId: serializer.fromJson<int>(json['examUnitId']),
       content: serializer.fromJson<String>(json['content']),
+      contentConfidence: serializer.fromJson<String>(json['contentConfidence']),
       confidenceLevel: serializer.fromJson<String>(json['confidenceLevel']),
       createdBy: serializer.fromJson<String>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1657,6 +1809,7 @@ class Claim extends DataClass implements Insertable<Claim> {
       'id': serializer.toJson<int>(id),
       'examUnitId': serializer.toJson<int>(examUnitId),
       'content': serializer.toJson<String>(content),
+      'contentConfidence': serializer.toJson<String>(contentConfidence),
       'confidenceLevel': serializer.toJson<String>(confidenceLevel),
       'createdBy': serializer.toJson<String>(createdBy),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1667,6 +1820,7 @@ class Claim extends DataClass implements Insertable<Claim> {
     int? id,
     int? examUnitId,
     String? content,
+    String? contentConfidence,
     String? confidenceLevel,
     String? createdBy,
     DateTime? createdAt,
@@ -1674,6 +1828,7 @@ class Claim extends DataClass implements Insertable<Claim> {
     id: id ?? this.id,
     examUnitId: examUnitId ?? this.examUnitId,
     content: content ?? this.content,
+    contentConfidence: contentConfidence ?? this.contentConfidence,
     confidenceLevel: confidenceLevel ?? this.confidenceLevel,
     createdBy: createdBy ?? this.createdBy,
     createdAt: createdAt ?? this.createdAt,
@@ -1685,6 +1840,9 @@ class Claim extends DataClass implements Insertable<Claim> {
           ? data.examUnitId.value
           : this.examUnitId,
       content: data.content.present ? data.content.value : this.content,
+      contentConfidence: data.contentConfidence.present
+          ? data.contentConfidence.value
+          : this.contentConfidence,
       confidenceLevel: data.confidenceLevel.present
           ? data.confidenceLevel.value
           : this.confidenceLevel,
@@ -1699,6 +1857,7 @@ class Claim extends DataClass implements Insertable<Claim> {
           ..write('id: $id, ')
           ..write('examUnitId: $examUnitId, ')
           ..write('content: $content, ')
+          ..write('contentConfidence: $contentConfidence, ')
           ..write('confidenceLevel: $confidenceLevel, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt')
@@ -1711,6 +1870,7 @@ class Claim extends DataClass implements Insertable<Claim> {
     id,
     examUnitId,
     content,
+    contentConfidence,
     confidenceLevel,
     createdBy,
     createdAt,
@@ -1722,6 +1882,7 @@ class Claim extends DataClass implements Insertable<Claim> {
           other.id == this.id &&
           other.examUnitId == this.examUnitId &&
           other.content == this.content &&
+          other.contentConfidence == this.contentConfidence &&
           other.confidenceLevel == this.confidenceLevel &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt);
@@ -1731,6 +1892,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
   final Value<int> id;
   final Value<int> examUnitId;
   final Value<String> content;
+  final Value<String> contentConfidence;
   final Value<String> confidenceLevel;
   final Value<String> createdBy;
   final Value<DateTime> createdAt;
@@ -1738,6 +1900,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
     this.id = const Value.absent(),
     this.examUnitId = const Value.absent(),
     this.content = const Value.absent(),
+    this.contentConfidence = const Value.absent(),
     this.confidenceLevel = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1746,6 +1909,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
     this.id = const Value.absent(),
     required int examUnitId,
     required String content,
+    this.contentConfidence = const Value.absent(),
     this.confidenceLevel = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1755,6 +1919,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
     Expression<int>? id,
     Expression<int>? examUnitId,
     Expression<String>? content,
+    Expression<String>? contentConfidence,
     Expression<String>? confidenceLevel,
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
@@ -1763,6 +1928,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
       if (id != null) 'id': id,
       if (examUnitId != null) 'exam_unit_id': examUnitId,
       if (content != null) 'content': content,
+      if (contentConfidence != null) 'content_confidence': contentConfidence,
       if (confidenceLevel != null) 'confidence_level': confidenceLevel,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
@@ -1773,6 +1939,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
     Value<int>? id,
     Value<int>? examUnitId,
     Value<String>? content,
+    Value<String>? contentConfidence,
     Value<String>? confidenceLevel,
     Value<String>? createdBy,
     Value<DateTime>? createdAt,
@@ -1781,6 +1948,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
       id: id ?? this.id,
       examUnitId: examUnitId ?? this.examUnitId,
       content: content ?? this.content,
+      contentConfidence: contentConfidence ?? this.contentConfidence,
       confidenceLevel: confidenceLevel ?? this.confidenceLevel,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -1798,6 +1966,9 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
     }
     if (content.present) {
       map['content'] = Variable<String>(content.value);
+    }
+    if (contentConfidence.present) {
+      map['content_confidence'] = Variable<String>(contentConfidence.value);
     }
     if (confidenceLevel.present) {
       map['confidence_level'] = Variable<String>(confidenceLevel.value);
@@ -1817,6 +1988,7 @@ class ClaimsCompanion extends UpdateCompanion<Claim> {
           ..write('id: $id, ')
           ..write('examUnitId: $examUnitId, ')
           ..write('content: $content, ')
+          ..write('contentConfidence: $contentConfidence, ')
           ..write('confidenceLevel: $confidenceLevel, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt')
@@ -1855,7 +2027,7 @@ class $EvidenceLinksTable extends EvidenceLinks
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES claims (id)',
+      'REFERENCES claims (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _sourceSegmentIdMeta = const VerificationMeta(
@@ -1869,7 +2041,7 @@ class $EvidenceLinksTable extends EvidenceLinks
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES source_segments (id)',
+      'REFERENCES source_segments (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _noteMeta = const VerificationMeta('note');
@@ -1952,6 +2124,10 @@ class $EvidenceLinksTable extends EvidenceLinks
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {claimId, sourceSegmentId},
+  ];
   @override
   EvidenceLink map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -2184,6 +2360,1209 @@ class EvidenceLinksCompanion extends UpdateCompanion<EvidenceLink> {
   }
 }
 
+class $AuditsTable extends Audits with TableInfo<$AuditsTable, Audit> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AuditsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sourceSegmentIdMeta = const VerificationMeta(
+    'sourceSegmentId',
+  );
+  @override
+  late final GeneratedColumn<int> sourceSegmentId = GeneratedColumn<int>(
+    'source_segment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES source_segments (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _examUnitIdMeta = const VerificationMeta(
+    'examUnitId',
+  );
+  @override
+  late final GeneratedColumn<int> examUnitId = GeneratedColumn<int>(
+    'exam_unit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    check: () => status.isIn(const [
+      'Covered',
+      'Partial',
+      'Uncovered',
+      'Conflict',
+      'LowConfidence',
+    ]),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentConfidenceMeta = const VerificationMeta(
+    'contentConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> contentConfidence =
+      GeneratedColumn<String>(
+        'content_confidence',
+        aliasedName,
+        false,
+        check: () => contentConfidence.isIn(const ['H', 'M', 'L']),
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('M'),
+      );
+  static const VerificationMeta _examConfidenceMeta = const VerificationMeta(
+    'examConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> examConfidence = GeneratedColumn<String>(
+    'exam_confidence',
+    aliasedName,
+    false,
+    check: () => examConfidence.isIn(const ['H', 'M', 'L']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('M'),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sourceSegmentId,
+    examUnitId,
+    status,
+    contentConfidence,
+    examConfidence,
+    note,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'audits';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Audit> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_segment_id')) {
+      context.handle(
+        _sourceSegmentIdMeta,
+        sourceSegmentId.isAcceptableOrUnknown(
+          data['source_segment_id']!,
+          _sourceSegmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceSegmentIdMeta);
+    }
+    if (data.containsKey('exam_unit_id')) {
+      context.handle(
+        _examUnitIdMeta,
+        examUnitId.isAcceptableOrUnknown(
+          data['exam_unit_id']!,
+          _examUnitIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_examUnitIdMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('content_confidence')) {
+      context.handle(
+        _contentConfidenceMeta,
+        contentConfidence.isAcceptableOrUnknown(
+          data['content_confidence']!,
+          _contentConfidenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exam_confidence')) {
+      context.handle(
+        _examConfidenceMeta,
+        examConfidence.isAcceptableOrUnknown(
+          data['exam_confidence']!,
+          _examConfidenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {sourceSegmentId, examUnitId},
+  ];
+  @override
+  Audit map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Audit(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceSegmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_segment_id'],
+      )!,
+      examUnitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exam_unit_id'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      contentConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_confidence'],
+      )!,
+      examConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exam_confidence'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AuditsTable createAlias(String alias) {
+    return $AuditsTable(attachedDatabase, alias);
+  }
+}
+
+class Audit extends DataClass implements Insertable<Audit> {
+  final int id;
+  final int sourceSegmentId;
+  final int examUnitId;
+  final String status;
+  final String contentConfidence;
+  final String examConfidence;
+  final String? note;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const Audit({
+    required this.id,
+    required this.sourceSegmentId,
+    required this.examUnitId,
+    required this.status,
+    required this.contentConfidence,
+    required this.examConfidence,
+    this.note,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_segment_id'] = Variable<int>(sourceSegmentId);
+    map['exam_unit_id'] = Variable<int>(examUnitId);
+    map['status'] = Variable<String>(status);
+    map['content_confidence'] = Variable<String>(contentConfidence);
+    map['exam_confidence'] = Variable<String>(examConfidence);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  AuditsCompanion toCompanion(bool nullToAbsent) {
+    return AuditsCompanion(
+      id: Value(id),
+      sourceSegmentId: Value(sourceSegmentId),
+      examUnitId: Value(examUnitId),
+      status: Value(status),
+      contentConfidence: Value(contentConfidence),
+      examConfidence: Value(examConfidence),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Audit.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Audit(
+      id: serializer.fromJson<int>(json['id']),
+      sourceSegmentId: serializer.fromJson<int>(json['sourceSegmentId']),
+      examUnitId: serializer.fromJson<int>(json['examUnitId']),
+      status: serializer.fromJson<String>(json['status']),
+      contentConfidence: serializer.fromJson<String>(json['contentConfidence']),
+      examConfidence: serializer.fromJson<String>(json['examConfidence']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceSegmentId': serializer.toJson<int>(sourceSegmentId),
+      'examUnitId': serializer.toJson<int>(examUnitId),
+      'status': serializer.toJson<String>(status),
+      'contentConfidence': serializer.toJson<String>(contentConfidence),
+      'examConfidence': serializer.toJson<String>(examConfidence),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  Audit copyWith({
+    int? id,
+    int? sourceSegmentId,
+    int? examUnitId,
+    String? status,
+    String? contentConfidence,
+    String? examConfidence,
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => Audit(
+    id: id ?? this.id,
+    sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+    examUnitId: examUnitId ?? this.examUnitId,
+    status: status ?? this.status,
+    contentConfidence: contentConfidence ?? this.contentConfidence,
+    examConfidence: examConfidence ?? this.examConfidence,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Audit copyWithCompanion(AuditsCompanion data) {
+    return Audit(
+      id: data.id.present ? data.id.value : this.id,
+      sourceSegmentId: data.sourceSegmentId.present
+          ? data.sourceSegmentId.value
+          : this.sourceSegmentId,
+      examUnitId: data.examUnitId.present
+          ? data.examUnitId.value
+          : this.examUnitId,
+      status: data.status.present ? data.status.value : this.status,
+      contentConfidence: data.contentConfidence.present
+          ? data.contentConfidence.value
+          : this.contentConfidence,
+      examConfidence: data.examConfidence.present
+          ? data.examConfidence.value
+          : this.examConfidence,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Audit(')
+          ..write('id: $id, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('status: $status, ')
+          ..write('contentConfidence: $contentConfidence, ')
+          ..write('examConfidence: $examConfidence, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sourceSegmentId,
+    examUnitId,
+    status,
+    contentConfidence,
+    examConfidence,
+    note,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Audit &&
+          other.id == this.id &&
+          other.sourceSegmentId == this.sourceSegmentId &&
+          other.examUnitId == this.examUnitId &&
+          other.status == this.status &&
+          other.contentConfidence == this.contentConfidence &&
+          other.examConfidence == this.examConfidence &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AuditsCompanion extends UpdateCompanion<Audit> {
+  final Value<int> id;
+  final Value<int> sourceSegmentId;
+  final Value<int> examUnitId;
+  final Value<String> status;
+  final Value<String> contentConfidence;
+  final Value<String> examConfidence;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const AuditsCompanion({
+    this.id = const Value.absent(),
+    this.sourceSegmentId = const Value.absent(),
+    this.examUnitId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.contentConfidence = const Value.absent(),
+    this.examConfidence = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  AuditsCompanion.insert({
+    this.id = const Value.absent(),
+    required int sourceSegmentId,
+    required int examUnitId,
+    required String status,
+    this.contentConfidence = const Value.absent(),
+    this.examConfidence = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : sourceSegmentId = Value(sourceSegmentId),
+       examUnitId = Value(examUnitId),
+       status = Value(status);
+  static Insertable<Audit> custom({
+    Expression<int>? id,
+    Expression<int>? sourceSegmentId,
+    Expression<int>? examUnitId,
+    Expression<String>? status,
+    Expression<String>? contentConfidence,
+    Expression<String>? examConfidence,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceSegmentId != null) 'source_segment_id': sourceSegmentId,
+      if (examUnitId != null) 'exam_unit_id': examUnitId,
+      if (status != null) 'status': status,
+      if (contentConfidence != null) 'content_confidence': contentConfidence,
+      if (examConfidence != null) 'exam_confidence': examConfidence,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  AuditsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sourceSegmentId,
+    Value<int>? examUnitId,
+    Value<String>? status,
+    Value<String>? contentConfidence,
+    Value<String>? examConfidence,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return AuditsCompanion(
+      id: id ?? this.id,
+      sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+      examUnitId: examUnitId ?? this.examUnitId,
+      status: status ?? this.status,
+      contentConfidence: contentConfidence ?? this.contentConfidence,
+      examConfidence: examConfidence ?? this.examConfidence,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceSegmentId.present) {
+      map['source_segment_id'] = Variable<int>(sourceSegmentId.value);
+    }
+    if (examUnitId.present) {
+      map['exam_unit_id'] = Variable<int>(examUnitId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (contentConfidence.present) {
+      map['content_confidence'] = Variable<String>(contentConfidence.value);
+    }
+    if (examConfidence.present) {
+      map['exam_confidence'] = Variable<String>(examConfidence.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AuditsCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('status: $status, ')
+          ..write('contentConfidence: $contentConfidence, ')
+          ..write('examConfidence: $examConfidence, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ConflictsTable extends Conflicts
+    with TableInfo<$ConflictsTable, Conflict> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ConflictsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sourceSegmentIdMeta = const VerificationMeta(
+    'sourceSegmentId',
+  );
+  @override
+  late final GeneratedColumn<int> sourceSegmentId = GeneratedColumn<int>(
+    'source_segment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES source_segments (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _examUnitIdMeta = const VerificationMeta(
+    'examUnitId',
+  );
+  @override
+  late final GeneratedColumn<int> examUnitId = GeneratedColumn<int>(
+    'exam_unit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _claimIdMeta = const VerificationMeta(
+    'claimId',
+  );
+  @override
+  late final GeneratedColumn<int> claimId = GeneratedColumn<int>(
+    'claim_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES claims (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _auditIdMeta = const VerificationMeta(
+    'auditId',
+  );
+  @override
+  late final GeneratedColumn<int> auditId = GeneratedColumn<int>(
+    'audit_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES audits (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    check: () => status.isIn(const ['open', 'resolved', 'dismissed']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('open'),
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resolutionNoteMeta = const VerificationMeta(
+    'resolutionNote',
+  );
+  @override
+  late final GeneratedColumn<String> resolutionNote = GeneratedColumn<String>(
+    'resolution_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _resolvedAtMeta = const VerificationMeta(
+    'resolvedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resolvedAt = GeneratedColumn<DateTime>(
+    'resolved_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sourceSegmentId,
+    examUnitId,
+    claimId,
+    auditId,
+    status,
+    reason,
+    resolutionNote,
+    createdAt,
+    resolvedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'conflicts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Conflict> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_segment_id')) {
+      context.handle(
+        _sourceSegmentIdMeta,
+        sourceSegmentId.isAcceptableOrUnknown(
+          data['source_segment_id']!,
+          _sourceSegmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceSegmentIdMeta);
+    }
+    if (data.containsKey('exam_unit_id')) {
+      context.handle(
+        _examUnitIdMeta,
+        examUnitId.isAcceptableOrUnknown(
+          data['exam_unit_id']!,
+          _examUnitIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_examUnitIdMeta);
+    }
+    if (data.containsKey('claim_id')) {
+      context.handle(
+        _claimIdMeta,
+        claimId.isAcceptableOrUnknown(data['claim_id']!, _claimIdMeta),
+      );
+    }
+    if (data.containsKey('audit_id')) {
+      context.handle(
+        _auditIdMeta,
+        auditId.isAcceptableOrUnknown(data['audit_id']!, _auditIdMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    }
+    if (data.containsKey('resolution_note')) {
+      context.handle(
+        _resolutionNoteMeta,
+        resolutionNote.isAcceptableOrUnknown(
+          data['resolution_note']!,
+          _resolutionNoteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('resolved_at')) {
+      context.handle(
+        _resolvedAtMeta,
+        resolvedAt.isAcceptableOrUnknown(data['resolved_at']!, _resolvedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Conflict map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Conflict(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceSegmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_segment_id'],
+      )!,
+      examUnitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exam_unit_id'],
+      )!,
+      claimId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}claim_id'],
+      ),
+      auditId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}audit_id'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      ),
+      resolutionNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}resolution_note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      resolvedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolved_at'],
+      ),
+    );
+  }
+
+  @override
+  $ConflictsTable createAlias(String alias) {
+    return $ConflictsTable(attachedDatabase, alias);
+  }
+}
+
+class Conflict extends DataClass implements Insertable<Conflict> {
+  final int id;
+  final int sourceSegmentId;
+  final int examUnitId;
+  final int? claimId;
+  final int? auditId;
+  final String status;
+  final String? reason;
+  final String? resolutionNote;
+  final DateTime createdAt;
+  final DateTime? resolvedAt;
+  const Conflict({
+    required this.id,
+    required this.sourceSegmentId,
+    required this.examUnitId,
+    this.claimId,
+    this.auditId,
+    required this.status,
+    this.reason,
+    this.resolutionNote,
+    required this.createdAt,
+    this.resolvedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_segment_id'] = Variable<int>(sourceSegmentId);
+    map['exam_unit_id'] = Variable<int>(examUnitId);
+    if (!nullToAbsent || claimId != null) {
+      map['claim_id'] = Variable<int>(claimId);
+    }
+    if (!nullToAbsent || auditId != null) {
+      map['audit_id'] = Variable<int>(auditId);
+    }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    if (!nullToAbsent || resolutionNote != null) {
+      map['resolution_note'] = Variable<String>(resolutionNote);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || resolvedAt != null) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt);
+    }
+    return map;
+  }
+
+  ConflictsCompanion toCompanion(bool nullToAbsent) {
+    return ConflictsCompanion(
+      id: Value(id),
+      sourceSegmentId: Value(sourceSegmentId),
+      examUnitId: Value(examUnitId),
+      claimId: claimId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(claimId),
+      auditId: auditId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(auditId),
+      status: Value(status),
+      reason: reason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reason),
+      resolutionNote: resolutionNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolutionNote),
+      createdAt: Value(createdAt),
+      resolvedAt: resolvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedAt),
+    );
+  }
+
+  factory Conflict.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Conflict(
+      id: serializer.fromJson<int>(json['id']),
+      sourceSegmentId: serializer.fromJson<int>(json['sourceSegmentId']),
+      examUnitId: serializer.fromJson<int>(json['examUnitId']),
+      claimId: serializer.fromJson<int?>(json['claimId']),
+      auditId: serializer.fromJson<int?>(json['auditId']),
+      status: serializer.fromJson<String>(json['status']),
+      reason: serializer.fromJson<String?>(json['reason']),
+      resolutionNote: serializer.fromJson<String?>(json['resolutionNote']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceSegmentId': serializer.toJson<int>(sourceSegmentId),
+      'examUnitId': serializer.toJson<int>(examUnitId),
+      'claimId': serializer.toJson<int?>(claimId),
+      'auditId': serializer.toJson<int?>(auditId),
+      'status': serializer.toJson<String>(status),
+      'reason': serializer.toJson<String?>(reason),
+      'resolutionNote': serializer.toJson<String?>(resolutionNote),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
+    };
+  }
+
+  Conflict copyWith({
+    int? id,
+    int? sourceSegmentId,
+    int? examUnitId,
+    Value<int?> claimId = const Value.absent(),
+    Value<int?> auditId = const Value.absent(),
+    String? status,
+    Value<String?> reason = const Value.absent(),
+    Value<String?> resolutionNote = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> resolvedAt = const Value.absent(),
+  }) => Conflict(
+    id: id ?? this.id,
+    sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+    examUnitId: examUnitId ?? this.examUnitId,
+    claimId: claimId.present ? claimId.value : this.claimId,
+    auditId: auditId.present ? auditId.value : this.auditId,
+    status: status ?? this.status,
+    reason: reason.present ? reason.value : this.reason,
+    resolutionNote: resolutionNote.present
+        ? resolutionNote.value
+        : this.resolutionNote,
+    createdAt: createdAt ?? this.createdAt,
+    resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
+  );
+  Conflict copyWithCompanion(ConflictsCompanion data) {
+    return Conflict(
+      id: data.id.present ? data.id.value : this.id,
+      sourceSegmentId: data.sourceSegmentId.present
+          ? data.sourceSegmentId.value
+          : this.sourceSegmentId,
+      examUnitId: data.examUnitId.present
+          ? data.examUnitId.value
+          : this.examUnitId,
+      claimId: data.claimId.present ? data.claimId.value : this.claimId,
+      auditId: data.auditId.present ? data.auditId.value : this.auditId,
+      status: data.status.present ? data.status.value : this.status,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      resolutionNote: data.resolutionNote.present
+          ? data.resolutionNote.value
+          : this.resolutionNote,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      resolvedAt: data.resolvedAt.present
+          ? data.resolvedAt.value
+          : this.resolvedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Conflict(')
+          ..write('id: $id, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('claimId: $claimId, ')
+          ..write('auditId: $auditId, ')
+          ..write('status: $status, ')
+          ..write('reason: $reason, ')
+          ..write('resolutionNote: $resolutionNote, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('resolvedAt: $resolvedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sourceSegmentId,
+    examUnitId,
+    claimId,
+    auditId,
+    status,
+    reason,
+    resolutionNote,
+    createdAt,
+    resolvedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Conflict &&
+          other.id == this.id &&
+          other.sourceSegmentId == this.sourceSegmentId &&
+          other.examUnitId == this.examUnitId &&
+          other.claimId == this.claimId &&
+          other.auditId == this.auditId &&
+          other.status == this.status &&
+          other.reason == this.reason &&
+          other.resolutionNote == this.resolutionNote &&
+          other.createdAt == this.createdAt &&
+          other.resolvedAt == this.resolvedAt);
+}
+
+class ConflictsCompanion extends UpdateCompanion<Conflict> {
+  final Value<int> id;
+  final Value<int> sourceSegmentId;
+  final Value<int> examUnitId;
+  final Value<int?> claimId;
+  final Value<int?> auditId;
+  final Value<String> status;
+  final Value<String?> reason;
+  final Value<String?> resolutionNote;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> resolvedAt;
+  const ConflictsCompanion({
+    this.id = const Value.absent(),
+    this.sourceSegmentId = const Value.absent(),
+    this.examUnitId = const Value.absent(),
+    this.claimId = const Value.absent(),
+    this.auditId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.resolutionNote = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+  });
+  ConflictsCompanion.insert({
+    this.id = const Value.absent(),
+    required int sourceSegmentId,
+    required int examUnitId,
+    this.claimId = const Value.absent(),
+    this.auditId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.resolutionNote = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+  }) : sourceSegmentId = Value(sourceSegmentId),
+       examUnitId = Value(examUnitId);
+  static Insertable<Conflict> custom({
+    Expression<int>? id,
+    Expression<int>? sourceSegmentId,
+    Expression<int>? examUnitId,
+    Expression<int>? claimId,
+    Expression<int>? auditId,
+    Expression<String>? status,
+    Expression<String>? reason,
+    Expression<String>? resolutionNote,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? resolvedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceSegmentId != null) 'source_segment_id': sourceSegmentId,
+      if (examUnitId != null) 'exam_unit_id': examUnitId,
+      if (claimId != null) 'claim_id': claimId,
+      if (auditId != null) 'audit_id': auditId,
+      if (status != null) 'status': status,
+      if (reason != null) 'reason': reason,
+      if (resolutionNote != null) 'resolution_note': resolutionNote,
+      if (createdAt != null) 'created_at': createdAt,
+      if (resolvedAt != null) 'resolved_at': resolvedAt,
+    });
+  }
+
+  ConflictsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sourceSegmentId,
+    Value<int>? examUnitId,
+    Value<int?>? claimId,
+    Value<int?>? auditId,
+    Value<String>? status,
+    Value<String?>? reason,
+    Value<String?>? resolutionNote,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? resolvedAt,
+  }) {
+    return ConflictsCompanion(
+      id: id ?? this.id,
+      sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+      examUnitId: examUnitId ?? this.examUnitId,
+      claimId: claimId ?? this.claimId,
+      auditId: auditId ?? this.auditId,
+      status: status ?? this.status,
+      reason: reason ?? this.reason,
+      resolutionNote: resolutionNote ?? this.resolutionNote,
+      createdAt: createdAt ?? this.createdAt,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceSegmentId.present) {
+      map['source_segment_id'] = Variable<int>(sourceSegmentId.value);
+    }
+    if (examUnitId.present) {
+      map['exam_unit_id'] = Variable<int>(examUnitId.value);
+    }
+    if (claimId.present) {
+      map['claim_id'] = Variable<int>(claimId.value);
+    }
+    if (auditId.present) {
+      map['audit_id'] = Variable<int>(auditId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (resolutionNote.present) {
+      map['resolution_note'] = Variable<String>(resolutionNote.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (resolvedAt.present) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConflictsCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('claimId: $claimId, ')
+          ..write('auditId: $auditId, ')
+          ..write('status: $status, ')
+          ..write('reason: $reason, ')
+          ..write('resolutionNote: $resolutionNote, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('resolvedAt: $resolvedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $StudyMethodsTable extends StudyMethods
     with TableInfo<$StudyMethodsTable, StudyMethod> {
   @override
@@ -2211,6 +3590,7 @@ class $StudyMethodsTable extends StudyMethods
     'unit_type',
     aliasedName,
     false,
+    check: () => unitType.isIn(const ['定義', '機序', '鑑別', '画像所見', 'その他']),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -2222,6 +3602,7 @@ class $StudyMethodsTable extends StudyMethods
     'problem_format',
     aliasedName,
     false,
+    check: () => problemFormat.isIn(const ['選択肢', '穴埋め', '記述', '画像問題', '計算']),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -2607,6 +3988,1527 @@ class StudyMethodsCompanion extends UpdateCompanion<StudyMethod> {
   }
 }
 
+class $UnitStatsTable extends UnitStats
+    with TableInfo<$UnitStatsTable, UnitStat> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UnitStatsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _examUnitIdMeta = const VerificationMeta(
+    'examUnitId',
+  );
+  @override
+  late final GeneratedColumn<int> examUnitId = GeneratedColumn<int>(
+    'exam_unit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sourceCountMeta = const VerificationMeta(
+    'sourceCount',
+  );
+  @override
+  late final GeneratedColumn<int> sourceCount = GeneratedColumn<int>(
+    'source_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _segmentCountMeta = const VerificationMeta(
+    'segmentCount',
+  );
+  @override
+  late final GeneratedColumn<int> segmentCount = GeneratedColumn<int>(
+    'segment_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _claimCountMeta = const VerificationMeta(
+    'claimCount',
+  );
+  @override
+  late final GeneratedColumn<int> claimCount = GeneratedColumn<int>(
+    'claim_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _evidenceCountMeta = const VerificationMeta(
+    'evidenceCount',
+  );
+  @override
+  late final GeneratedColumn<int> evidenceCount = GeneratedColumn<int>(
+    'evidence_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _conflictCountMeta = const VerificationMeta(
+    'conflictCount',
+  );
+  @override
+  late final GeneratedColumn<int> conflictCount = GeneratedColumn<int>(
+    'conflict_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastAuditedAtMeta = const VerificationMeta(
+    'lastAuditedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastAuditedAt =
+      GeneratedColumn<DateTime>(
+        'last_audited_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    examUnitId,
+    sourceCount,
+    segmentCount,
+    claimCount,
+    evidenceCount,
+    conflictCount,
+    lastAuditedAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'unit_stats';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UnitStat> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('exam_unit_id')) {
+      context.handle(
+        _examUnitIdMeta,
+        examUnitId.isAcceptableOrUnknown(
+          data['exam_unit_id']!,
+          _examUnitIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_examUnitIdMeta);
+    }
+    if (data.containsKey('source_count')) {
+      context.handle(
+        _sourceCountMeta,
+        sourceCount.isAcceptableOrUnknown(
+          data['source_count']!,
+          _sourceCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('segment_count')) {
+      context.handle(
+        _segmentCountMeta,
+        segmentCount.isAcceptableOrUnknown(
+          data['segment_count']!,
+          _segmentCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('claim_count')) {
+      context.handle(
+        _claimCountMeta,
+        claimCount.isAcceptableOrUnknown(data['claim_count']!, _claimCountMeta),
+      );
+    }
+    if (data.containsKey('evidence_count')) {
+      context.handle(
+        _evidenceCountMeta,
+        evidenceCount.isAcceptableOrUnknown(
+          data['evidence_count']!,
+          _evidenceCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('conflict_count')) {
+      context.handle(
+        _conflictCountMeta,
+        conflictCount.isAcceptableOrUnknown(
+          data['conflict_count']!,
+          _conflictCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_audited_at')) {
+      context.handle(
+        _lastAuditedAtMeta,
+        lastAuditedAt.isAcceptableOrUnknown(
+          data['last_audited_at']!,
+          _lastAuditedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {examUnitId},
+  ];
+  @override
+  UnitStat map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UnitStat(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      examUnitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exam_unit_id'],
+      )!,
+      sourceCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_count'],
+      )!,
+      segmentCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}segment_count'],
+      )!,
+      claimCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}claim_count'],
+      )!,
+      evidenceCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}evidence_count'],
+      )!,
+      conflictCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}conflict_count'],
+      )!,
+      lastAuditedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_audited_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UnitStatsTable createAlias(String alias) {
+    return $UnitStatsTable(attachedDatabase, alias);
+  }
+}
+
+class UnitStat extends DataClass implements Insertable<UnitStat> {
+  final int id;
+  final int examUnitId;
+  final int sourceCount;
+  final int segmentCount;
+  final int claimCount;
+  final int evidenceCount;
+  final int conflictCount;
+  final DateTime? lastAuditedAt;
+  final DateTime updatedAt;
+  const UnitStat({
+    required this.id,
+    required this.examUnitId,
+    required this.sourceCount,
+    required this.segmentCount,
+    required this.claimCount,
+    required this.evidenceCount,
+    required this.conflictCount,
+    this.lastAuditedAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['exam_unit_id'] = Variable<int>(examUnitId);
+    map['source_count'] = Variable<int>(sourceCount);
+    map['segment_count'] = Variable<int>(segmentCount);
+    map['claim_count'] = Variable<int>(claimCount);
+    map['evidence_count'] = Variable<int>(evidenceCount);
+    map['conflict_count'] = Variable<int>(conflictCount);
+    if (!nullToAbsent || lastAuditedAt != null) {
+      map['last_audited_at'] = Variable<DateTime>(lastAuditedAt);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  UnitStatsCompanion toCompanion(bool nullToAbsent) {
+    return UnitStatsCompanion(
+      id: Value(id),
+      examUnitId: Value(examUnitId),
+      sourceCount: Value(sourceCount),
+      segmentCount: Value(segmentCount),
+      claimCount: Value(claimCount),
+      evidenceCount: Value(evidenceCount),
+      conflictCount: Value(conflictCount),
+      lastAuditedAt: lastAuditedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastAuditedAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UnitStat.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UnitStat(
+      id: serializer.fromJson<int>(json['id']),
+      examUnitId: serializer.fromJson<int>(json['examUnitId']),
+      sourceCount: serializer.fromJson<int>(json['sourceCount']),
+      segmentCount: serializer.fromJson<int>(json['segmentCount']),
+      claimCount: serializer.fromJson<int>(json['claimCount']),
+      evidenceCount: serializer.fromJson<int>(json['evidenceCount']),
+      conflictCount: serializer.fromJson<int>(json['conflictCount']),
+      lastAuditedAt: serializer.fromJson<DateTime?>(json['lastAuditedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'examUnitId': serializer.toJson<int>(examUnitId),
+      'sourceCount': serializer.toJson<int>(sourceCount),
+      'segmentCount': serializer.toJson<int>(segmentCount),
+      'claimCount': serializer.toJson<int>(claimCount),
+      'evidenceCount': serializer.toJson<int>(evidenceCount),
+      'conflictCount': serializer.toJson<int>(conflictCount),
+      'lastAuditedAt': serializer.toJson<DateTime?>(lastAuditedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  UnitStat copyWith({
+    int? id,
+    int? examUnitId,
+    int? sourceCount,
+    int? segmentCount,
+    int? claimCount,
+    int? evidenceCount,
+    int? conflictCount,
+    Value<DateTime?> lastAuditedAt = const Value.absent(),
+    DateTime? updatedAt,
+  }) => UnitStat(
+    id: id ?? this.id,
+    examUnitId: examUnitId ?? this.examUnitId,
+    sourceCount: sourceCount ?? this.sourceCount,
+    segmentCount: segmentCount ?? this.segmentCount,
+    claimCount: claimCount ?? this.claimCount,
+    evidenceCount: evidenceCount ?? this.evidenceCount,
+    conflictCount: conflictCount ?? this.conflictCount,
+    lastAuditedAt: lastAuditedAt.present
+        ? lastAuditedAt.value
+        : this.lastAuditedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UnitStat copyWithCompanion(UnitStatsCompanion data) {
+    return UnitStat(
+      id: data.id.present ? data.id.value : this.id,
+      examUnitId: data.examUnitId.present
+          ? data.examUnitId.value
+          : this.examUnitId,
+      sourceCount: data.sourceCount.present
+          ? data.sourceCount.value
+          : this.sourceCount,
+      segmentCount: data.segmentCount.present
+          ? data.segmentCount.value
+          : this.segmentCount,
+      claimCount: data.claimCount.present
+          ? data.claimCount.value
+          : this.claimCount,
+      evidenceCount: data.evidenceCount.present
+          ? data.evidenceCount.value
+          : this.evidenceCount,
+      conflictCount: data.conflictCount.present
+          ? data.conflictCount.value
+          : this.conflictCount,
+      lastAuditedAt: data.lastAuditedAt.present
+          ? data.lastAuditedAt.value
+          : this.lastAuditedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnitStat(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('sourceCount: $sourceCount, ')
+          ..write('segmentCount: $segmentCount, ')
+          ..write('claimCount: $claimCount, ')
+          ..write('evidenceCount: $evidenceCount, ')
+          ..write('conflictCount: $conflictCount, ')
+          ..write('lastAuditedAt: $lastAuditedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    examUnitId,
+    sourceCount,
+    segmentCount,
+    claimCount,
+    evidenceCount,
+    conflictCount,
+    lastAuditedAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UnitStat &&
+          other.id == this.id &&
+          other.examUnitId == this.examUnitId &&
+          other.sourceCount == this.sourceCount &&
+          other.segmentCount == this.segmentCount &&
+          other.claimCount == this.claimCount &&
+          other.evidenceCount == this.evidenceCount &&
+          other.conflictCount == this.conflictCount &&
+          other.lastAuditedAt == this.lastAuditedAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
+  final Value<int> id;
+  final Value<int> examUnitId;
+  final Value<int> sourceCount;
+  final Value<int> segmentCount;
+  final Value<int> claimCount;
+  final Value<int> evidenceCount;
+  final Value<int> conflictCount;
+  final Value<DateTime?> lastAuditedAt;
+  final Value<DateTime> updatedAt;
+  const UnitStatsCompanion({
+    this.id = const Value.absent(),
+    this.examUnitId = const Value.absent(),
+    this.sourceCount = const Value.absent(),
+    this.segmentCount = const Value.absent(),
+    this.claimCount = const Value.absent(),
+    this.evidenceCount = const Value.absent(),
+    this.conflictCount = const Value.absent(),
+    this.lastAuditedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  UnitStatsCompanion.insert({
+    this.id = const Value.absent(),
+    required int examUnitId,
+    this.sourceCount = const Value.absent(),
+    this.segmentCount = const Value.absent(),
+    this.claimCount = const Value.absent(),
+    this.evidenceCount = const Value.absent(),
+    this.conflictCount = const Value.absent(),
+    this.lastAuditedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : examUnitId = Value(examUnitId);
+  static Insertable<UnitStat> custom({
+    Expression<int>? id,
+    Expression<int>? examUnitId,
+    Expression<int>? sourceCount,
+    Expression<int>? segmentCount,
+    Expression<int>? claimCount,
+    Expression<int>? evidenceCount,
+    Expression<int>? conflictCount,
+    Expression<DateTime>? lastAuditedAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (examUnitId != null) 'exam_unit_id': examUnitId,
+      if (sourceCount != null) 'source_count': sourceCount,
+      if (segmentCount != null) 'segment_count': segmentCount,
+      if (claimCount != null) 'claim_count': claimCount,
+      if (evidenceCount != null) 'evidence_count': evidenceCount,
+      if (conflictCount != null) 'conflict_count': conflictCount,
+      if (lastAuditedAt != null) 'last_audited_at': lastAuditedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  UnitStatsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? examUnitId,
+    Value<int>? sourceCount,
+    Value<int>? segmentCount,
+    Value<int>? claimCount,
+    Value<int>? evidenceCount,
+    Value<int>? conflictCount,
+    Value<DateTime?>? lastAuditedAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return UnitStatsCompanion(
+      id: id ?? this.id,
+      examUnitId: examUnitId ?? this.examUnitId,
+      sourceCount: sourceCount ?? this.sourceCount,
+      segmentCount: segmentCount ?? this.segmentCount,
+      claimCount: claimCount ?? this.claimCount,
+      evidenceCount: evidenceCount ?? this.evidenceCount,
+      conflictCount: conflictCount ?? this.conflictCount,
+      lastAuditedAt: lastAuditedAt ?? this.lastAuditedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (examUnitId.present) {
+      map['exam_unit_id'] = Variable<int>(examUnitId.value);
+    }
+    if (sourceCount.present) {
+      map['source_count'] = Variable<int>(sourceCount.value);
+    }
+    if (segmentCount.present) {
+      map['segment_count'] = Variable<int>(segmentCount.value);
+    }
+    if (claimCount.present) {
+      map['claim_count'] = Variable<int>(claimCount.value);
+    }
+    if (evidenceCount.present) {
+      map['evidence_count'] = Variable<int>(evidenceCount.value);
+    }
+    if (conflictCount.present) {
+      map['conflict_count'] = Variable<int>(conflictCount.value);
+    }
+    if (lastAuditedAt.present) {
+      map['last_audited_at'] = Variable<DateTime>(lastAuditedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnitStatsCompanion(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('sourceCount: $sourceCount, ')
+          ..write('segmentCount: $segmentCount, ')
+          ..write('claimCount: $claimCount, ')
+          ..write('evidenceCount: $evidenceCount, ')
+          ..write('conflictCount: $conflictCount, ')
+          ..write('lastAuditedAt: $lastAuditedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EvidencePacksTable extends EvidencePacks
+    with TableInfo<$EvidencePacksTable, EvidencePack> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EvidencePacksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _claimIdMeta = const VerificationMeta(
+    'claimId',
+  );
+  @override
+  late final GeneratedColumn<int> claimId = GeneratedColumn<int>(
+    'claim_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES claims (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _summaryMeta = const VerificationMeta(
+    'summary',
+  );
+  @override
+  late final GeneratedColumn<String> summary = GeneratedColumn<String>(
+    'summary',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contentConfidenceMeta = const VerificationMeta(
+    'contentConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> contentConfidence =
+      GeneratedColumn<String>(
+        'content_confidence',
+        aliasedName,
+        false,
+        check: () => contentConfidence.isIn(const ['H', 'M', 'L']),
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('M'),
+      );
+  static const VerificationMeta _examConfidenceMeta = const VerificationMeta(
+    'examConfidence',
+  );
+  @override
+  late final GeneratedColumn<String> examConfidence = GeneratedColumn<String>(
+    'exam_confidence',
+    aliasedName,
+    false,
+    check: () => examConfidence.isIn(const ['H', 'M', 'L']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('M'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    claimId,
+    createdAt,
+    updatedAt,
+    summary,
+    contentConfidence,
+    examConfidence,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'evidence_packs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EvidencePack> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('claim_id')) {
+      context.handle(
+        _claimIdMeta,
+        claimId.isAcceptableOrUnknown(data['claim_id']!, _claimIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claimIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('summary')) {
+      context.handle(
+        _summaryMeta,
+        summary.isAcceptableOrUnknown(data['summary']!, _summaryMeta),
+      );
+    }
+    if (data.containsKey('content_confidence')) {
+      context.handle(
+        _contentConfidenceMeta,
+        contentConfidence.isAcceptableOrUnknown(
+          data['content_confidence']!,
+          _contentConfidenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exam_confidence')) {
+      context.handle(
+        _examConfidenceMeta,
+        examConfidence.isAcceptableOrUnknown(
+          data['exam_confidence']!,
+          _examConfidenceMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {claimId},
+  ];
+  @override
+  EvidencePack map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EvidencePack(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      claimId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}claim_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      summary: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}summary'],
+      ),
+      contentConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_confidence'],
+      )!,
+      examConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exam_confidence'],
+      )!,
+    );
+  }
+
+  @override
+  $EvidencePacksTable createAlias(String alias) {
+    return $EvidencePacksTable(attachedDatabase, alias);
+  }
+}
+
+class EvidencePack extends DataClass implements Insertable<EvidencePack> {
+  final int id;
+  final int claimId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? summary;
+  final String contentConfidence;
+  final String examConfidence;
+  const EvidencePack({
+    required this.id,
+    required this.claimId,
+    required this.createdAt,
+    required this.updatedAt,
+    this.summary,
+    required this.contentConfidence,
+    required this.examConfidence,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['claim_id'] = Variable<int>(claimId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || summary != null) {
+      map['summary'] = Variable<String>(summary);
+    }
+    map['content_confidence'] = Variable<String>(contentConfidence);
+    map['exam_confidence'] = Variable<String>(examConfidence);
+    return map;
+  }
+
+  EvidencePacksCompanion toCompanion(bool nullToAbsent) {
+    return EvidencePacksCompanion(
+      id: Value(id),
+      claimId: Value(claimId),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      summary: summary == null && nullToAbsent
+          ? const Value.absent()
+          : Value(summary),
+      contentConfidence: Value(contentConfidence),
+      examConfidence: Value(examConfidence),
+    );
+  }
+
+  factory EvidencePack.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EvidencePack(
+      id: serializer.fromJson<int>(json['id']),
+      claimId: serializer.fromJson<int>(json['claimId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      summary: serializer.fromJson<String?>(json['summary']),
+      contentConfidence: serializer.fromJson<String>(json['contentConfidence']),
+      examConfidence: serializer.fromJson<String>(json['examConfidence']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'claimId': serializer.toJson<int>(claimId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'summary': serializer.toJson<String?>(summary),
+      'contentConfidence': serializer.toJson<String>(contentConfidence),
+      'examConfidence': serializer.toJson<String>(examConfidence),
+    };
+  }
+
+  EvidencePack copyWith({
+    int? id,
+    int? claimId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<String?> summary = const Value.absent(),
+    String? contentConfidence,
+    String? examConfidence,
+  }) => EvidencePack(
+    id: id ?? this.id,
+    claimId: claimId ?? this.claimId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    summary: summary.present ? summary.value : this.summary,
+    contentConfidence: contentConfidence ?? this.contentConfidence,
+    examConfidence: examConfidence ?? this.examConfidence,
+  );
+  EvidencePack copyWithCompanion(EvidencePacksCompanion data) {
+    return EvidencePack(
+      id: data.id.present ? data.id.value : this.id,
+      claimId: data.claimId.present ? data.claimId.value : this.claimId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      summary: data.summary.present ? data.summary.value : this.summary,
+      contentConfidence: data.contentConfidence.present
+          ? data.contentConfidence.value
+          : this.contentConfidence,
+      examConfidence: data.examConfidence.present
+          ? data.examConfidence.value
+          : this.examConfidence,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EvidencePack(')
+          ..write('id: $id, ')
+          ..write('claimId: $claimId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('summary: $summary, ')
+          ..write('contentConfidence: $contentConfidence, ')
+          ..write('examConfidence: $examConfidence')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    claimId,
+    createdAt,
+    updatedAt,
+    summary,
+    contentConfidence,
+    examConfidence,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EvidencePack &&
+          other.id == this.id &&
+          other.claimId == this.claimId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.summary == this.summary &&
+          other.contentConfidence == this.contentConfidence &&
+          other.examConfidence == this.examConfidence);
+}
+
+class EvidencePacksCompanion extends UpdateCompanion<EvidencePack> {
+  final Value<int> id;
+  final Value<int> claimId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String?> summary;
+  final Value<String> contentConfidence;
+  final Value<String> examConfidence;
+  const EvidencePacksCompanion({
+    this.id = const Value.absent(),
+    this.claimId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.summary = const Value.absent(),
+    this.contentConfidence = const Value.absent(),
+    this.examConfidence = const Value.absent(),
+  });
+  EvidencePacksCompanion.insert({
+    this.id = const Value.absent(),
+    required int claimId,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.summary = const Value.absent(),
+    this.contentConfidence = const Value.absent(),
+    this.examConfidence = const Value.absent(),
+  }) : claimId = Value(claimId);
+  static Insertable<EvidencePack> custom({
+    Expression<int>? id,
+    Expression<int>? claimId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? summary,
+    Expression<String>? contentConfidence,
+    Expression<String>? examConfidence,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (claimId != null) 'claim_id': claimId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (summary != null) 'summary': summary,
+      if (contentConfidence != null) 'content_confidence': contentConfidence,
+      if (examConfidence != null) 'exam_confidence': examConfidence,
+    });
+  }
+
+  EvidencePacksCompanion copyWith({
+    Value<int>? id,
+    Value<int>? claimId,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<String?>? summary,
+    Value<String>? contentConfidence,
+    Value<String>? examConfidence,
+  }) {
+    return EvidencePacksCompanion(
+      id: id ?? this.id,
+      claimId: claimId ?? this.claimId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      summary: summary ?? this.summary,
+      contentConfidence: contentConfidence ?? this.contentConfidence,
+      examConfidence: examConfidence ?? this.examConfidence,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (claimId.present) {
+      map['claim_id'] = Variable<int>(claimId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (summary.present) {
+      map['summary'] = Variable<String>(summary.value);
+    }
+    if (contentConfidence.present) {
+      map['content_confidence'] = Variable<String>(contentConfidence.value);
+    }
+    if (examConfidence.present) {
+      map['exam_confidence'] = Variable<String>(examConfidence.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EvidencePacksCompanion(')
+          ..write('id: $id, ')
+          ..write('claimId: $claimId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('summary: $summary, ')
+          ..write('contentConfidence: $contentConfidence, ')
+          ..write('examConfidence: $examConfidence')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EvidencePackItemsTable extends EvidencePackItems
+    with TableInfo<$EvidencePackItemsTable, EvidencePackItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EvidencePackItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _evidencePackIdMeta = const VerificationMeta(
+    'evidencePackId',
+  );
+  @override
+  late final GeneratedColumn<int> evidencePackId = GeneratedColumn<int>(
+    'evidence_pack_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES evidence_packs (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sourceSegmentIdMeta = const VerificationMeta(
+    'sourceSegmentId',
+  );
+  @override
+  late final GeneratedColumn<int> sourceSegmentId = GeneratedColumn<int>(
+    'source_segment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES source_segments (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _pageNumberMeta = const VerificationMeta(
+    'pageNumber',
+  );
+  @override
+  late final GeneratedColumn<int> pageNumber = GeneratedColumn<int>(
+    'page_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _snippetMeta = const VerificationMeta(
+    'snippet',
+  );
+  @override
+  late final GeneratedColumn<String> snippet = GeneratedColumn<String>(
+    'snippet',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _weightMeta = const VerificationMeta('weight');
+  @override
+  late final GeneratedColumn<int> weight = GeneratedColumn<int>(
+    'weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    evidencePackId,
+    sourceSegmentId,
+    pageNumber,
+    snippet,
+    weight,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'evidence_pack_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EvidencePackItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('evidence_pack_id')) {
+      context.handle(
+        _evidencePackIdMeta,
+        evidencePackId.isAcceptableOrUnknown(
+          data['evidence_pack_id']!,
+          _evidencePackIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_evidencePackIdMeta);
+    }
+    if (data.containsKey('source_segment_id')) {
+      context.handle(
+        _sourceSegmentIdMeta,
+        sourceSegmentId.isAcceptableOrUnknown(
+          data['source_segment_id']!,
+          _sourceSegmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceSegmentIdMeta);
+    }
+    if (data.containsKey('page_number')) {
+      context.handle(
+        _pageNumberMeta,
+        pageNumber.isAcceptableOrUnknown(data['page_number']!, _pageNumberMeta),
+      );
+    }
+    if (data.containsKey('snippet')) {
+      context.handle(
+        _snippetMeta,
+        snippet.isAcceptableOrUnknown(data['snippet']!, _snippetMeta),
+      );
+    }
+    if (data.containsKey('weight')) {
+      context.handle(
+        _weightMeta,
+        weight.isAcceptableOrUnknown(data['weight']!, _weightMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {evidencePackId, sourceSegmentId},
+  ];
+  @override
+  EvidencePackItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EvidencePackItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      evidencePackId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}evidence_pack_id'],
+      )!,
+      sourceSegmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_segment_id'],
+      )!,
+      pageNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}page_number'],
+      ),
+      snippet: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}snippet'],
+      ),
+      weight: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}weight'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EvidencePackItemsTable createAlias(String alias) {
+    return $EvidencePackItemsTable(attachedDatabase, alias);
+  }
+}
+
+class EvidencePackItem extends DataClass
+    implements Insertable<EvidencePackItem> {
+  final int id;
+  final int evidencePackId;
+  final int sourceSegmentId;
+  final int? pageNumber;
+  final String? snippet;
+  final int weight;
+  final DateTime createdAt;
+  const EvidencePackItem({
+    required this.id,
+    required this.evidencePackId,
+    required this.sourceSegmentId,
+    this.pageNumber,
+    this.snippet,
+    required this.weight,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['evidence_pack_id'] = Variable<int>(evidencePackId);
+    map['source_segment_id'] = Variable<int>(sourceSegmentId);
+    if (!nullToAbsent || pageNumber != null) {
+      map['page_number'] = Variable<int>(pageNumber);
+    }
+    if (!nullToAbsent || snippet != null) {
+      map['snippet'] = Variable<String>(snippet);
+    }
+    map['weight'] = Variable<int>(weight);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  EvidencePackItemsCompanion toCompanion(bool nullToAbsent) {
+    return EvidencePackItemsCompanion(
+      id: Value(id),
+      evidencePackId: Value(evidencePackId),
+      sourceSegmentId: Value(sourceSegmentId),
+      pageNumber: pageNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pageNumber),
+      snippet: snippet == null && nullToAbsent
+          ? const Value.absent()
+          : Value(snippet),
+      weight: Value(weight),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory EvidencePackItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EvidencePackItem(
+      id: serializer.fromJson<int>(json['id']),
+      evidencePackId: serializer.fromJson<int>(json['evidencePackId']),
+      sourceSegmentId: serializer.fromJson<int>(json['sourceSegmentId']),
+      pageNumber: serializer.fromJson<int?>(json['pageNumber']),
+      snippet: serializer.fromJson<String?>(json['snippet']),
+      weight: serializer.fromJson<int>(json['weight']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'evidencePackId': serializer.toJson<int>(evidencePackId),
+      'sourceSegmentId': serializer.toJson<int>(sourceSegmentId),
+      'pageNumber': serializer.toJson<int?>(pageNumber),
+      'snippet': serializer.toJson<String?>(snippet),
+      'weight': serializer.toJson<int>(weight),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  EvidencePackItem copyWith({
+    int? id,
+    int? evidencePackId,
+    int? sourceSegmentId,
+    Value<int?> pageNumber = const Value.absent(),
+    Value<String?> snippet = const Value.absent(),
+    int? weight,
+    DateTime? createdAt,
+  }) => EvidencePackItem(
+    id: id ?? this.id,
+    evidencePackId: evidencePackId ?? this.evidencePackId,
+    sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+    pageNumber: pageNumber.present ? pageNumber.value : this.pageNumber,
+    snippet: snippet.present ? snippet.value : this.snippet,
+    weight: weight ?? this.weight,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  EvidencePackItem copyWithCompanion(EvidencePackItemsCompanion data) {
+    return EvidencePackItem(
+      id: data.id.present ? data.id.value : this.id,
+      evidencePackId: data.evidencePackId.present
+          ? data.evidencePackId.value
+          : this.evidencePackId,
+      sourceSegmentId: data.sourceSegmentId.present
+          ? data.sourceSegmentId.value
+          : this.sourceSegmentId,
+      pageNumber: data.pageNumber.present
+          ? data.pageNumber.value
+          : this.pageNumber,
+      snippet: data.snippet.present ? data.snippet.value : this.snippet,
+      weight: data.weight.present ? data.weight.value : this.weight,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EvidencePackItem(')
+          ..write('id: $id, ')
+          ..write('evidencePackId: $evidencePackId, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('pageNumber: $pageNumber, ')
+          ..write('snippet: $snippet, ')
+          ..write('weight: $weight, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    evidencePackId,
+    sourceSegmentId,
+    pageNumber,
+    snippet,
+    weight,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EvidencePackItem &&
+          other.id == this.id &&
+          other.evidencePackId == this.evidencePackId &&
+          other.sourceSegmentId == this.sourceSegmentId &&
+          other.pageNumber == this.pageNumber &&
+          other.snippet == this.snippet &&
+          other.weight == this.weight &&
+          other.createdAt == this.createdAt);
+}
+
+class EvidencePackItemsCompanion extends UpdateCompanion<EvidencePackItem> {
+  final Value<int> id;
+  final Value<int> evidencePackId;
+  final Value<int> sourceSegmentId;
+  final Value<int?> pageNumber;
+  final Value<String?> snippet;
+  final Value<int> weight;
+  final Value<DateTime> createdAt;
+  const EvidencePackItemsCompanion({
+    this.id = const Value.absent(),
+    this.evidencePackId = const Value.absent(),
+    this.sourceSegmentId = const Value.absent(),
+    this.pageNumber = const Value.absent(),
+    this.snippet = const Value.absent(),
+    this.weight = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  EvidencePackItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required int evidencePackId,
+    required int sourceSegmentId,
+    this.pageNumber = const Value.absent(),
+    this.snippet = const Value.absent(),
+    this.weight = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : evidencePackId = Value(evidencePackId),
+       sourceSegmentId = Value(sourceSegmentId);
+  static Insertable<EvidencePackItem> custom({
+    Expression<int>? id,
+    Expression<int>? evidencePackId,
+    Expression<int>? sourceSegmentId,
+    Expression<int>? pageNumber,
+    Expression<String>? snippet,
+    Expression<int>? weight,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (evidencePackId != null) 'evidence_pack_id': evidencePackId,
+      if (sourceSegmentId != null) 'source_segment_id': sourceSegmentId,
+      if (pageNumber != null) 'page_number': pageNumber,
+      if (snippet != null) 'snippet': snippet,
+      if (weight != null) 'weight': weight,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  EvidencePackItemsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? evidencePackId,
+    Value<int>? sourceSegmentId,
+    Value<int?>? pageNumber,
+    Value<String?>? snippet,
+    Value<int>? weight,
+    Value<DateTime>? createdAt,
+  }) {
+    return EvidencePackItemsCompanion(
+      id: id ?? this.id,
+      evidencePackId: evidencePackId ?? this.evidencePackId,
+      sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+      pageNumber: pageNumber ?? this.pageNumber,
+      snippet: snippet ?? this.snippet,
+      weight: weight ?? this.weight,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (evidencePackId.present) {
+      map['evidence_pack_id'] = Variable<int>(evidencePackId.value);
+    }
+    if (sourceSegmentId.present) {
+      map['source_segment_id'] = Variable<int>(sourceSegmentId.value);
+    }
+    if (pageNumber.present) {
+      map['page_number'] = Variable<int>(pageNumber.value);
+    }
+    if (snippet.present) {
+      map['snippet'] = Variable<String>(snippet.value);
+    }
+    if (weight.present) {
+      map['weight'] = Variable<int>(weight.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EvidencePackItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('evidencePackId: $evidencePackId, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('pageNumber: $pageNumber, ')
+          ..write('snippet: $snippet, ')
+          ..write('weight: $weight, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2615,7 +5517,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ExamUnitsTable examUnits = $ExamUnitsTable(this);
   late final $ClaimsTable claims = $ClaimsTable(this);
   late final $EvidenceLinksTable evidenceLinks = $EvidenceLinksTable(this);
+  late final $AuditsTable audits = $AuditsTable(this);
+  late final $ConflictsTable conflicts = $ConflictsTable(this);
   late final $StudyMethodsTable studyMethods = $StudyMethodsTable(this);
+  late final $UnitStatsTable unitStats = $UnitStatsTable(this);
+  late final $EvidencePacksTable evidencePacks = $EvidencePacksTable(this);
+  late final $EvidencePackItemsTable evidencePackItems =
+      $EvidencePackItemsTable(this);
   late final SourcesDao sourcesDao = SourcesDao(this as AppDatabase);
   late final ExamUnitsDao examUnitsDao = ExamUnitsDao(this as AppDatabase);
   late final ClaimsDao claimsDao = ClaimsDao(this as AppDatabase);
@@ -2623,6 +5531,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final DashboardDao dashboardDao = DashboardDao(this as AppDatabase);
   late final SearchDao searchDao = SearchDao(this as AppDatabase);
   late final StudyMethodsDao studyMethodsDao = StudyMethodsDao(
+    this as AppDatabase,
+  );
+  late final EvidencePacksDao evidencePacksDao = EvidencePacksDao(
     this as AppDatabase,
   );
   @override
@@ -2635,8 +5546,114 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     examUnits,
     claims,
     evidenceLinks,
+    audits,
+    conflicts,
     studyMethods,
+    unitStats,
+    evidencePacks,
+    evidencePackItems,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'sources',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('source_segments', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'exam_units',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('claims', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'claims',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('evidence_links', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'source_segments',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('evidence_links', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'source_segments',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('audits', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'exam_units',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('audits', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'source_segments',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('conflicts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'exam_units',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('conflicts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'claims',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('conflicts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'audits',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('conflicts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'exam_units',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('unit_stats', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'claims',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('evidence_packs', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'evidence_packs',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('evidence_pack_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'source_segments',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('evidence_pack_items', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$SourcesTableCreateCompanionBuilder =
@@ -2982,6 +5999,7 @@ typedef $$SourceSegmentsTableCreateCompanionBuilder =
       required int pageNumber,
       Value<String> content,
       Value<String> segmentType,
+      Value<String> contentConfidence,
       Value<DateTime> createdAt,
     });
 typedef $$SourceSegmentsTableUpdateCompanionBuilder =
@@ -2991,6 +6009,7 @@ typedef $$SourceSegmentsTableUpdateCompanionBuilder =
       Value<int> pageNumber,
       Value<String> content,
       Value<String> segmentType,
+      Value<String> contentConfidence,
       Value<DateTime> createdAt,
     });
 
@@ -3041,6 +6060,73 @@ final class $$SourceSegmentsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$AuditsTable, List<Audit>> _auditsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.audits,
+    aliasName: $_aliasNameGenerator(
+      db.sourceSegments.id,
+      db.audits.sourceSegmentId,
+    ),
+  );
+
+  $$AuditsTableProcessedTableManager get auditsRefs {
+    final manager = $$AuditsTableTableManager(
+      $_db,
+      $_db.audits,
+    ).filter((f) => f.sourceSegmentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_auditsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ConflictsTable, List<Conflict>>
+  _conflictsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.conflicts,
+    aliasName: $_aliasNameGenerator(
+      db.sourceSegments.id,
+      db.conflicts.sourceSegmentId,
+    ),
+  );
+
+  $$ConflictsTableProcessedTableManager get conflictsRefs {
+    final manager = $$ConflictsTableTableManager(
+      $_db,
+      $_db.conflicts,
+    ).filter((f) => f.sourceSegmentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_conflictsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$EvidencePackItemsTable, List<EvidencePackItem>>
+  _evidencePackItemsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.evidencePackItems,
+        aliasName: $_aliasNameGenerator(
+          db.sourceSegments.id,
+          db.evidencePackItems.sourceSegmentId,
+        ),
+      );
+
+  $$EvidencePackItemsTableProcessedTableManager get evidencePackItemsRefs {
+    final manager = $$EvidencePackItemsTableTableManager(
+      $_db,
+      $_db.evidencePackItems,
+    ).filter((f) => f.sourceSegmentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _evidencePackItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$SourceSegmentsTableFilterComposer
@@ -3069,6 +6155,11 @@ class $$SourceSegmentsTableFilterComposer
 
   ColumnFilters<String> get segmentType => $composableBuilder(
     column: $table.segmentType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3124,6 +6215,81 @@ class $$SourceSegmentsTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> auditsRefs(
+    Expression<bool> Function($$AuditsTableFilterComposer f) f,
+  ) {
+    final $$AuditsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableFilterComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> conflictsRefs(
+    Expression<bool> Function($$ConflictsTableFilterComposer f) f,
+  ) {
+    final $$ConflictsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableFilterComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> evidencePackItemsRefs(
+    Expression<bool> Function($$EvidencePackItemsTableFilterComposer f) f,
+  ) {
+    final $$EvidencePackItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidencePackItems,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePackItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.evidencePackItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SourceSegmentsTableOrderingComposer
@@ -3152,6 +6318,11 @@ class $$SourceSegmentsTableOrderingComposer
 
   ColumnOrderings<String> get segmentType => $composableBuilder(
     column: $table.segmentType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3209,6 +6380,11 @@ class $$SourceSegmentsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -3259,6 +6435,82 @@ class $$SourceSegmentsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> auditsRefs<T extends Object>(
+    Expression<T> Function($$AuditsTableAnnotationComposer a) f,
+  ) {
+    final $$AuditsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> conflictsRefs<T extends Object>(
+    Expression<T> Function($$ConflictsTableAnnotationComposer a) f,
+  ) {
+    final $$ConflictsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> evidencePackItemsRefs<T extends Object>(
+    Expression<T> Function($$EvidencePackItemsTableAnnotationComposer a) f,
+  ) {
+    final $$EvidencePackItemsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.evidencePackItems,
+          getReferencedColumn: (t) => t.sourceSegmentId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$EvidencePackItemsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.evidencePackItems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$SourceSegmentsTableTableManager
@@ -3274,7 +6526,13 @@ class $$SourceSegmentsTableTableManager
           $$SourceSegmentsTableUpdateCompanionBuilder,
           (SourceSegment, $$SourceSegmentsTableReferences),
           SourceSegment,
-          PrefetchHooks Function({bool sourceId, bool evidenceLinksRefs})
+          PrefetchHooks Function({
+            bool sourceId,
+            bool evidenceLinksRefs,
+            bool auditsRefs,
+            bool conflictsRefs,
+            bool evidencePackItemsRefs,
+          })
         > {
   $$SourceSegmentsTableTableManager(
     _$AppDatabase db,
@@ -3296,6 +6554,7 @@ class $$SourceSegmentsTableTableManager
                 Value<int> pageNumber = const Value.absent(),
                 Value<String> content = const Value.absent(),
                 Value<String> segmentType = const Value.absent(),
+                Value<String> contentConfidence = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SourceSegmentsCompanion(
                 id: id,
@@ -3303,6 +6562,7 @@ class $$SourceSegmentsTableTableManager
                 pageNumber: pageNumber,
                 content: content,
                 segmentType: segmentType,
+                contentConfidence: contentConfidence,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -3312,6 +6572,7 @@ class $$SourceSegmentsTableTableManager
                 required int pageNumber,
                 Value<String> content = const Value.absent(),
                 Value<String> segmentType = const Value.absent(),
+                Value<String> contentConfidence = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SourceSegmentsCompanion.insert(
                 id: id,
@@ -3319,6 +6580,7 @@ class $$SourceSegmentsTableTableManager
                 pageNumber: pageNumber,
                 content: content,
                 segmentType: segmentType,
+                contentConfidence: contentConfidence,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -3330,11 +6592,20 @@ class $$SourceSegmentsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({sourceId = false, evidenceLinksRefs = false}) {
+              ({
+                sourceId = false,
+                evidenceLinksRefs = false,
+                auditsRefs = false,
+                conflictsRefs = false,
+                evidencePackItemsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (evidenceLinksRefs) db.evidenceLinks,
+                    if (auditsRefs) db.audits,
+                    if (conflictsRefs) db.conflicts,
+                    if (evidencePackItemsRefs) db.evidencePackItems,
                   ],
                   addJoins:
                       <
@@ -3393,6 +6664,69 @@ class $$SourceSegmentsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (auditsRefs)
+                        await $_getPrefetchedData<
+                          SourceSegment,
+                          $SourceSegmentsTable,
+                          Audit
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SourceSegmentsTableReferences
+                              ._auditsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SourceSegmentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).auditsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceSegmentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (conflictsRefs)
+                        await $_getPrefetchedData<
+                          SourceSegment,
+                          $SourceSegmentsTable,
+                          Conflict
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SourceSegmentsTableReferences
+                              ._conflictsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SourceSegmentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).conflictsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceSegmentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (evidencePackItemsRefs)
+                        await $_getPrefetchedData<
+                          SourceSegment,
+                          $SourceSegmentsTable,
+                          EvidencePackItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SourceSegmentsTableReferences
+                              ._evidencePackItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SourceSegmentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).evidencePackItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceSegmentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3413,7 +6747,13 @@ typedef $$SourceSegmentsTableProcessedTableManager =
       $$SourceSegmentsTableUpdateCompanionBuilder,
       (SourceSegment, $$SourceSegmentsTableReferences),
       SourceSegment,
-      PrefetchHooks Function({bool sourceId, bool evidenceLinksRefs})
+      PrefetchHooks Function({
+        bool sourceId,
+        bool evidenceLinksRefs,
+        bool auditsRefs,
+        bool conflictsRefs,
+        bool evidencePackItemsRefs,
+      })
     >;
 typedef $$ExamUnitsTableCreateCompanionBuilder =
     ExamUnitsCompanion Function({
@@ -3422,6 +6762,7 @@ typedef $$ExamUnitsTableCreateCompanionBuilder =
       Value<String> unitType,
       Value<String?> description,
       Value<String> confidenceLevel,
+      Value<String> examConfidence,
       Value<String> auditStatus,
       Value<int> sortOrder,
       Value<DateTime> createdAt,
@@ -3434,6 +6775,7 @@ typedef $$ExamUnitsTableUpdateCompanionBuilder =
       Value<String> unitType,
       Value<String?> description,
       Value<String> confidenceLevel,
+      Value<String> examConfidence,
       Value<String> auditStatus,
       Value<int> sortOrder,
       Value<DateTime> createdAt,
@@ -3458,6 +6800,61 @@ final class $$ExamUnitsTableReferences
     ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_claimsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$AuditsTable, List<Audit>> _auditsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.audits,
+    aliasName: $_aliasNameGenerator(db.examUnits.id, db.audits.examUnitId),
+  );
+
+  $$AuditsTableProcessedTableManager get auditsRefs {
+    final manager = $$AuditsTableTableManager(
+      $_db,
+      $_db.audits,
+    ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_auditsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ConflictsTable, List<Conflict>>
+  _conflictsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.conflicts,
+    aliasName: $_aliasNameGenerator(db.examUnits.id, db.conflicts.examUnitId),
+  );
+
+  $$ConflictsTableProcessedTableManager get conflictsRefs {
+    final manager = $$ConflictsTableTableManager(
+      $_db,
+      $_db.conflicts,
+    ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_conflictsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$UnitStatsTable, List<UnitStat>>
+  _unitStatsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.unitStats,
+    aliasName: $_aliasNameGenerator(db.examUnits.id, db.unitStats.examUnitId),
+  );
+
+  $$UnitStatsTableProcessedTableManager get unitStatsRefs {
+    final manager = $$UnitStatsTableTableManager(
+      $_db,
+      $_db.unitStats,
+    ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_unitStatsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3495,6 +6892,11 @@ class $$ExamUnitsTableFilterComposer
 
   ColumnFilters<String> get confidenceLevel => $composableBuilder(
     column: $table.confidenceLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3542,6 +6944,81 @@ class $$ExamUnitsTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> auditsRefs(
+    Expression<bool> Function($$AuditsTableFilterComposer f) f,
+  ) {
+    final $$AuditsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableFilterComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> conflictsRefs(
+    Expression<bool> Function($$ConflictsTableFilterComposer f) f,
+  ) {
+    final $$ConflictsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableFilterComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> unitStatsRefs(
+    Expression<bool> Function($$UnitStatsTableFilterComposer f) f,
+  ) {
+    final $$UnitStatsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.unitStats,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UnitStatsTableFilterComposer(
+            $db: $db,
+            $table: $db.unitStats,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ExamUnitsTableOrderingComposer
@@ -3575,6 +7052,11 @@ class $$ExamUnitsTableOrderingComposer
 
   ColumnOrderings<String> get confidenceLevel => $composableBuilder(
     column: $table.confidenceLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3627,6 +7109,11 @@ class $$ExamUnitsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get auditStatus => $composableBuilder(
     column: $table.auditStatus,
     builder: (column) => column,
@@ -3665,6 +7152,81 @@ class $$ExamUnitsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> auditsRefs<T extends Object>(
+    Expression<T> Function($$AuditsTableAnnotationComposer a) f,
+  ) {
+    final $$AuditsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> conflictsRefs<T extends Object>(
+    Expression<T> Function($$ConflictsTableAnnotationComposer a) f,
+  ) {
+    final $$ConflictsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> unitStatsRefs<T extends Object>(
+    Expression<T> Function($$UnitStatsTableAnnotationComposer a) f,
+  ) {
+    final $$UnitStatsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.unitStats,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UnitStatsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.unitStats,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ExamUnitsTableTableManager
@@ -3680,7 +7242,12 @@ class $$ExamUnitsTableTableManager
           $$ExamUnitsTableUpdateCompanionBuilder,
           (ExamUnit, $$ExamUnitsTableReferences),
           ExamUnit,
-          PrefetchHooks Function({bool claimsRefs})
+          PrefetchHooks Function({
+            bool claimsRefs,
+            bool auditsRefs,
+            bool conflictsRefs,
+            bool unitStatsRefs,
+          })
         > {
   $$ExamUnitsTableTableManager(_$AppDatabase db, $ExamUnitsTable table)
     : super(
@@ -3700,6 +7267,7 @@ class $$ExamUnitsTableTableManager
                 Value<String> unitType = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String> confidenceLevel = const Value.absent(),
+                Value<String> examConfidence = const Value.absent(),
                 Value<String> auditStatus = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -3710,6 +7278,7 @@ class $$ExamUnitsTableTableManager
                 unitType: unitType,
                 description: description,
                 confidenceLevel: confidenceLevel,
+                examConfidence: examConfidence,
                 auditStatus: auditStatus,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
@@ -3722,6 +7291,7 @@ class $$ExamUnitsTableTableManager
                 Value<String> unitType = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String> confidenceLevel = const Value.absent(),
+                Value<String> examConfidence = const Value.absent(),
                 Value<String> auditStatus = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -3732,6 +7302,7 @@ class $$ExamUnitsTableTableManager
                 unitType: unitType,
                 description: description,
                 confidenceLevel: confidenceLevel,
+                examConfidence: examConfidence,
                 auditStatus: auditStatus,
                 sortOrder: sortOrder,
                 createdAt: createdAt,
@@ -3745,28 +7316,112 @@ class $$ExamUnitsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({claimsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (claimsRefs) db.claims],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (claimsRefs)
-                    await $_getPrefetchedData<ExamUnit, $ExamUnitsTable, Claim>(
-                      currentTable: table,
-                      referencedTable: $$ExamUnitsTableReferences
-                          ._claimsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$ExamUnitsTableReferences(db, table, p0).claimsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.examUnitId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({
+                claimsRefs = false,
+                auditsRefs = false,
+                conflictsRefs = false,
+                unitStatsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (claimsRefs) db.claims,
+                    if (auditsRefs) db.audits,
+                    if (conflictsRefs) db.conflicts,
+                    if (unitStatsRefs) db.unitStats,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (claimsRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          Claim
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._claimsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).claimsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.examUnitId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (auditsRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          Audit
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._auditsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).auditsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.examUnitId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (conflictsRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          Conflict
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._conflictsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).conflictsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.examUnitId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (unitStatsRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          UnitStat
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._unitStatsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).unitStatsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.examUnitId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -3783,13 +7438,19 @@ typedef $$ExamUnitsTableProcessedTableManager =
       $$ExamUnitsTableUpdateCompanionBuilder,
       (ExamUnit, $$ExamUnitsTableReferences),
       ExamUnit,
-      PrefetchHooks Function({bool claimsRefs})
+      PrefetchHooks Function({
+        bool claimsRefs,
+        bool auditsRefs,
+        bool conflictsRefs,
+        bool unitStatsRefs,
+      })
     >;
 typedef $$ClaimsTableCreateCompanionBuilder =
     ClaimsCompanion Function({
       Value<int> id,
       required int examUnitId,
       required String content,
+      Value<String> contentConfidence,
       Value<String> confidenceLevel,
       Value<String> createdBy,
       Value<DateTime> createdAt,
@@ -3799,6 +7460,7 @@ typedef $$ClaimsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<int> examUnitId,
       Value<String> content,
+      Value<String> contentConfidence,
       Value<String> confidenceLevel,
       Value<String> createdBy,
       Value<DateTime> createdAt,
@@ -3842,6 +7504,42 @@ final class $$ClaimsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$ConflictsTable, List<Conflict>>
+  _conflictsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.conflicts,
+    aliasName: $_aliasNameGenerator(db.claims.id, db.conflicts.claimId),
+  );
+
+  $$ConflictsTableProcessedTableManager get conflictsRefs {
+    final manager = $$ConflictsTableTableManager(
+      $_db,
+      $_db.conflicts,
+    ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_conflictsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$EvidencePacksTable, List<EvidencePack>>
+  _evidencePacksRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.evidencePacks,
+    aliasName: $_aliasNameGenerator(db.claims.id, db.evidencePacks.claimId),
+  );
+
+  $$EvidencePacksTableProcessedTableManager get evidencePacksRefs {
+    final manager = $$EvidencePacksTableTableManager(
+      $_db,
+      $_db.evidencePacks,
+    ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_evidencePacksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ClaimsTableFilterComposer
@@ -3860,6 +7558,11 @@ class $$ClaimsTableFilterComposer
 
   ColumnFilters<String> get content => $composableBuilder(
     column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3925,6 +7628,56 @@ class $$ClaimsTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> conflictsRefs(
+    Expression<bool> Function($$ConflictsTableFilterComposer f) f,
+  ) {
+    final $$ConflictsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableFilterComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> evidencePacksRefs(
+    Expression<bool> Function($$EvidencePacksTableFilterComposer f) f,
+  ) {
+    final $$EvidencePacksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidencePacks,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePacksTableFilterComposer(
+            $db: $db,
+            $table: $db.evidencePacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ClaimsTableOrderingComposer
@@ -3943,6 +7696,11 @@ class $$ClaimsTableOrderingComposer
 
   ColumnOrderings<String> get content => $composableBuilder(
     column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3999,6 +7757,11 @@ class $$ClaimsTableAnnotationComposer
 
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get confidenceLevel => $composableBuilder(
     column: $table.confidenceLevel,
@@ -4058,6 +7821,56 @@ class $$ClaimsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> conflictsRefs<T extends Object>(
+    Expression<T> Function($$ConflictsTableAnnotationComposer a) f,
+  ) {
+    final $$ConflictsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> evidencePacksRefs<T extends Object>(
+    Expression<T> Function($$EvidencePacksTableAnnotationComposer a) f,
+  ) {
+    final $$EvidencePacksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidencePacks,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePacksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.evidencePacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ClaimsTableTableManager
@@ -4073,7 +7886,12 @@ class $$ClaimsTableTableManager
           $$ClaimsTableUpdateCompanionBuilder,
           (Claim, $$ClaimsTableReferences),
           Claim,
-          PrefetchHooks Function({bool examUnitId, bool evidenceLinksRefs})
+          PrefetchHooks Function({
+            bool examUnitId,
+            bool evidenceLinksRefs,
+            bool conflictsRefs,
+            bool evidencePacksRefs,
+          })
         > {
   $$ClaimsTableTableManager(_$AppDatabase db, $ClaimsTable table)
     : super(
@@ -4091,6 +7909,7 @@ class $$ClaimsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> examUnitId = const Value.absent(),
                 Value<String> content = const Value.absent(),
+                Value<String> contentConfidence = const Value.absent(),
                 Value<String> confidenceLevel = const Value.absent(),
                 Value<String> createdBy = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -4098,6 +7917,7 @@ class $$ClaimsTableTableManager
                 id: id,
                 examUnitId: examUnitId,
                 content: content,
+                contentConfidence: contentConfidence,
                 confidenceLevel: confidenceLevel,
                 createdBy: createdBy,
                 createdAt: createdAt,
@@ -4107,6 +7927,7 @@ class $$ClaimsTableTableManager
                 Value<int> id = const Value.absent(),
                 required int examUnitId,
                 required String content,
+                Value<String> contentConfidence = const Value.absent(),
                 Value<String> confidenceLevel = const Value.absent(),
                 Value<String> createdBy = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -4114,6 +7935,7 @@ class $$ClaimsTableTableManager
                 id: id,
                 examUnitId: examUnitId,
                 content: content,
+                contentConfidence: contentConfidence,
                 confidenceLevel: confidenceLevel,
                 createdBy: createdBy,
                 createdAt: createdAt,
@@ -4125,11 +7947,18 @@ class $$ClaimsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({examUnitId = false, evidenceLinksRefs = false}) {
+              ({
+                examUnitId = false,
+                evidenceLinksRefs = false,
+                conflictsRefs = false,
+                evidencePacksRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (evidenceLinksRefs) db.evidenceLinks,
+                    if (conflictsRefs) db.conflicts,
+                    if (evidencePacksRefs) db.evidencePacks,
                   ],
                   addJoins:
                       <
@@ -4186,6 +8015,48 @@ class $$ClaimsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (conflictsRefs)
+                        await $_getPrefetchedData<
+                          Claim,
+                          $ClaimsTable,
+                          Conflict
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ClaimsTableReferences
+                              ._conflictsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ClaimsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).conflictsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.claimId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (evidencePacksRefs)
+                        await $_getPrefetchedData<
+                          Claim,
+                          $ClaimsTable,
+                          EvidencePack
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ClaimsTableReferences
+                              ._evidencePacksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ClaimsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).evidencePacksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.claimId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4206,7 +8077,12 @@ typedef $$ClaimsTableProcessedTableManager =
       $$ClaimsTableUpdateCompanionBuilder,
       (Claim, $$ClaimsTableReferences),
       Claim,
-      PrefetchHooks Function({bool examUnitId, bool evidenceLinksRefs})
+      PrefetchHooks Function({
+        bool examUnitId,
+        bool evidenceLinksRefs,
+        bool conflictsRefs,
+        bool evidencePacksRefs,
+      })
     >;
 typedef $$EvidenceLinksTableCreateCompanionBuilder =
     EvidenceLinksCompanion Function({
@@ -4615,6 +8491,1279 @@ typedef $$EvidenceLinksTableProcessedTableManager =
       EvidenceLink,
       PrefetchHooks Function({bool claimId, bool sourceSegmentId})
     >;
+typedef $$AuditsTableCreateCompanionBuilder =
+    AuditsCompanion Function({
+      Value<int> id,
+      required int sourceSegmentId,
+      required int examUnitId,
+      required String status,
+      Value<String> contentConfidence,
+      Value<String> examConfidence,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+typedef $$AuditsTableUpdateCompanionBuilder =
+    AuditsCompanion Function({
+      Value<int> id,
+      Value<int> sourceSegmentId,
+      Value<int> examUnitId,
+      Value<String> status,
+      Value<String> contentConfidence,
+      Value<String> examConfidence,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+final class $$AuditsTableReferences
+    extends BaseReferences<_$AppDatabase, $AuditsTable, Audit> {
+  $$AuditsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $SourceSegmentsTable _sourceSegmentIdTable(_$AppDatabase db) =>
+      db.sourceSegments.createAlias(
+        $_aliasNameGenerator(db.audits.sourceSegmentId, db.sourceSegments.id),
+      );
+
+  $$SourceSegmentsTableProcessedTableManager get sourceSegmentId {
+    final $_column = $_itemColumn<int>('source_segment_id')!;
+
+    final manager = $$SourceSegmentsTableTableManager(
+      $_db,
+      $_db.sourceSegments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceSegmentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ExamUnitsTable _examUnitIdTable(_$AppDatabase db) => db.examUnits
+      .createAlias($_aliasNameGenerator(db.audits.examUnitId, db.examUnits.id));
+
+  $$ExamUnitsTableProcessedTableManager get examUnitId {
+    final $_column = $_itemColumn<int>('exam_unit_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_examUnitIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$ConflictsTable, List<Conflict>>
+  _conflictsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.conflicts,
+    aliasName: $_aliasNameGenerator(db.audits.id, db.conflicts.auditId),
+  );
+
+  $$ConflictsTableProcessedTableManager get conflictsRefs {
+    final manager = $$ConflictsTableTableManager(
+      $_db,
+      $_db.conflicts,
+    ).filter((f) => f.auditId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_conflictsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$AuditsTableFilterComposer
+    extends Composer<_$AppDatabase, $AuditsTable> {
+  $$AuditsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SourceSegmentsTableFilterComposer get sourceSegmentId {
+    final $$SourceSegmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ExamUnitsTableFilterComposer get examUnitId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> conflictsRefs(
+    Expression<bool> Function($$ConflictsTableFilterComposer f) f,
+  ) {
+    final $$ConflictsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.auditId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableFilterComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$AuditsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AuditsTable> {
+  $$AuditsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SourceSegmentsTableOrderingComposer get sourceSegmentId {
+    final $$SourceSegmentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ExamUnitsTableOrderingComposer get examUnitId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AuditsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AuditsTable> {
+  $$AuditsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$SourceSegmentsTableAnnotationComposer get sourceSegmentId {
+    final $$SourceSegmentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ExamUnitsTableAnnotationComposer get examUnitId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> conflictsRefs<T extends Object>(
+    Expression<T> Function($$ConflictsTableAnnotationComposer a) f,
+  ) {
+    final $$ConflictsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.conflicts,
+      getReferencedColumn: (t) => t.auditId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConflictsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.conflicts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$AuditsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AuditsTable,
+          Audit,
+          $$AuditsTableFilterComposer,
+          $$AuditsTableOrderingComposer,
+          $$AuditsTableAnnotationComposer,
+          $$AuditsTableCreateCompanionBuilder,
+          $$AuditsTableUpdateCompanionBuilder,
+          (Audit, $$AuditsTableReferences),
+          Audit,
+          PrefetchHooks Function({
+            bool sourceSegmentId,
+            bool examUnitId,
+            bool conflictsRefs,
+          })
+        > {
+  $$AuditsTableTableManager(_$AppDatabase db, $AuditsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AuditsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AuditsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AuditsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sourceSegmentId = const Value.absent(),
+                Value<int> examUnitId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> contentConfidence = const Value.absent(),
+                Value<String> examConfidence = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AuditsCompanion(
+                id: id,
+                sourceSegmentId: sourceSegmentId,
+                examUnitId: examUnitId,
+                status: status,
+                contentConfidence: contentConfidence,
+                examConfidence: examConfidence,
+                note: note,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sourceSegmentId,
+                required int examUnitId,
+                required String status,
+                Value<String> contentConfidence = const Value.absent(),
+                Value<String> examConfidence = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AuditsCompanion.insert(
+                id: id,
+                sourceSegmentId: sourceSegmentId,
+                examUnitId: examUnitId,
+                status: status,
+                contentConfidence: contentConfidence,
+                examConfidence: examConfidence,
+                note: note,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable(table), $$AuditsTableReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                sourceSegmentId = false,
+                examUnitId = false,
+                conflictsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [if (conflictsRefs) db.conflicts],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sourceSegmentId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sourceSegmentId,
+                                    referencedTable: $$AuditsTableReferences
+                                        ._sourceSegmentIdTable(db),
+                                    referencedColumn: $$AuditsTableReferences
+                                        ._sourceSegmentIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (examUnitId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.examUnitId,
+                                    referencedTable: $$AuditsTableReferences
+                                        ._examUnitIdTable(db),
+                                    referencedColumn: $$AuditsTableReferences
+                                        ._examUnitIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (conflictsRefs)
+                        await $_getPrefetchedData<
+                          Audit,
+                          $AuditsTable,
+                          Conflict
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AuditsTableReferences
+                              ._conflictsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AuditsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).conflictsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.auditId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$AuditsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AuditsTable,
+      Audit,
+      $$AuditsTableFilterComposer,
+      $$AuditsTableOrderingComposer,
+      $$AuditsTableAnnotationComposer,
+      $$AuditsTableCreateCompanionBuilder,
+      $$AuditsTableUpdateCompanionBuilder,
+      (Audit, $$AuditsTableReferences),
+      Audit,
+      PrefetchHooks Function({
+        bool sourceSegmentId,
+        bool examUnitId,
+        bool conflictsRefs,
+      })
+    >;
+typedef $$ConflictsTableCreateCompanionBuilder =
+    ConflictsCompanion Function({
+      Value<int> id,
+      required int sourceSegmentId,
+      required int examUnitId,
+      Value<int?> claimId,
+      Value<int?> auditId,
+      Value<String> status,
+      Value<String?> reason,
+      Value<String?> resolutionNote,
+      Value<DateTime> createdAt,
+      Value<DateTime?> resolvedAt,
+    });
+typedef $$ConflictsTableUpdateCompanionBuilder =
+    ConflictsCompanion Function({
+      Value<int> id,
+      Value<int> sourceSegmentId,
+      Value<int> examUnitId,
+      Value<int?> claimId,
+      Value<int?> auditId,
+      Value<String> status,
+      Value<String?> reason,
+      Value<String?> resolutionNote,
+      Value<DateTime> createdAt,
+      Value<DateTime?> resolvedAt,
+    });
+
+final class $$ConflictsTableReferences
+    extends BaseReferences<_$AppDatabase, $ConflictsTable, Conflict> {
+  $$ConflictsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $SourceSegmentsTable _sourceSegmentIdTable(_$AppDatabase db) =>
+      db.sourceSegments.createAlias(
+        $_aliasNameGenerator(
+          db.conflicts.sourceSegmentId,
+          db.sourceSegments.id,
+        ),
+      );
+
+  $$SourceSegmentsTableProcessedTableManager get sourceSegmentId {
+    final $_column = $_itemColumn<int>('source_segment_id')!;
+
+    final manager = $$SourceSegmentsTableTableManager(
+      $_db,
+      $_db.sourceSegments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceSegmentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ExamUnitsTable _examUnitIdTable(_$AppDatabase db) =>
+      db.examUnits.createAlias(
+        $_aliasNameGenerator(db.conflicts.examUnitId, db.examUnits.id),
+      );
+
+  $$ExamUnitsTableProcessedTableManager get examUnitId {
+    final $_column = $_itemColumn<int>('exam_unit_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_examUnitIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ClaimsTable _claimIdTable(_$AppDatabase db) => db.claims.createAlias(
+    $_aliasNameGenerator(db.conflicts.claimId, db.claims.id),
+  );
+
+  $$ClaimsTableProcessedTableManager? get claimId {
+    final $_column = $_itemColumn<int>('claim_id');
+    if ($_column == null) return null;
+    final manager = $$ClaimsTableTableManager(
+      $_db,
+      $_db.claims,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_claimIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $AuditsTable _auditIdTable(_$AppDatabase db) => db.audits.createAlias(
+    $_aliasNameGenerator(db.conflicts.auditId, db.audits.id),
+  );
+
+  $$AuditsTableProcessedTableManager? get auditId {
+    final $_column = $_itemColumn<int>('audit_id');
+    if ($_column == null) return null;
+    final manager = $$AuditsTableTableManager(
+      $_db,
+      $_db.audits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_auditIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ConflictsTableFilterComposer
+    extends Composer<_$AppDatabase, $ConflictsTable> {
+  $$ConflictsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resolutionNote => $composableBuilder(
+    column: $table.resolutionNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SourceSegmentsTableFilterComposer get sourceSegmentId {
+    final $$SourceSegmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ExamUnitsTableFilterComposer get examUnitId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableFilterComposer get claimId {
+    final $$ClaimsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableFilterComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AuditsTableFilterComposer get auditId {
+    final $$AuditsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.auditId,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableFilterComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ConflictsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ConflictsTable> {
+  $$ConflictsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resolutionNote => $composableBuilder(
+    column: $table.resolutionNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SourceSegmentsTableOrderingComposer get sourceSegmentId {
+    final $$SourceSegmentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ExamUnitsTableOrderingComposer get examUnitId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableOrderingComposer get claimId {
+    final $$ClaimsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableOrderingComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AuditsTableOrderingComposer get auditId {
+    final $$AuditsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.auditId,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableOrderingComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ConflictsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ConflictsTable> {
+  $$ConflictsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<String> get resolutionNote => $composableBuilder(
+    column: $table.resolutionNote,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => column,
+  );
+
+  $$SourceSegmentsTableAnnotationComposer get sourceSegmentId {
+    final $$SourceSegmentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ExamUnitsTableAnnotationComposer get examUnitId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableAnnotationComposer get claimId {
+    final $$ClaimsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AuditsTableAnnotationComposer get auditId {
+    final $$AuditsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.auditId,
+      referencedTable: $db.audits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AuditsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.audits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ConflictsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ConflictsTable,
+          Conflict,
+          $$ConflictsTableFilterComposer,
+          $$ConflictsTableOrderingComposer,
+          $$ConflictsTableAnnotationComposer,
+          $$ConflictsTableCreateCompanionBuilder,
+          $$ConflictsTableUpdateCompanionBuilder,
+          (Conflict, $$ConflictsTableReferences),
+          Conflict,
+          PrefetchHooks Function({
+            bool sourceSegmentId,
+            bool examUnitId,
+            bool claimId,
+            bool auditId,
+          })
+        > {
+  $$ConflictsTableTableManager(_$AppDatabase db, $ConflictsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ConflictsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ConflictsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ConflictsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sourceSegmentId = const Value.absent(),
+                Value<int> examUnitId = const Value.absent(),
+                Value<int?> claimId = const Value.absent(),
+                Value<int?> auditId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                Value<String?> resolutionNote = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+              }) => ConflictsCompanion(
+                id: id,
+                sourceSegmentId: sourceSegmentId,
+                examUnitId: examUnitId,
+                claimId: claimId,
+                auditId: auditId,
+                status: status,
+                reason: reason,
+                resolutionNote: resolutionNote,
+                createdAt: createdAt,
+                resolvedAt: resolvedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sourceSegmentId,
+                required int examUnitId,
+                Value<int?> claimId = const Value.absent(),
+                Value<int?> auditId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                Value<String?> resolutionNote = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+              }) => ConflictsCompanion.insert(
+                id: id,
+                sourceSegmentId: sourceSegmentId,
+                examUnitId: examUnitId,
+                claimId: claimId,
+                auditId: auditId,
+                status: status,
+                reason: reason,
+                resolutionNote: resolutionNote,
+                createdAt: createdAt,
+                resolvedAt: resolvedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ConflictsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                sourceSegmentId = false,
+                examUnitId = false,
+                claimId = false,
+                auditId = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sourceSegmentId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sourceSegmentId,
+                                    referencedTable: $$ConflictsTableReferences
+                                        ._sourceSegmentIdTable(db),
+                                    referencedColumn: $$ConflictsTableReferences
+                                        ._sourceSegmentIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (examUnitId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.examUnitId,
+                                    referencedTable: $$ConflictsTableReferences
+                                        ._examUnitIdTable(db),
+                                    referencedColumn: $$ConflictsTableReferences
+                                        ._examUnitIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (claimId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.claimId,
+                                    referencedTable: $$ConflictsTableReferences
+                                        ._claimIdTable(db),
+                                    referencedColumn: $$ConflictsTableReferences
+                                        ._claimIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (auditId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.auditId,
+                                    referencedTable: $$ConflictsTableReferences
+                                        ._auditIdTable(db),
+                                    referencedColumn: $$ConflictsTableReferences
+                                        ._auditIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$ConflictsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ConflictsTable,
+      Conflict,
+      $$ConflictsTableFilterComposer,
+      $$ConflictsTableOrderingComposer,
+      $$ConflictsTableAnnotationComposer,
+      $$ConflictsTableCreateCompanionBuilder,
+      $$ConflictsTableUpdateCompanionBuilder,
+      (Conflict, $$ConflictsTableReferences),
+      Conflict,
+      PrefetchHooks Function({
+        bool sourceSegmentId,
+        bool examUnitId,
+        bool claimId,
+        bool auditId,
+      })
+    >;
 typedef $$StudyMethodsTableCreateCompanionBuilder =
     StudyMethodsCompanion Function({
       Value<int> id,
@@ -4836,6 +9985,1333 @@ typedef $$StudyMethodsTableProcessedTableManager =
       StudyMethod,
       PrefetchHooks Function()
     >;
+typedef $$UnitStatsTableCreateCompanionBuilder =
+    UnitStatsCompanion Function({
+      Value<int> id,
+      required int examUnitId,
+      Value<int> sourceCount,
+      Value<int> segmentCount,
+      Value<int> claimCount,
+      Value<int> evidenceCount,
+      Value<int> conflictCount,
+      Value<DateTime?> lastAuditedAt,
+      Value<DateTime> updatedAt,
+    });
+typedef $$UnitStatsTableUpdateCompanionBuilder =
+    UnitStatsCompanion Function({
+      Value<int> id,
+      Value<int> examUnitId,
+      Value<int> sourceCount,
+      Value<int> segmentCount,
+      Value<int> claimCount,
+      Value<int> evidenceCount,
+      Value<int> conflictCount,
+      Value<DateTime?> lastAuditedAt,
+      Value<DateTime> updatedAt,
+    });
+
+final class $$UnitStatsTableReferences
+    extends BaseReferences<_$AppDatabase, $UnitStatsTable, UnitStat> {
+  $$UnitStatsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ExamUnitsTable _examUnitIdTable(_$AppDatabase db) =>
+      db.examUnits.createAlias(
+        $_aliasNameGenerator(db.unitStats.examUnitId, db.examUnits.id),
+      );
+
+  $$ExamUnitsTableProcessedTableManager get examUnitId {
+    final $_column = $_itemColumn<int>('exam_unit_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_examUnitIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$UnitStatsTableFilterComposer
+    extends Composer<_$AppDatabase, $UnitStatsTable> {
+  $$UnitStatsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceCount => $composableBuilder(
+    column: $table.sourceCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get segmentCount => $composableBuilder(
+    column: $table.segmentCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get claimCount => $composableBuilder(
+    column: $table.claimCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get evidenceCount => $composableBuilder(
+    column: $table.evidenceCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get conflictCount => $composableBuilder(
+    column: $table.conflictCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastAuditedAt => $composableBuilder(
+    column: $table.lastAuditedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ExamUnitsTableFilterComposer get examUnitId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UnitStatsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UnitStatsTable> {
+  $$UnitStatsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceCount => $composableBuilder(
+    column: $table.sourceCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get segmentCount => $composableBuilder(
+    column: $table.segmentCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get claimCount => $composableBuilder(
+    column: $table.claimCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get evidenceCount => $composableBuilder(
+    column: $table.evidenceCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get conflictCount => $composableBuilder(
+    column: $table.conflictCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastAuditedAt => $composableBuilder(
+    column: $table.lastAuditedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ExamUnitsTableOrderingComposer get examUnitId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UnitStatsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UnitStatsTable> {
+  $$UnitStatsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sourceCount => $composableBuilder(
+    column: $table.sourceCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get segmentCount => $composableBuilder(
+    column: $table.segmentCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get claimCount => $composableBuilder(
+    column: $table.claimCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get evidenceCount => $composableBuilder(
+    column: $table.evidenceCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get conflictCount => $composableBuilder(
+    column: $table.conflictCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastAuditedAt => $composableBuilder(
+    column: $table.lastAuditedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ExamUnitsTableAnnotationComposer get examUnitId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UnitStatsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UnitStatsTable,
+          UnitStat,
+          $$UnitStatsTableFilterComposer,
+          $$UnitStatsTableOrderingComposer,
+          $$UnitStatsTableAnnotationComposer,
+          $$UnitStatsTableCreateCompanionBuilder,
+          $$UnitStatsTableUpdateCompanionBuilder,
+          (UnitStat, $$UnitStatsTableReferences),
+          UnitStat,
+          PrefetchHooks Function({bool examUnitId})
+        > {
+  $$UnitStatsTableTableManager(_$AppDatabase db, $UnitStatsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UnitStatsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UnitStatsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UnitStatsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> examUnitId = const Value.absent(),
+                Value<int> sourceCount = const Value.absent(),
+                Value<int> segmentCount = const Value.absent(),
+                Value<int> claimCount = const Value.absent(),
+                Value<int> evidenceCount = const Value.absent(),
+                Value<int> conflictCount = const Value.absent(),
+                Value<DateTime?> lastAuditedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => UnitStatsCompanion(
+                id: id,
+                examUnitId: examUnitId,
+                sourceCount: sourceCount,
+                segmentCount: segmentCount,
+                claimCount: claimCount,
+                evidenceCount: evidenceCount,
+                conflictCount: conflictCount,
+                lastAuditedAt: lastAuditedAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int examUnitId,
+                Value<int> sourceCount = const Value.absent(),
+                Value<int> segmentCount = const Value.absent(),
+                Value<int> claimCount = const Value.absent(),
+                Value<int> evidenceCount = const Value.absent(),
+                Value<int> conflictCount = const Value.absent(),
+                Value<DateTime?> lastAuditedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => UnitStatsCompanion.insert(
+                id: id,
+                examUnitId: examUnitId,
+                sourceCount: sourceCount,
+                segmentCount: segmentCount,
+                claimCount: claimCount,
+                evidenceCount: evidenceCount,
+                conflictCount: conflictCount,
+                lastAuditedAt: lastAuditedAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$UnitStatsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({examUnitId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (examUnitId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.examUnitId,
+                                referencedTable: $$UnitStatsTableReferences
+                                    ._examUnitIdTable(db),
+                                referencedColumn: $$UnitStatsTableReferences
+                                    ._examUnitIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$UnitStatsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UnitStatsTable,
+      UnitStat,
+      $$UnitStatsTableFilterComposer,
+      $$UnitStatsTableOrderingComposer,
+      $$UnitStatsTableAnnotationComposer,
+      $$UnitStatsTableCreateCompanionBuilder,
+      $$UnitStatsTableUpdateCompanionBuilder,
+      (UnitStat, $$UnitStatsTableReferences),
+      UnitStat,
+      PrefetchHooks Function({bool examUnitId})
+    >;
+typedef $$EvidencePacksTableCreateCompanionBuilder =
+    EvidencePacksCompanion Function({
+      Value<int> id,
+      required int claimId,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> summary,
+      Value<String> contentConfidence,
+      Value<String> examConfidence,
+    });
+typedef $$EvidencePacksTableUpdateCompanionBuilder =
+    EvidencePacksCompanion Function({
+      Value<int> id,
+      Value<int> claimId,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> summary,
+      Value<String> contentConfidence,
+      Value<String> examConfidence,
+    });
+
+final class $$EvidencePacksTableReferences
+    extends BaseReferences<_$AppDatabase, $EvidencePacksTable, EvidencePack> {
+  $$EvidencePacksTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ClaimsTable _claimIdTable(_$AppDatabase db) => db.claims.createAlias(
+    $_aliasNameGenerator(db.evidencePacks.claimId, db.claims.id),
+  );
+
+  $$ClaimsTableProcessedTableManager get claimId {
+    final $_column = $_itemColumn<int>('claim_id')!;
+
+    final manager = $$ClaimsTableTableManager(
+      $_db,
+      $_db.claims,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_claimIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$EvidencePackItemsTable, List<EvidencePackItem>>
+  _evidencePackItemsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.evidencePackItems,
+        aliasName: $_aliasNameGenerator(
+          db.evidencePacks.id,
+          db.evidencePackItems.evidencePackId,
+        ),
+      );
+
+  $$EvidencePackItemsTableProcessedTableManager get evidencePackItemsRefs {
+    final manager = $$EvidencePackItemsTableTableManager(
+      $_db,
+      $_db.evidencePackItems,
+    ).filter((f) => f.evidencePackId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _evidencePackItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$EvidencePacksTableFilterComposer
+    extends Composer<_$AppDatabase, $EvidencePacksTable> {
+  $$EvidencePacksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get summary => $composableBuilder(
+    column: $table.summary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ClaimsTableFilterComposer get claimId {
+    final $$ClaimsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableFilterComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> evidencePackItemsRefs(
+    Expression<bool> Function($$EvidencePackItemsTableFilterComposer f) f,
+  ) {
+    final $$EvidencePackItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidencePackItems,
+      getReferencedColumn: (t) => t.evidencePackId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePackItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.evidencePackItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$EvidencePacksTableOrderingComposer
+    extends Composer<_$AppDatabase, $EvidencePacksTable> {
+  $$EvidencePacksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get summary => $composableBuilder(
+    column: $table.summary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ClaimsTableOrderingComposer get claimId {
+    final $$ClaimsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableOrderingComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidencePacksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EvidencePacksTable> {
+  $$EvidencePacksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get summary =>
+      $composableBuilder(column: $table.summary, builder: (column) => column);
+
+  GeneratedColumn<String> get contentConfidence => $composableBuilder(
+    column: $table.contentConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get examConfidence => $composableBuilder(
+    column: $table.examConfidence,
+    builder: (column) => column,
+  );
+
+  $$ClaimsTableAnnotationComposer get claimId {
+    final $$ClaimsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> evidencePackItemsRefs<T extends Object>(
+    Expression<T> Function($$EvidencePackItemsTableAnnotationComposer a) f,
+  ) {
+    final $$EvidencePackItemsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.evidencePackItems,
+          getReferencedColumn: (t) => t.evidencePackId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$EvidencePackItemsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.evidencePackItems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$EvidencePacksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EvidencePacksTable,
+          EvidencePack,
+          $$EvidencePacksTableFilterComposer,
+          $$EvidencePacksTableOrderingComposer,
+          $$EvidencePacksTableAnnotationComposer,
+          $$EvidencePacksTableCreateCompanionBuilder,
+          $$EvidencePacksTableUpdateCompanionBuilder,
+          (EvidencePack, $$EvidencePacksTableReferences),
+          EvidencePack,
+          PrefetchHooks Function({bool claimId, bool evidencePackItemsRefs})
+        > {
+  $$EvidencePacksTableTableManager(_$AppDatabase db, $EvidencePacksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EvidencePacksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EvidencePacksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EvidencePacksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> claimId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> summary = const Value.absent(),
+                Value<String> contentConfidence = const Value.absent(),
+                Value<String> examConfidence = const Value.absent(),
+              }) => EvidencePacksCompanion(
+                id: id,
+                claimId: claimId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                summary: summary,
+                contentConfidence: contentConfidence,
+                examConfidence: examConfidence,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int claimId,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> summary = const Value.absent(),
+                Value<String> contentConfidence = const Value.absent(),
+                Value<String> examConfidence = const Value.absent(),
+              }) => EvidencePacksCompanion.insert(
+                id: id,
+                claimId: claimId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                summary: summary,
+                contentConfidence: contentConfidence,
+                examConfidence: examConfidence,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$EvidencePacksTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({claimId = false, evidencePackItemsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (evidencePackItemsRefs) db.evidencePackItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (claimId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.claimId,
+                                    referencedTable:
+                                        $$EvidencePacksTableReferences
+                                            ._claimIdTable(db),
+                                    referencedColumn:
+                                        $$EvidencePacksTableReferences
+                                            ._claimIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (evidencePackItemsRefs)
+                        await $_getPrefetchedData<
+                          EvidencePack,
+                          $EvidencePacksTable,
+                          EvidencePackItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EvidencePacksTableReferences
+                              ._evidencePackItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EvidencePacksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).evidencePackItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.evidencePackId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$EvidencePacksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EvidencePacksTable,
+      EvidencePack,
+      $$EvidencePacksTableFilterComposer,
+      $$EvidencePacksTableOrderingComposer,
+      $$EvidencePacksTableAnnotationComposer,
+      $$EvidencePacksTableCreateCompanionBuilder,
+      $$EvidencePacksTableUpdateCompanionBuilder,
+      (EvidencePack, $$EvidencePacksTableReferences),
+      EvidencePack,
+      PrefetchHooks Function({bool claimId, bool evidencePackItemsRefs})
+    >;
+typedef $$EvidencePackItemsTableCreateCompanionBuilder =
+    EvidencePackItemsCompanion Function({
+      Value<int> id,
+      required int evidencePackId,
+      required int sourceSegmentId,
+      Value<int?> pageNumber,
+      Value<String?> snippet,
+      Value<int> weight,
+      Value<DateTime> createdAt,
+    });
+typedef $$EvidencePackItemsTableUpdateCompanionBuilder =
+    EvidencePackItemsCompanion Function({
+      Value<int> id,
+      Value<int> evidencePackId,
+      Value<int> sourceSegmentId,
+      Value<int?> pageNumber,
+      Value<String?> snippet,
+      Value<int> weight,
+      Value<DateTime> createdAt,
+    });
+
+final class $$EvidencePackItemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $EvidencePackItemsTable,
+          EvidencePackItem
+        > {
+  $$EvidencePackItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $EvidencePacksTable _evidencePackIdTable(_$AppDatabase db) =>
+      db.evidencePacks.createAlias(
+        $_aliasNameGenerator(
+          db.evidencePackItems.evidencePackId,
+          db.evidencePacks.id,
+        ),
+      );
+
+  $$EvidencePacksTableProcessedTableManager get evidencePackId {
+    final $_column = $_itemColumn<int>('evidence_pack_id')!;
+
+    final manager = $$EvidencePacksTableTableManager(
+      $_db,
+      $_db.evidencePacks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_evidencePackIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $SourceSegmentsTable _sourceSegmentIdTable(_$AppDatabase db) =>
+      db.sourceSegments.createAlias(
+        $_aliasNameGenerator(
+          db.evidencePackItems.sourceSegmentId,
+          db.sourceSegments.id,
+        ),
+      );
+
+  $$SourceSegmentsTableProcessedTableManager get sourceSegmentId {
+    final $_column = $_itemColumn<int>('source_segment_id')!;
+
+    final manager = $$SourceSegmentsTableTableManager(
+      $_db,
+      $_db.sourceSegments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceSegmentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$EvidencePackItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $EvidencePackItemsTable> {
+  $$EvidencePackItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pageNumber => $composableBuilder(
+    column: $table.pageNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get snippet => $composableBuilder(
+    column: $table.snippet,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get weight => $composableBuilder(
+    column: $table.weight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$EvidencePacksTableFilterComposer get evidencePackId {
+    final $$EvidencePacksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.evidencePackId,
+      referencedTable: $db.evidencePacks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePacksTableFilterComposer(
+            $db: $db,
+            $table: $db.evidencePacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SourceSegmentsTableFilterComposer get sourceSegmentId {
+    final $$SourceSegmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidencePackItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $EvidencePackItemsTable> {
+  $$EvidencePackItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pageNumber => $composableBuilder(
+    column: $table.pageNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get snippet => $composableBuilder(
+    column: $table.snippet,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get weight => $composableBuilder(
+    column: $table.weight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$EvidencePacksTableOrderingComposer get evidencePackId {
+    final $$EvidencePacksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.evidencePackId,
+      referencedTable: $db.evidencePacks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePacksTableOrderingComposer(
+            $db: $db,
+            $table: $db.evidencePacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SourceSegmentsTableOrderingComposer get sourceSegmentId {
+    final $$SourceSegmentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidencePackItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EvidencePackItemsTable> {
+  $$EvidencePackItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get pageNumber => $composableBuilder(
+    column: $table.pageNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get snippet =>
+      $composableBuilder(column: $table.snippet, builder: (column) => column);
+
+  GeneratedColumn<int> get weight =>
+      $composableBuilder(column: $table.weight, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$EvidencePacksTableAnnotationComposer get evidencePackId {
+    final $$EvidencePacksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.evidencePackId,
+      referencedTable: $db.evidencePacks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidencePacksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.evidencePacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SourceSegmentsTableAnnotationComposer get sourceSegmentId {
+    final $$SourceSegmentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidencePackItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EvidencePackItemsTable,
+          EvidencePackItem,
+          $$EvidencePackItemsTableFilterComposer,
+          $$EvidencePackItemsTableOrderingComposer,
+          $$EvidencePackItemsTableAnnotationComposer,
+          $$EvidencePackItemsTableCreateCompanionBuilder,
+          $$EvidencePackItemsTableUpdateCompanionBuilder,
+          (EvidencePackItem, $$EvidencePackItemsTableReferences),
+          EvidencePackItem,
+          PrefetchHooks Function({bool evidencePackId, bool sourceSegmentId})
+        > {
+  $$EvidencePackItemsTableTableManager(
+    _$AppDatabase db,
+    $EvidencePackItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EvidencePackItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EvidencePackItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EvidencePackItemsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> evidencePackId = const Value.absent(),
+                Value<int> sourceSegmentId = const Value.absent(),
+                Value<int?> pageNumber = const Value.absent(),
+                Value<String?> snippet = const Value.absent(),
+                Value<int> weight = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => EvidencePackItemsCompanion(
+                id: id,
+                evidencePackId: evidencePackId,
+                sourceSegmentId: sourceSegmentId,
+                pageNumber: pageNumber,
+                snippet: snippet,
+                weight: weight,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int evidencePackId,
+                required int sourceSegmentId,
+                Value<int?> pageNumber = const Value.absent(),
+                Value<String?> snippet = const Value.absent(),
+                Value<int> weight = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => EvidencePackItemsCompanion.insert(
+                id: id,
+                evidencePackId: evidencePackId,
+                sourceSegmentId: sourceSegmentId,
+                pageNumber: pageNumber,
+                snippet: snippet,
+                weight: weight,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$EvidencePackItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({evidencePackId = false, sourceSegmentId = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (evidencePackId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.evidencePackId,
+                                    referencedTable:
+                                        $$EvidencePackItemsTableReferences
+                                            ._evidencePackIdTable(db),
+                                    referencedColumn:
+                                        $$EvidencePackItemsTableReferences
+                                            ._evidencePackIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (sourceSegmentId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sourceSegmentId,
+                                    referencedTable:
+                                        $$EvidencePackItemsTableReferences
+                                            ._sourceSegmentIdTable(db),
+                                    referencedColumn:
+                                        $$EvidencePackItemsTableReferences
+                                            ._sourceSegmentIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$EvidencePackItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EvidencePackItemsTable,
+      EvidencePackItem,
+      $$EvidencePackItemsTableFilterComposer,
+      $$EvidencePackItemsTableOrderingComposer,
+      $$EvidencePackItemsTableAnnotationComposer,
+      $$EvidencePackItemsTableCreateCompanionBuilder,
+      $$EvidencePackItemsTableUpdateCompanionBuilder,
+      (EvidencePackItem, $$EvidencePackItemsTableReferences),
+      EvidencePackItem,
+      PrefetchHooks Function({bool evidencePackId, bool sourceSegmentId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4850,6 +11326,16 @@ class $AppDatabaseManager {
       $$ClaimsTableTableManager(_db, _db.claims);
   $$EvidenceLinksTableTableManager get evidenceLinks =>
       $$EvidenceLinksTableTableManager(_db, _db.evidenceLinks);
+  $$AuditsTableTableManager get audits =>
+      $$AuditsTableTableManager(_db, _db.audits);
+  $$ConflictsTableTableManager get conflicts =>
+      $$ConflictsTableTableManager(_db, _db.conflicts);
   $$StudyMethodsTableTableManager get studyMethods =>
       $$StudyMethodsTableTableManager(_db, _db.studyMethods);
+  $$UnitStatsTableTableManager get unitStats =>
+      $$UnitStatsTableTableManager(_db, _db.unitStats);
+  $$EvidencePacksTableTableManager get evidencePacks =>
+      $$EvidencePacksTableTableManager(_db, _db.evidencePacks);
+  $$EvidencePackItemsTableTableManager get evidencePackItems =>
+      $$EvidencePackItemsTableTableManager(_db, _db.evidencePackItems);
 }
