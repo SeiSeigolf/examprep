@@ -9,7 +9,12 @@ import 'tables/source_segments.dart';
 import 'tables/exam_units.dart';
 import 'tables/claims.dart';
 import 'tables/evidence_links.dart';
+import 'tables/audits.dart';
+import 'tables/conflicts.dart';
 import 'tables/study_methods.dart';
+import 'tables/unit_stats.dart';
+import 'tables/evidence_packs.dart';
+import 'tables/evidence_pack_items.dart';
 import 'daos/sources_dao.dart';
 import 'daos/exam_units_dao.dart';
 import 'daos/claims_dao.dart';
@@ -17,19 +22,38 @@ import 'daos/audit_dao.dart';
 import 'daos/dashboard_dao.dart';
 import 'daos/search_dao.dart';
 import 'daos/study_methods_dao.dart';
+import 'daos/evidence_packs_dao.dart';
 
 export 'tables/sources.dart';
 export 'tables/source_segments.dart';
 export 'tables/exam_units.dart';
 export 'tables/claims.dart';
 export 'tables/evidence_links.dart';
+export 'tables/audits.dart';
+export 'tables/conflicts.dart';
 export 'tables/study_methods.dart';
+export 'tables/unit_stats.dart';
+export 'tables/evidence_packs.dart';
+export 'tables/evidence_pack_items.dart';
+export 'daos/evidence_packs_dao.dart';
 
 part 'database.g.dart';
 
 @DriftDatabase(
-  tables: [Sources, SourceSegments, ExamUnits, Claims, EvidenceLinks, StudyMethods],
-  daos: [SourcesDao, ExamUnitsDao, ClaimsDao, AuditDao, DashboardDao, SearchDao, StudyMethodsDao],
+  tables: [
+    Sources,
+    SourceSegments,
+    ExamUnits,
+    Claims,
+    EvidenceLinks,
+    Audits,
+    Conflicts,
+    StudyMethods,
+    UnitStats,
+    EvidencePacks,
+    EvidencePackItems,
+  ],
+  daos: [SourcesDao, ExamUnitsDao, ClaimsDao, AuditDao, DashboardDao, SearchDao, StudyMethodsDao, EvidencePacksDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -38,7 +62,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -59,6 +83,46 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('DELETE FROM study_methods');
         await _seedStudyMethods();
       }
+      if (from < 5) {
+        await m.addColumn(sourceSegments, sourceSegments.contentConfidence);
+        await m.addColumn(examUnits, examUnits.examConfidence);
+        await m.addColumn(claims, claims.contentConfidence);
+        await m.createTable(audits);
+        await m.createTable(conflicts);
+        await m.createTable(unitStats);
+      }
+if (from < 6) {
+  await m.createTable(evidencePacks);
+  await m.createTable(evidencePackItems);
+
+  // Backfill: 1 claim = 1 evidence_pack
+  await m.database.customStatement('''
+    INSERT INTO evidence_packs (claim_id, created_at, updated_at, summary, content_confidence, exam_confidence)
+    SELECT DISTINCT
+      el.claim_id,
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP,
+      NULL,
+      'M',
+      'M'
+    FROM evidence_links el
+  ''');
+
+  await m.database.customStatement('''
+    INSERT OR IGNORE INTO evidence_pack_items
+      (evidence_pack_id, source_segment_id, page_number, snippet, weight, created_at)
+    SELECT
+      ep.id,
+      el.source_segment_id,
+      NULL,
+      NULL,
+      1,
+      CURRENT_TIMESTAMP
+    FROM evidence_links el
+    JOIN evidence_packs ep
+      ON ep.claim_id = el.claim_id
+  ''');
+}
     },
   );
 
