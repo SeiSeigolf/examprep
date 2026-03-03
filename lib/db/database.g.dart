@@ -1011,6 +1011,18 @@ class $ExamUnitsTable extends ExamUnits
     requiredDuringInsert: false,
     defaultValue: const Constant('定義'),
   );
+  static const VerificationMeta _problemFormatMeta = const VerificationMeta(
+    'problemFormat',
+  );
+  @override
+  late final GeneratedColumn<String> problemFormat = GeneratedColumn<String>(
+    'problem_format',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('選択肢'),
+  );
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',
   );
@@ -1107,6 +1119,7 @@ class $ExamUnitsTable extends ExamUnits
     id,
     title,
     unitType,
+    problemFormat,
     description,
     confidenceLevel,
     examConfidence,
@@ -1142,6 +1155,15 @@ class $ExamUnitsTable extends ExamUnits
       context.handle(
         _unitTypeMeta,
         unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    }
+    if (data.containsKey('problem_format')) {
+      context.handle(
+        _problemFormatMeta,
+        problemFormat.isAcceptableOrUnknown(
+          data['problem_format']!,
+          _problemFormatMeta,
+        ),
       );
     }
     if (data.containsKey('description')) {
@@ -1219,6 +1241,10 @@ class $ExamUnitsTable extends ExamUnits
         DriftSqlType.string,
         data['${effectivePrefix}unit_type'],
       )!,
+      problemFormat: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}problem_format'],
+      )!,
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
@@ -1260,6 +1286,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
   final int id;
   final String title;
   final String unitType;
+  final String problemFormat;
   final String? description;
   final String confidenceLevel;
   final String examConfidence;
@@ -1271,6 +1298,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     required this.id,
     required this.title,
     required this.unitType,
+    required this.problemFormat,
     this.description,
     required this.confidenceLevel,
     required this.examConfidence,
@@ -1285,6 +1313,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
     map['unit_type'] = Variable<String>(unitType);
+    map['problem_format'] = Variable<String>(problemFormat);
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
@@ -1302,6 +1331,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       id: Value(id),
       title: Value(title),
       unitType: Value(unitType),
+      problemFormat: Value(problemFormat),
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
@@ -1323,6 +1353,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       unitType: serializer.fromJson<String>(json['unitType']),
+      problemFormat: serializer.fromJson<String>(json['problemFormat']),
       description: serializer.fromJson<String?>(json['description']),
       confidenceLevel: serializer.fromJson<String>(json['confidenceLevel']),
       examConfidence: serializer.fromJson<String>(json['examConfidence']),
@@ -1339,6 +1370,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
       'unitType': serializer.toJson<String>(unitType),
+      'problemFormat': serializer.toJson<String>(problemFormat),
       'description': serializer.toJson<String?>(description),
       'confidenceLevel': serializer.toJson<String>(confidenceLevel),
       'examConfidence': serializer.toJson<String>(examConfidence),
@@ -1353,6 +1385,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     int? id,
     String? title,
     String? unitType,
+    String? problemFormat,
     Value<String?> description = const Value.absent(),
     String? confidenceLevel,
     String? examConfidence,
@@ -1364,6 +1397,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     id: id ?? this.id,
     title: title ?? this.title,
     unitType: unitType ?? this.unitType,
+    problemFormat: problemFormat ?? this.problemFormat,
     description: description.present ? description.value : this.description,
     confidenceLevel: confidenceLevel ?? this.confidenceLevel,
     examConfidence: examConfidence ?? this.examConfidence,
@@ -1377,6 +1411,9 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
       unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      problemFormat: data.problemFormat.present
+          ? data.problemFormat.value
+          : this.problemFormat,
       description: data.description.present
           ? data.description.value
           : this.description,
@@ -1401,6 +1438,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('unitType: $unitType, ')
+          ..write('problemFormat: $problemFormat, ')
           ..write('description: $description, ')
           ..write('confidenceLevel: $confidenceLevel, ')
           ..write('examConfidence: $examConfidence, ')
@@ -1417,6 +1455,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
     id,
     title,
     unitType,
+    problemFormat,
     description,
     confidenceLevel,
     examConfidence,
@@ -1432,6 +1471,7 @@ class ExamUnit extends DataClass implements Insertable<ExamUnit> {
           other.id == this.id &&
           other.title == this.title &&
           other.unitType == this.unitType &&
+          other.problemFormat == this.problemFormat &&
           other.description == this.description &&
           other.confidenceLevel == this.confidenceLevel &&
           other.examConfidence == this.examConfidence &&
@@ -1445,6 +1485,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> unitType;
+  final Value<String> problemFormat;
   final Value<String?> description;
   final Value<String> confidenceLevel;
   final Value<String> examConfidence;
@@ -1456,6 +1497,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.unitType = const Value.absent(),
+    this.problemFormat = const Value.absent(),
     this.description = const Value.absent(),
     this.confidenceLevel = const Value.absent(),
     this.examConfidence = const Value.absent(),
@@ -1468,6 +1510,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     this.id = const Value.absent(),
     required String title,
     this.unitType = const Value.absent(),
+    this.problemFormat = const Value.absent(),
     this.description = const Value.absent(),
     this.confidenceLevel = const Value.absent(),
     this.examConfidence = const Value.absent(),
@@ -1480,6 +1523,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? unitType,
+    Expression<String>? problemFormat,
     Expression<String>? description,
     Expression<String>? confidenceLevel,
     Expression<String>? examConfidence,
@@ -1492,6 +1536,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
       if (id != null) 'id': id,
       if (title != null) 'title': title,
       if (unitType != null) 'unit_type': unitType,
+      if (problemFormat != null) 'problem_format': problemFormat,
       if (description != null) 'description': description,
       if (confidenceLevel != null) 'confidence_level': confidenceLevel,
       if (examConfidence != null) 'exam_confidence': examConfidence,
@@ -1506,6 +1551,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     Value<int>? id,
     Value<String>? title,
     Value<String>? unitType,
+    Value<String>? problemFormat,
     Value<String?>? description,
     Value<String>? confidenceLevel,
     Value<String>? examConfidence,
@@ -1518,6 +1564,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
       id: id ?? this.id,
       title: title ?? this.title,
       unitType: unitType ?? this.unitType,
+      problemFormat: problemFormat ?? this.problemFormat,
       description: description ?? this.description,
       confidenceLevel: confidenceLevel ?? this.confidenceLevel,
       examConfidence: examConfidence ?? this.examConfidence,
@@ -1539,6 +1586,9 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
     }
     if (unitType.present) {
       map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (problemFormat.present) {
+      map['problem_format'] = Variable<String>(problemFormat.value);
     }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
@@ -1570,6 +1620,7 @@ class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('unitType: $unitType, ')
+          ..write('problemFormat: $problemFormat, ')
           ..write('description: $description, ')
           ..write('confidenceLevel: $confidenceLevel, ')
           ..write('examConfidence: $examConfidence, ')
@@ -7780,6 +7831,7 @@ typedef $$ExamUnitsTableCreateCompanionBuilder =
       Value<int> id,
       required String title,
       Value<String> unitType,
+      Value<String> problemFormat,
       Value<String?> description,
       Value<String> confidenceLevel,
       Value<String> examConfidence,
@@ -7793,6 +7845,7 @@ typedef $$ExamUnitsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String> title,
       Value<String> unitType,
+      Value<String> problemFormat,
       Value<String?> description,
       Value<String> confidenceLevel,
       Value<String> examConfidence,
@@ -7925,6 +7978,11 @@ class $$ExamUnitsTableFilterComposer
 
   ColumnFilters<String> get unitType => $composableBuilder(
     column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get problemFormat => $composableBuilder(
+    column: $table.problemFormat,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8113,6 +8171,11 @@ class $$ExamUnitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get problemFormat => $composableBuilder(
+    column: $table.problemFormat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get description => $composableBuilder(
     column: $table.description,
     builder: (column) => ColumnOrderings(column),
@@ -8166,6 +8229,11 @@ class $$ExamUnitsTableAnnotationComposer
 
   GeneratedColumn<String> get unitType =>
       $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<String> get problemFormat => $composableBuilder(
+    column: $table.problemFormat,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get description => $composableBuilder(
     column: $table.description,
@@ -8359,6 +8427,7 @@ class $$ExamUnitsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> unitType = const Value.absent(),
+                Value<String> problemFormat = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String> confidenceLevel = const Value.absent(),
                 Value<String> examConfidence = const Value.absent(),
@@ -8370,6 +8439,7 @@ class $$ExamUnitsTableTableManager
                 id: id,
                 title: title,
                 unitType: unitType,
+                problemFormat: problemFormat,
                 description: description,
                 confidenceLevel: confidenceLevel,
                 examConfidence: examConfidence,
@@ -8383,6 +8453,7 @@ class $$ExamUnitsTableTableManager
                 Value<int> id = const Value.absent(),
                 required String title,
                 Value<String> unitType = const Value.absent(),
+                Value<String> problemFormat = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String> confidenceLevel = const Value.absent(),
                 Value<String> examConfidence = const Value.absent(),
@@ -8394,6 +8465,7 @@ class $$ExamUnitsTableTableManager
                 id: id,
                 title: title,
                 unitType: unitType,
+                problemFormat: problemFormat,
                 description: description,
                 confidenceLevel: confidenceLevel,
                 examConfidence: examConfidence,

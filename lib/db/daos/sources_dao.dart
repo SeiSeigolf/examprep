@@ -10,6 +10,8 @@ class SegmentUnitDraft {
     required this.pageNumber,
     required this.title,
     required this.claimContent,
+    required this.unitType,
+    required this.problemFormat,
   });
 
   final int sourceId;
@@ -17,6 +19,25 @@ class SegmentUnitDraft {
   final int pageNumber;
   final String title;
   final String claimContent;
+  final String unitType;
+  final String problemFormat;
+
+  SegmentUnitDraft copyWith({
+    String? title,
+    String? claimContent,
+    String? unitType,
+    String? problemFormat,
+  }) {
+    return SegmentUnitDraft(
+      sourceId: sourceId,
+      segmentId: segmentId,
+      pageNumber: pageNumber,
+      title: title ?? this.title,
+      claimContent: claimContent ?? this.claimContent,
+      unitType: unitType ?? this.unitType,
+      problemFormat: problemFormat ?? this.problemFormat,
+    );
+  }
 }
 
 @DriftAccessor(
@@ -132,7 +153,7 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
       if (headingLines.isNotEmpty) {
         for (final heading in headingLines.take(5)) {
           final title = _extractCandidateTitle(heading);
-          if (title.length < 3) continue;
+          if (title.length < 2) continue;
           final norm = _normalizeTitle(title);
           if (seenTitles.contains(norm)) continue;
           seenTitles.add(norm);
@@ -144,6 +165,8 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
               pageNumber: seg.pageNumber,
               title: title,
               claimContent: _claimAroundHeading(text, heading),
+              unitType: _inferUnitType('$title $text'),
+              problemFormat: _inferProblemFormat('$title $text'),
             ),
           );
           if (drafts.length >= limit) return drafts;
@@ -156,7 +179,7 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
             .take(3);
         for (final chunk in chunks) {
           final title = _extractCandidateTitle(chunk);
-          if (title.length < 3) continue;
+          if (title.length < 2) continue;
           final norm = _normalizeTitle(title);
           if (seenTitles.contains(norm)) continue;
           seenTitles.add(norm);
@@ -168,6 +191,8 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
               pageNumber: seg.pageNumber,
               title: title,
               claimContent: _toClaimContent(chunk),
+              unitType: _inferUnitType('$title $chunk'),
+              problemFormat: _inferProblemFormat('$title $chunk'),
             ),
           );
           if (drafts.length >= limit) return drafts;
@@ -187,7 +212,8 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
         final unitId = await into(examUnits).insert(
           ExamUnitsCompanion.insert(
             title: draft.title,
-            unitType: const Value('その他'),
+            unitType: Value(draft.unitType),
+            problemFormat: Value(draft.problemFormat),
             description: Value(
               'Auto-generated from source p.${draft.pageNumber}',
             ),
@@ -334,5 +360,46 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
     final t = claim.trim();
     if (t.length <= 200) return t;
     return t.substring(0, 200);
+  }
+
+  String _inferUnitType(String text) {
+    final t = text.toLowerCase();
+    if (RegExp(
+      r'(ct|mri|x線|xray|レントゲン|エコー|ultrasound|us|画像|所見|陰影)',
+    ).hasMatch(t)) {
+      return '画像所見';
+    }
+    if (RegExp(r'(鑑別|除外|見分け|比較|違い)').hasMatch(t)) {
+      return '鑑別';
+    }
+    if (RegExp(r'(機序|病態|メカニズム|原因|過程|作用)').hasMatch(t)) {
+      return '機序';
+    }
+    if (RegExp(r'(定義|とは|をいう|意味)').hasMatch(t)) {
+      return '定義';
+    }
+    return 'その他';
+  }
+
+  String _inferProblemFormat(String text) {
+    final t = text.toLowerCase();
+    if (RegExp(r'(計算|算出|求めよ|求める|=|％|%|mg/?dl|mmhg|ml)').hasMatch(t)) {
+      return '計算';
+    }
+    if (RegExp(
+      r'(ct|mri|x線|xray|レントゲン|エコー|ultrasound|us|画像|写真|図)',
+    ).hasMatch(t)) {
+      return '画像問題';
+    }
+    if (RegExp(r'(穴埋め|空欄|____|＿|（\s*）|\(\s*\))').hasMatch(t)) {
+      return '穴埋め';
+    }
+    if (RegExp(r'(次のうち|正しいもの|誤っている|選べ|選択肢|①|②|a\.|b\.)').hasMatch(t)) {
+      return '選択肢';
+    }
+    if (RegExp(r'(述べよ|説明せよ|記載せよ|理由を)').hasMatch(t)) {
+      return '記述';
+    }
+    return '選択肢';
   }
 }

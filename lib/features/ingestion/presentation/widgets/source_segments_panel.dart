@@ -152,6 +152,10 @@ class _AutoGenerateUnitsDialogState
   bool _creating = false;
   late Future<List<SegmentUnitDraft>> _future;
   final _selected = <int>{};
+  final _unitTypes = const ['定義', '機序', '鑑別', '画像所見', 'その他'];
+  final _problemFormats = const ['選択肢', '穴埋め', '記述', '画像問題', '計算'];
+  final _unitTypeByIndex = <int, String>{};
+  final _problemFormatByIndex = <int, String>{};
 
   @override
   void initState() {
@@ -165,9 +169,13 @@ class _AutoGenerateUnitsDialogState
   Future<void> _create(List<SegmentUnitDraft> drafts) async {
     setState(() => _creating = true);
     try {
-      final selectedDrafts = drafts
-          .where((d) => _selected.contains(d.segmentId))
-          .toList();
+      final selectedDrafts = _selected.map((i) {
+        final d = drafts[i];
+        return d.copyWith(
+          unitType: _unitTypeByIndex[i],
+          problemFormat: _problemFormatByIndex[i],
+        );
+      }).toList();
       final createdUnitIds = await ref
           .read(databaseProvider)
           .sourcesDao
@@ -243,7 +251,12 @@ class _AutoGenerateUnitsDialogState
               }
 
               if (_selected.isEmpty) {
-                _selected.addAll(drafts.take(5).map((d) => d.segmentId));
+                final initial = drafts.length < 5 ? drafts.length : 5;
+                _selected.addAll(List.generate(initial, (i) => i));
+                for (var i = 0; i < drafts.length; i++) {
+                  _unitTypeByIndex[i] = drafts[i].unitType;
+                  _problemFormatByIndex[i] = drafts[i].problemFormat;
+                }
               }
 
               return Column(
@@ -261,15 +274,18 @@ class _AutoGenerateUnitsDialogState
                           const Divider(height: 1, color: Color(0xFF2E3340)),
                       itemBuilder: (context, i) {
                         final d = drafts[i];
-                        final checked = _selected.contains(d.segmentId);
+                        final checked = _selected.contains(i);
+                        final unitType = _unitTypeByIndex[i] ?? d.unitType;
+                        final problemFormat =
+                            _problemFormatByIndex[i] ?? d.problemFormat;
                         return CheckboxListTile(
                           value: checked,
                           onChanged: (v) {
                             setState(() {
                               if (v == true) {
-                                _selected.add(d.segmentId);
+                                _selected.add(i);
                               } else {
-                                _selected.remove(d.segmentId);
+                                _selected.remove(i);
                               }
                             });
                           },
@@ -277,11 +293,91 @@ class _AutoGenerateUnitsDialogState
                             d.title,
                             style: const TextStyle(fontSize: 13),
                           ),
-                          subtitle: Text(
-                            'p.${d.pageNumber}  ${d.claimContent}',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'p.${d.pageNumber}  ${d.claimContent}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  SizedBox(
+                                    width: 130,
+                                    child: DropdownButtonFormField<String>(
+                                      value: unitType,
+                                      isDense: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'UnitType',
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 8,
+                                        ),
+                                      ),
+                                      items: _unitTypes
+                                          .map(
+                                            (v) => DropdownMenuItem(
+                                              value: v,
+                                              child: Text(
+                                                v,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (v) {
+                                        if (v == null) return;
+                                        setState(() => _unitTypeByIndex[i] = v);
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 130,
+                                    child: DropdownButtonFormField<String>(
+                                      value: problemFormat,
+                                      isDense: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Format',
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 8,
+                                        ),
+                                      ),
+                                      items: _problemFormats
+                                          .map(
+                                            (v) => DropdownMenuItem(
+                                              value: v,
+                                              child: Text(
+                                                v,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (v) {
+                                        if (v == null) return;
+                                        setState(
+                                          () => _problemFormatByIndex[i] = v,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                           controlAffinity: ListTileControlAffinity.leading,
                         );

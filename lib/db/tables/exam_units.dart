@@ -5,6 +5,8 @@ class ExamUnits extends Table {
   TextColumn get title => text()();
   // '定義' | '機序' | '鑑別' | '画像所見' | 'その他'
   TextColumn get unitType => text().withDefault(const Constant('定義'))();
+  // '選択肢' | '穴埋め' | '記述' | '画像問題' | '計算'
+  TextColumn get problemFormat => text().withDefault(const Constant('選択肢'))();
   TextColumn get description => text().nullable()();
   // Legacy: 'high' | 'medium' | 'low'
   TextColumn get confidenceLevel =>
@@ -17,13 +19,15 @@ class ExamUnits extends Table {
   // Covered / Partial / Uncovered / Conflict / LowConfidence
   TextColumn get auditStatus => text()
       .withDefault(const Constant('Uncovered'))
-      .check(auditStatus.isIn(const [
-        'Covered',
-        'Partial',
-        'Uncovered',
-        'Conflict',
-        'LowConfidence',
-      ]))();
+      .check(
+        auditStatus.isIn(const [
+          'Covered',
+          'Partial',
+          'Uncovered',
+          'Conflict',
+          'LowConfidence',
+        ]),
+      )();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

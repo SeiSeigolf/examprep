@@ -6,19 +6,31 @@ import '../../../db/database.provider.dart';
 final dailyGoalMinutesProvider = StateProvider<int>((ref) => 120);
 
 /// 全 StudyMethod のストリーム
-final studyMethodsProvider = StreamProvider<List<StudyMethod>>((ref) =>
-    ref.watch(databaseProvider).studyMethodsDao.watchAll());
+final studyMethodsProvider = StreamProvider<List<StudyMethod>>(
+  (ref) => ref.watch(databaseProvider).studyMethodsDao.watchAll(),
+);
 
-/// unitType → 推奨 StudyMethod のマップ（最初の1件）
-final studyMethodsByTypeProvider =
-    Provider<Map<String, StudyMethod>>((ref) {
+String _studyMethodKey(String unitType, String problemFormat) =>
+    '$unitType::$problemFormat';
+
+/// unitType + problemFormat → 推奨 StudyMethod のマップ（最初の1件）
+final studyMethodsByKeyProvider = Provider<Map<String, StudyMethod>>((ref) {
   final methods = ref.watch(studyMethodsProvider).valueOrNull ?? [];
   final map = <String, StudyMethod>{};
   for (final m in methods) {
-    map.putIfAbsent(m.unitType, () => m);
+    final key = _studyMethodKey(m.unitType, m.problemFormat);
+    map.putIfAbsent(key, () => m);
   }
   return map;
 });
+
+StudyMethod? resolveRecommendedMethod(
+  Map<String, StudyMethod> methodsByKey,
+  ExamUnit unit,
+) {
+  return methodsByKey[_studyMethodKey(unit.unitType, unit.problemFormat)] ??
+      methodsByKey[_studyMethodKey(unit.unitType, '選択肢')];
+}
 
 /// 推奨学習ユニットリスト
 /// 優先順位: low confidence → medium → high

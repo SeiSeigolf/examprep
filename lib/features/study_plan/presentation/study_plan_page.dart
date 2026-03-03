@@ -21,17 +21,16 @@ class StudyPlanPage extends ConsumerWidget {
               Text(
                 '学習プラン',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 '信頼度の低いユニットから優先的に学習しましょう',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Colors.white38),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
               ),
             ],
           ),
@@ -89,8 +88,7 @@ class _DailyGoalSlider extends ConsumerWidget {
               activeColor: const Color(0xFF4A90D9),
               inactiveColor: const Color(0xFF2D3440),
               onChanged: (v) {
-                ref.read(dailyGoalMinutesProvider.notifier).state =
-                    v.round();
+                ref.read(dailyGoalMinutesProvider.notifier).state = v.round();
               },
             ),
           ),
@@ -118,14 +116,16 @@ class _RecommendedList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unitsAsync = ref.watch(recommendedUnitsProvider);
-    final methodsByType = ref.watch(studyMethodsByTypeProvider);
+    final methodsByKey = ref.watch(studyMethodsByKeyProvider);
     final goal = ref.watch(dailyGoalMinutesProvider);
 
     return unitsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text('読み込みエラー: $e',
-            style: const TextStyle(color: Colors.redAccent)),
+        child: Text(
+          '読み込みエラー: $e',
+          style: const TextStyle(color: Colors.redAccent),
+        ),
       ),
       data: (units) {
         if (units.isEmpty) {
@@ -133,8 +133,7 @@ class _RecommendedList extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.checklist_outlined,
-                    size: 64, color: Colors.white12),
+                Icon(Icons.checklist_outlined, size: 64, color: Colors.white12),
                 SizedBox(height: 16),
                 Text(
                   'Exam Unit がまだありません',
@@ -149,7 +148,7 @@ class _RecommendedList extends ConsumerWidget {
         int accumulated = 0;
         final withinBudget = <int>{};
         for (final unit in units) {
-          final method = methodsByType[unit.unitType];
+          final method = resolveRecommendedMethod(methodsByKey, unit);
           final mins = method?.estimatedMinutes ?? 30;
           if (accumulated + mins <= goal) {
             withinBudget.add(unit.id);
@@ -165,7 +164,7 @@ class _RecommendedList extends ConsumerWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final unit = units[i];
-            final method = methodsByType[unit.unitType];
+            final method = resolveRecommendedMethod(methodsByKey, unit);
             final inBudget = withinBudget.contains(unit.id);
             return _UnitPlanTile(
               unit: unit,
@@ -231,8 +230,11 @@ class _UnitPlanTile extends ConsumerWidget {
                 if (inBudget)
                   const Padding(
                     padding: EdgeInsets.only(right: 6),
-                    child: Icon(Icons.today_outlined,
-                        size: 14, color: Color(0xFF4A90D9)),
+                    child: Icon(
+                      Icons.today_outlined,
+                      size: 14,
+                      color: Color(0xFF4A90D9),
+                    ),
                   ),
                 Expanded(
                   child: Text(
@@ -248,8 +250,10 @@ class _UnitPlanTile extends ConsumerWidget {
                 const SizedBox(width: 8),
                 // 信頼度バッジ
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: confColor.withAlpha(30),
                     borderRadius: BorderRadius.circular(4),
@@ -258,15 +262,15 @@ class _UnitPlanTile extends ConsumerWidget {
                   child: Text(
                     confLabel,
                     style: TextStyle(
-                        color: confColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600),
+                      color: confColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 6),
                 // 信頼度アップグレードボタン
-                if (unit.confidenceLevel != 'high')
-                  _UpgradeButton(unit: unit),
+                if (unit.confidenceLevel != 'high') _UpgradeButton(unit: unit),
               ],
             ),
 
@@ -277,7 +281,9 @@ class _UnitPlanTile extends ConsumerWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 2),
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2D3440),
                       borderRadius: BorderRadius.circular(3),
@@ -285,18 +291,25 @@ class _UnitPlanTile extends ConsumerWidget {
                     child: Text(
                       unit.unitType,
                       style: const TextStyle(
-                          color: Colors.white54, fontSize: 10),
+                        color: Colors.white54,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.lightbulb_outline,
-                      size: 12, color: Color(0xFFFFD54F)),
+                  const Icon(
+                    Icons.lightbulb_outline,
+                    size: 12,
+                    color: Color(0xFFFFD54F),
+                  ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '${method!.methodName}（${method!.estimatedMinutes}分）',
                       style: const TextStyle(
-                          color: Colors.white54, fontSize: 11),
+                        color: Colors.white54,
+                        fontSize: 11,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -316,11 +329,9 @@ class _UpgradeButton extends ConsumerWidget {
   const _UpgradeButton({required this.unit});
   final ExamUnit unit;
 
-  String get _nextLevel =>
-      unit.confidenceLevel == 'low' ? 'medium' : 'high';
+  String get _nextLevel => unit.confidenceLevel == 'low' ? 'medium' : 'high';
 
-  String get _nextLabel =>
-      unit.confidenceLevel == 'low' ? 'Medium' : 'High';
+  String get _nextLabel => unit.confidenceLevel == 'low' ? 'Medium' : 'High';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -331,8 +342,11 @@ class _UpgradeButton extends ConsumerWidget {
         onTap: () => _showUpgradeDialog(context, ref),
         child: const Padding(
           padding: EdgeInsets.all(2),
-          child: Icon(Icons.arrow_upward_rounded,
-              size: 14, color: Colors.white38),
+          child: Icon(
+            Icons.arrow_upward_rounded,
+            size: 14,
+            color: Colors.white38,
+          ),
         ),
       ),
     );
@@ -343,9 +357,7 @@ class _UpgradeButton extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('信頼度を更新'),
-        content: Text(
-          '「${unit.title}」の信頼度を $_nextLabel に上げますか？',
-        ),
+        content: Text('「${unit.title}」の信頼度を $_nextLabel に上げますか？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

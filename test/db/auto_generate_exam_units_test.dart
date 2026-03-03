@@ -104,4 +104,40 @@ void main() {
       1,
     );
   });
+
+  test('候補生成時に unitType/problemFormat を推定し作成後も保持される', () async {
+    final sourceId = await db.sourcesDao.insertSource(
+      SourcesCompanion.insert(
+        fileName: 'labels.pdf',
+        filePath: '/tmp/labels.pdf',
+      ),
+    );
+    await db
+        .into(db.sourceSegments)
+        .insert(
+          SourceSegmentsCompanion.insert(
+            sourceId: sourceId,
+            pageNumber: 3,
+            content: const Value('機序：この病態のメカニズムを説明せよ。'),
+          ),
+        );
+
+    final drafts = await db.sourcesDao.suggestExamUnitDraftsFromSource(
+      sourceId,
+    );
+    expect(drafts, isNotEmpty);
+    final draft = drafts.firstWhere((d) => d.title.contains('機序'));
+    expect(draft.unitType, '機序');
+    expect(draft.problemFormat, '記述');
+
+    final createdIds = await db.sourcesDao.createExamUnitsFromDrafts([draft]);
+    expect(createdIds.length, 1);
+    final unitId = createdIds.first;
+
+    final unit = await (db.select(
+      db.examUnits,
+    )..where((u) => u.id.equals(unitId))).getSingle();
+    expect(unit.unitType, '機序');
+    expect(unit.problemFormat, '記述');
+  });
 }

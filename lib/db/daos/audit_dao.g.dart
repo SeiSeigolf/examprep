@@ -9,4 +9,9 @@ mixin _$AuditDaoMixin on DatabaseAccessor<AppDatabase> {
   $ExamUnitsTable get examUnits => attachedDatabase.examUnits;
   $ClaimsTable get claims => attachedDatabase.claims;
   $EvidenceLinksTable get evidenceLinks => attachedDatabase.evidenceLinks;
+  $AuditsTable get audits => attachedDatabase.audits;
+  $ConflictsTable get conflicts => attachedDatabase.conflicts;
+  $EvidencePacksTable get evidencePacks => attachedDatabase.evidencePacks;
+  $EvidencePackItemsTable get evidencePackItems =>
+      attachedDatabase.evidencePackItems;
 }

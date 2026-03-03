@@ -6,4 +6,10 @@ part of 'sources_dao.dart';
 mixin _$SourcesDaoMixin on DatabaseAccessor<AppDatabase> {
   $SourcesTable get sources => attachedDatabase.sources;
   $SourceSegmentsTable get sourceSegments => attachedDatabase.sourceSegments;
+  $ExamUnitsTable get examUnits => attachedDatabase.examUnits;
+  $ClaimsTable get claims => attachedDatabase.claims;
+  $EvidenceLinksTable get evidenceLinks => attachedDatabase.evidenceLinks;
+  $EvidencePacksTable get evidencePacks => attachedDatabase.evidencePacks;
+  $EvidencePackItemsTable get evidencePackItems =>
+      attachedDatabase.evidencePackItems;
 }
