@@ -4,6 +4,7 @@ import '../../../db/database.provider.dart';
 
 /// 1日の学習目標時間（分）
 final dailyGoalMinutesProvider = StateProvider<int>((ref) => 120);
+final studyPlanTopNProvider = StateProvider<int>((ref) => 20);
 final examDateProvider = StateProvider<DateTime?>((ref) => null);
 
 enum CramMode { off, h72, d7 }

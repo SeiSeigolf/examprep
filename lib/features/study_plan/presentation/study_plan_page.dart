@@ -3,34 +3,84 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../db/database.dart';
 import '../../../db/database.provider.dart';
 import '../providers/study_plan.provider.dart';
+import '../services/study_plan_exporter.dart';
 
-class StudyPlanPage extends ConsumerWidget {
+class StudyPlanPage extends ConsumerStatefulWidget {
   const StudyPlanPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StudyPlanPage> createState() => _StudyPlanPageState();
+}
+
+class _StudyPlanPageState extends ConsumerState<StudyPlanPage> {
+  bool _exporting = false;
+
+  Future<void> _export() async {
+    setState(() => _exporting = true);
+    try {
+      final path = await StudyPlanExporter.export(
+        ref.read(databaseProvider),
+        topN: ref.read(studyPlanTopNProvider),
+        mode: ref.read(cramModeProvider),
+        examDate: ref.read(examDateProvider),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Markdownを保存しました: $path')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エクスポート失敗: $e')));
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ---- ヘッダー ----
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '学習プラン',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '学習プラン',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '信頼度の低いユニットから優先的に学習しましょう',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                '信頼度の低いユニットから優先的に学習しましょう',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
+              FilledButton.tonalIcon(
+                onPressed: _exporting ? null : _export,
+                icon: _exporting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.download_outlined, size: 16),
+                label: const Text('Markdown出力'),
               ),
             ],
           ),
@@ -57,6 +107,7 @@ class _CramModeBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(cramModeProvider);
     final examDate = ref.watch(examDateProvider);
+    final topN = ref.watch(studyPlanTopNProvider);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -116,6 +167,22 @@ class _CramModeBar extends ConsumerWidget {
             selected: mode == CramMode.d7,
             onSelected: (_) =>
                 ref.read(cramModeProvider.notifier).state = CramMode.d7,
+          ),
+          const SizedBox(width: 12),
+          DropdownButton<int>(
+            value: topN,
+            dropdownColor: const Color(0xFF1E2530),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            items: const [10, 20, 30, 50]
+                .map(
+                  (n) => DropdownMenuItem<int>(value: n, child: Text('上位$n件')),
+                )
+                .toList(),
+            onChanged: (v) {
+              if (v != null) {
+                ref.read(studyPlanTopNProvider.notifier).state = v;
+              }
+            },
           ),
         ],
       ),
