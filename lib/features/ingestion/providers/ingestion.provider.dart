@@ -93,6 +93,7 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         );
 
         await _db.sourcesDao.recalculatePastExamFrequency();
+        await _db.auditDao.refreshCoverageAudits();
       }
 
       state = state.copyWith(status: IngestionStatus.done, currentFile: null);

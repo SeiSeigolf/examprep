@@ -131,6 +131,7 @@ class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
           );
         });
         await db.sourcesDao.recalculatePastExamFrequency();
+        await db.auditDao.refreshCoverageAudits();
       });
 
   Future<void> deleteClaimCascade(int claimId) async {
