@@ -40,10 +40,85 @@ class StudyPlanPage extends ConsumerWidget {
         // ---- デイリー目標スライダー ----
         const _DailyGoalSlider(),
         const SizedBox(height: 8),
+        const _CramModeBar(),
+        const SizedBox(height: 8),
 
         // ---- 推奨リスト ----
         Expanded(child: _RecommendedList()),
       ],
+    );
+  }
+}
+
+class _CramModeBar extends ConsumerWidget {
+  const _CramModeBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(cramModeProvider);
+    final examDate = ref.watch(examDateProvider);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2530),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF2D3440)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.event_available, size: 18, color: Colors.white54),
+          const SizedBox(width: 10),
+          TextButton.icon(
+            onPressed: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: examDate ?? now.add(const Duration(days: 7)),
+                firstDate: now.subtract(const Duration(days: 1)),
+                lastDate: now.add(const Duration(days: 365 * 2)),
+              );
+              if (picked != null) {
+                ref.read(examDateProvider.notifier).state = DateTime(
+                  picked.year,
+                  picked.month,
+                  picked.day,
+                  9,
+                );
+              }
+            },
+            icon: const Icon(Icons.calendar_today, size: 14),
+            label: Text(
+              examDate == null
+                  ? '試験日を設定'
+                  : '試験日: ${examDate.toLocal().toString().substring(0, 10)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 10),
+          ChoiceChip(
+            label: const Text('Off'),
+            selected: mode == CramMode.off,
+            onSelected: (_) =>
+                ref.read(cramModeProvider.notifier).state = CramMode.off,
+          ),
+          const SizedBox(width: 6),
+          ChoiceChip(
+            label: const Text('72h'),
+            selected: mode == CramMode.h72,
+            onSelected: (_) =>
+                ref.read(cramModeProvider.notifier).state = CramMode.h72,
+          ),
+          const SizedBox(width: 6),
+          ChoiceChip(
+            label: const Text('7d'),
+            selected: mode == CramMode.d7,
+            onSelected: (_) =>
+                ref.read(cramModeProvider.notifier).state = CramMode.d7,
+          ),
+        ],
+      ),
     );
   }
 }

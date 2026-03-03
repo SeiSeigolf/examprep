@@ -24,11 +24,15 @@ class UnitDueStat {
     required this.examUnitId,
     required this.nextReviewAt,
     required this.overdueCount,
+    required this.scheduledCount,
+    required this.avgIntervalHours,
   });
 
   final int examUnitId;
   final DateTime nextReviewAt;
   final int overdueCount;
+  final int scheduledCount;
+  final double avgIntervalHours;
 }
 
 @DriftAccessor(tables: [QuizAttempts, ClaimReviewSchedules])
@@ -184,7 +188,9 @@ class QuizAttemptsDao extends DatabaseAccessor<AppDatabase>
       SELECT
         exam_unit_id,
         MIN(next_review_at) AS next_review_at,
-        SUM(CASE WHEN next_review_at <= CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS overdue_count
+        SUM(CASE WHEN next_review_at <= CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS overdue_count,
+        COUNT(*) AS scheduled_count,
+        AVG(interval_hours) AS avg_interval_hours
       FROM claim_review_schedules
       GROUP BY exam_unit_id
       ''',
@@ -197,6 +203,8 @@ class QuizAttemptsDao extends DatabaseAccessor<AppDatabase>
           examUnitId: examUnitId,
           nextReviewAt: row.read<DateTime>('next_review_at'),
           overdueCount: row.read<int>('overdue_count'),
+          scheduledCount: row.read<int>('scheduled_count'),
+          avgIntervalHours: row.read<double>('avg_interval_hours'),
         );
       }
       return map;
