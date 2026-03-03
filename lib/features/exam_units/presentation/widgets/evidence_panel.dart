@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/claims.provider.dart';
+import '../../../../db/database.dart';
+import '../../../../db/daos/claims_dao.dart';
 import '../../../../features/ingestion/presentation/widgets/pdf_viewer_dialog.dart';
 
 class EvidencePanel extends ConsumerWidget {
@@ -9,7 +11,9 @@ class EvidencePanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final packAsync = ref.watch(evidencePackForClaimProvider(claimId));
     final evidenceAsync = ref.watch(evidenceForClaimProvider(claimId));
+    final segmentsAsync = ref.watch(allSegmentsWithSourceProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,39 +37,220 @@ class EvidencePanel extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: evidenceAsync.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('エラー: $e',
-                style: const TextStyle(color: Colors.redAccent)),
-            data: (evidences) {
-              if (evidences.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Evidence なし',
-                    style: TextStyle(color: Colors.white24, fontSize: 12),
-                  ),
-                );
-              }
-              return ListView.separated(
-                itemCount: evidences.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1),
-                itemBuilder: (context, i) {
-                  final ev = evidences[i];
-                  return _EvidenceCard(
-                    sourceName: ev.source.fileName,
-                    filePath: ev.source.filePath,
-                    pageNumber: ev.segment.pageNumber,
-                    content: ev.segment.content,
-                    note: ev.link.note,
+          child: ListView(
+            children: [
+              const Text(
+                'EvidencePack (bundle)',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              packAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Text(
+                  'エラー: $e',
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+                data: (bundle) {
+                  if (bundle == null || bundle.items.isEmpty) {
+                    return const Text(
+                      'Bundle なし',
+                      style: TextStyle(color: Colors.white24, fontSize: 12),
+                    );
+                  }
+
+                  return segmentsAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        '参照情報を読み込み中...',
+                        style: TextStyle(color: Colors.white24, fontSize: 12),
+                      ),
+                    ),
+                    error: (e, _) => Text(
+                      '参照情報の取得エラー: $e',
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                    data: (segments) {
+                      final segmentMap = {
+                        for (final s in segments) s.segment.id: s,
+                      };
+                      return Column(
+                        children: bundle.items
+                            .map(
+                              (item) => _EvidencePackItemCard(
+                                item: item,
+                                segmentWithSource:
+                                    segmentMap[item.sourceSegmentId],
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              const Text(
+                '従来 evidence_links（比較用）',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              evidenceAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Text(
+                  'エラー: $e',
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+                data: (evidences) {
+                  if (evidences.isEmpty) {
+                    return const Text(
+                      'Evidence なし',
+                      style: TextStyle(color: Colors.white24, fontSize: 12),
+                    );
+                  }
+                  return Column(
+                    children: evidences
+                        .map(
+                          (ev) => _EvidenceCard(
+                            sourceName: ev.source.fileName,
+                            filePath: ev.source.filePath,
+                            pageNumber: ev.segment.pageNumber,
+                            content: ev.segment.content,
+                            note: ev.link.note,
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _EvidencePackItemCard extends StatelessWidget {
+  const _EvidencePackItemCard({
+    required this.item,
+    required this.segmentWithSource,
+  });
+
+  final EvidencePackItem item;
+  final SegmentWithSource? segmentWithSource;
+
+  @override
+  Widget build(BuildContext context) {
+    final pageFromPack = item.pageNumber;
+    final pageFromSegment = segmentWithSource?.segment.pageNumber;
+    final pageForViewer = pageFromPack ?? pageFromSegment;
+    final snippet = (item.snippet ?? '').trim();
+    final sourceName = segmentWithSource?.source.fileName ?? 'Unknown source';
+    final canOpen =
+        segmentWithSource != null && pageForViewer != null && pageForViewer > 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.inventory_2_outlined,
+                size: 14,
+                color: Colors.white54,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'sourceSegmentId=${item.sourceSegmentId}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+              Text(
+                'weight=${item.weight}',
+                style: const TextStyle(color: Colors.white54, fontSize: 11),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'page=${pageFromPack?.toString() ?? '-'}',
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'snippet=${snippet.isEmpty ? '-' : snippet}',
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(
+                Icons.picture_as_pdf,
+                size: 13,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  sourceName,
+                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: canOpen
+                    ? () => showDialog(
+                        context: context,
+                        builder: (_) => PdfViewerDialog(
+                          filePath: segmentWithSource!.source.filePath,
+                          pageNumber: pageForViewer!,
+                          fileName: segmentWithSource!.source.fileName,
+                        ),
+                      )
+                    : null,
+                icon: const Icon(Icons.open_in_new, size: 13),
+                label: const Text('元ページを開く', style: TextStyle(fontSize: 11)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white38,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -95,16 +280,20 @@ class _EvidenceCard extends StatelessWidget {
           // ソース名 + ページ
           Row(
             children: [
-              const Icon(Icons.picture_as_pdf,
-                  size: 14, color: Colors.redAccent),
+              const Icon(
+                Icons.picture_as_pdf,
+                size: 14,
+                color: Colors.redAccent,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   sourceName,
                   style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500),
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -126,10 +315,11 @@ class _EvidenceCard extends StatelessWidget {
               child: Text(
                 content,
                 style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                    height: 1.5),
+                  color: Colors.white54,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  height: 1.5,
+                ),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -141,14 +331,12 @@ class _EvidenceCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.note_outlined,
-                    size: 12, color: Colors.amber),
+                const Icon(Icons.note_outlined, size: 12, color: Colors.amber),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     note!,
-                    style: const TextStyle(
-                        color: Colors.amber, fontSize: 11),
+                    style: const TextStyle(color: Colors.amber, fontSize: 11),
                   ),
                 ),
               ],
@@ -172,8 +360,7 @@ class _EvidenceCard extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white38,
                 visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
             ),
           ),

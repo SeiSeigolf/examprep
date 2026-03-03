@@ -4,8 +4,10 @@ import '../../../db/daos/claims_dao.dart';
 import '../../../db/database.provider.dart';
 
 /// 指定 Exam Unit の Claim 一覧
-final claimsForUnitProvider =
-    StreamProvider.family<List<Claim>, int>((ref, unitId) {
+final claimsForUnitProvider = StreamProvider.family<List<Claim>, int>((
+  ref,
+  unitId,
+) {
   return ref.watch(databaseProvider).claimsDao.watchClaimsForUnit(unitId);
 });
 
@@ -15,11 +17,24 @@ final selectedClaimIdProvider = StateProvider<int?>((ref) => null);
 /// 選択中 Claim の Evidence 一覧（join済み）
 final evidenceForClaimProvider =
     StreamProvider.family<List<EvidenceWithSource>, int>((ref, claimId) {
-  return ref.watch(databaseProvider).claimsDao.watchEvidenceForClaim(claimId);
-});
+      return ref
+          .watch(databaseProvider)
+          .claimsDao
+          .watchEvidenceForClaim(claimId);
+    });
+
+/// 選択中 Claim の EvidencePack（bundle）
+final evidencePackForClaimProvider =
+    StreamProvider.family<EvidencePackBundle?, int>((ref, claimId) {
+      return ref
+          .watch(databaseProvider)
+          .evidencePacksDao
+          .watchEvidencePackForClaim(claimId);
+    });
 
 /// Claim 追加ダイアログ用: 全セグメント + ソース名
-final allSegmentsWithSourceProvider =
-    StreamProvider<List<SegmentWithSource>>((ref) {
+final allSegmentsWithSourceProvider = StreamProvider<List<SegmentWithSource>>((
+  ref,
+) {
   return ref.watch(databaseProvider).claimsDao.watchAllSegmentsWithSource();
 });
