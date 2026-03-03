@@ -15,11 +15,14 @@ void main() {
       openConflictCount: 2,
       evidenceItemCount: 1,
       mastery: 0.0,
+      reviewOverdue: true,
+      nextReviewAt: null,
       priority: 5,
     );
 
     final reason = buildReviewReason(item);
     expect(reason, contains('1) Conflict(open) がある'));
+    expect(reason, contains('0) 期限切れレビュー'));
     expect(reason, contains('2) auditStatus=LowConfidence'));
     expect(reason, contains('3) contentConfidence=L'));
     expect(reason, contains('4) evidence数が少ない (1)'));
@@ -38,6 +41,8 @@ void main() {
       openConflictCount: 0,
       evidenceItemCount: 3,
       mastery: 1.0,
+      reviewOverdue: false,
+      nextReviewAt: null,
       priority: 0.1,
     );
     expect(buildReviewReason(item), '優先度スコアが高い');

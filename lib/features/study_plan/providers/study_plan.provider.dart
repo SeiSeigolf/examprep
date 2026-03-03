@@ -38,6 +38,10 @@ final unitMasteryStatsProvider = StreamProvider<Map<int, UnitMasteryStat>>((
   return ref.watch(databaseProvider).quizAttemptsDao.watchUnitMasteryStats();
 });
 
+final unitDueStatsProvider = StreamProvider<Map<int, UnitDueStat>>((ref) {
+  return ref.watch(databaseProvider).quizAttemptsDao.watchUnitDueStats();
+});
+
 double computeUnmasteryScore(UnitMasteryStat? stat) {
   if (stat == null) return 0;
   return stat.wrongRate + (stat.attemptCount.clamp(0, 10) / 10);
@@ -50,6 +54,7 @@ double computeUnmasteryScore(UnitMasteryStat? stat) {
 /// 3) createdAt（古い順）
 final recommendedUnitsProvider = StreamProvider<List<ExamUnit>>((ref) {
   final masteryByUnit = ref.watch(unitMasteryStatsProvider).valueOrNull ?? {};
+  final dueByUnit = ref.watch(unitDueStatsProvider).valueOrNull ?? {};
   return ref.watch(databaseProvider).examUnitsDao.watchAll().map((units) {
     const confidenceScore = {'low': 2.0, 'medium': 1.0, 'high': 0.0};
     final sorted = [...units];
@@ -58,9 +63,11 @@ final recommendedUnitsProvider = StreamProvider<List<ExamUnit>>((ref) {
       final mb = masteryByUnit[b.id];
       final ua = computeUnmasteryScore(ma);
       final ub = computeUnmasteryScore(mb);
+      final da = _duePriority(dueByUnit[a.id]);
+      final db = _duePriority(dueByUnit[b.id]);
 
-      final sa = (confidenceScore[a.confidenceLevel] ?? 1.0) + ua;
-      final sb = (confidenceScore[b.confidenceLevel] ?? 1.0) + ub;
+      final sa = (confidenceScore[a.confidenceLevel] ?? 1.0) + ua + da;
+      final sb = (confidenceScore[b.confidenceLevel] ?? 1.0) + ub + db;
 
       if (sa != sb) return sb.compareTo(sa);
       return a.createdAt.compareTo(b.createdAt);
@@ -68,3 +75,15 @@ final recommendedUnitsProvider = StreamProvider<List<ExamUnit>>((ref) {
     return sorted;
   });
 });
+
+double _duePriority(UnitDueStat? stat) {
+  if (stat == null) return 0;
+  final now = DateTime.now();
+  if (stat.overdueCount > 0 || stat.nextReviewAt.isBefore(now)) {
+    return 4 + (stat.overdueCount.clamp(0, 5) * 0.3);
+  }
+  if (stat.nextReviewAt.isBefore(now.add(const Duration(hours: 24)))) {
+    return 2;
+  }
+  return 0;
+}

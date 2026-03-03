@@ -7028,6 +7028,583 @@ class QuizAttemptsCompanion extends UpdateCompanion<QuizAttempt> {
   }
 }
 
+class $ClaimReviewSchedulesTable extends ClaimReviewSchedules
+    with TableInfo<$ClaimReviewSchedulesTable, ClaimReviewSchedule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClaimReviewSchedulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _examUnitIdMeta = const VerificationMeta(
+    'examUnitId',
+  );
+  @override
+  late final GeneratedColumn<int> examUnitId = GeneratedColumn<int>(
+    'exam_unit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _claimIdMeta = const VerificationMeta(
+    'claimId',
+  );
+  @override
+  late final GeneratedColumn<int> claimId = GeneratedColumn<int>(
+    'claim_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES claims (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nextReviewAtMeta = const VerificationMeta(
+    'nextReviewAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextReviewAt = GeneratedColumn<DateTime>(
+    'next_review_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _intervalHoursMeta = const VerificationMeta(
+    'intervalHours',
+  );
+  @override
+  late final GeneratedColumn<int> intervalHours = GeneratedColumn<int>(
+    'interval_hours',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(24),
+  );
+  static const VerificationMeta _easeFactorMeta = const VerificationMeta(
+    'easeFactor',
+  );
+  @override
+  late final GeneratedColumn<double> easeFactor = GeneratedColumn<double>(
+    'ease_factor',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(2.5),
+  );
+  static const VerificationMeta _repetitionMeta = const VerificationMeta(
+    'repetition',
+  );
+  @override
+  late final GeneratedColumn<int> repetition = GeneratedColumn<int>(
+    'repetition',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastReviewedAtMeta = const VerificationMeta(
+    'lastReviewedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastReviewedAt =
+      GeneratedColumn<DateTime>(
+        'last_reviewed_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: currentDateAndTime,
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    examUnitId,
+    claimId,
+    nextReviewAt,
+    intervalHours,
+    easeFactor,
+    repetition,
+    lastReviewedAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'claim_review_schedules';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ClaimReviewSchedule> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('exam_unit_id')) {
+      context.handle(
+        _examUnitIdMeta,
+        examUnitId.isAcceptableOrUnknown(
+          data['exam_unit_id']!,
+          _examUnitIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_examUnitIdMeta);
+    }
+    if (data.containsKey('claim_id')) {
+      context.handle(
+        _claimIdMeta,
+        claimId.isAcceptableOrUnknown(data['claim_id']!, _claimIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claimIdMeta);
+    }
+    if (data.containsKey('next_review_at')) {
+      context.handle(
+        _nextReviewAtMeta,
+        nextReviewAt.isAcceptableOrUnknown(
+          data['next_review_at']!,
+          _nextReviewAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_nextReviewAtMeta);
+    }
+    if (data.containsKey('interval_hours')) {
+      context.handle(
+        _intervalHoursMeta,
+        intervalHours.isAcceptableOrUnknown(
+          data['interval_hours']!,
+          _intervalHoursMeta,
+        ),
+      );
+    }
+    if (data.containsKey('ease_factor')) {
+      context.handle(
+        _easeFactorMeta,
+        easeFactor.isAcceptableOrUnknown(data['ease_factor']!, _easeFactorMeta),
+      );
+    }
+    if (data.containsKey('repetition')) {
+      context.handle(
+        _repetitionMeta,
+        repetition.isAcceptableOrUnknown(data['repetition']!, _repetitionMeta),
+      );
+    }
+    if (data.containsKey('last_reviewed_at')) {
+      context.handle(
+        _lastReviewedAtMeta,
+        lastReviewedAt.isAcceptableOrUnknown(
+          data['last_reviewed_at']!,
+          _lastReviewedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {claimId},
+  ];
+  @override
+  ClaimReviewSchedule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ClaimReviewSchedule(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      examUnitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exam_unit_id'],
+      )!,
+      claimId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}claim_id'],
+      )!,
+      nextReviewAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_review_at'],
+      )!,
+      intervalHours: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}interval_hours'],
+      )!,
+      easeFactor: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}ease_factor'],
+      )!,
+      repetition: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}repetition'],
+      )!,
+      lastReviewedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_reviewed_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ClaimReviewSchedulesTable createAlias(String alias) {
+    return $ClaimReviewSchedulesTable(attachedDatabase, alias);
+  }
+}
+
+class ClaimReviewSchedule extends DataClass
+    implements Insertable<ClaimReviewSchedule> {
+  final int id;
+  final int examUnitId;
+  final int claimId;
+  final DateTime nextReviewAt;
+  final int intervalHours;
+  final double easeFactor;
+  final int repetition;
+  final DateTime lastReviewedAt;
+  final DateTime updatedAt;
+  const ClaimReviewSchedule({
+    required this.id,
+    required this.examUnitId,
+    required this.claimId,
+    required this.nextReviewAt,
+    required this.intervalHours,
+    required this.easeFactor,
+    required this.repetition,
+    required this.lastReviewedAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['exam_unit_id'] = Variable<int>(examUnitId);
+    map['claim_id'] = Variable<int>(claimId);
+    map['next_review_at'] = Variable<DateTime>(nextReviewAt);
+    map['interval_hours'] = Variable<int>(intervalHours);
+    map['ease_factor'] = Variable<double>(easeFactor);
+    map['repetition'] = Variable<int>(repetition);
+    map['last_reviewed_at'] = Variable<DateTime>(lastReviewedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ClaimReviewSchedulesCompanion toCompanion(bool nullToAbsent) {
+    return ClaimReviewSchedulesCompanion(
+      id: Value(id),
+      examUnitId: Value(examUnitId),
+      claimId: Value(claimId),
+      nextReviewAt: Value(nextReviewAt),
+      intervalHours: Value(intervalHours),
+      easeFactor: Value(easeFactor),
+      repetition: Value(repetition),
+      lastReviewedAt: Value(lastReviewedAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ClaimReviewSchedule.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ClaimReviewSchedule(
+      id: serializer.fromJson<int>(json['id']),
+      examUnitId: serializer.fromJson<int>(json['examUnitId']),
+      claimId: serializer.fromJson<int>(json['claimId']),
+      nextReviewAt: serializer.fromJson<DateTime>(json['nextReviewAt']),
+      intervalHours: serializer.fromJson<int>(json['intervalHours']),
+      easeFactor: serializer.fromJson<double>(json['easeFactor']),
+      repetition: serializer.fromJson<int>(json['repetition']),
+      lastReviewedAt: serializer.fromJson<DateTime>(json['lastReviewedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'examUnitId': serializer.toJson<int>(examUnitId),
+      'claimId': serializer.toJson<int>(claimId),
+      'nextReviewAt': serializer.toJson<DateTime>(nextReviewAt),
+      'intervalHours': serializer.toJson<int>(intervalHours),
+      'easeFactor': serializer.toJson<double>(easeFactor),
+      'repetition': serializer.toJson<int>(repetition),
+      'lastReviewedAt': serializer.toJson<DateTime>(lastReviewedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ClaimReviewSchedule copyWith({
+    int? id,
+    int? examUnitId,
+    int? claimId,
+    DateTime? nextReviewAt,
+    int? intervalHours,
+    double? easeFactor,
+    int? repetition,
+    DateTime? lastReviewedAt,
+    DateTime? updatedAt,
+  }) => ClaimReviewSchedule(
+    id: id ?? this.id,
+    examUnitId: examUnitId ?? this.examUnitId,
+    claimId: claimId ?? this.claimId,
+    nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+    intervalHours: intervalHours ?? this.intervalHours,
+    easeFactor: easeFactor ?? this.easeFactor,
+    repetition: repetition ?? this.repetition,
+    lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ClaimReviewSchedule copyWithCompanion(ClaimReviewSchedulesCompanion data) {
+    return ClaimReviewSchedule(
+      id: data.id.present ? data.id.value : this.id,
+      examUnitId: data.examUnitId.present
+          ? data.examUnitId.value
+          : this.examUnitId,
+      claimId: data.claimId.present ? data.claimId.value : this.claimId,
+      nextReviewAt: data.nextReviewAt.present
+          ? data.nextReviewAt.value
+          : this.nextReviewAt,
+      intervalHours: data.intervalHours.present
+          ? data.intervalHours.value
+          : this.intervalHours,
+      easeFactor: data.easeFactor.present
+          ? data.easeFactor.value
+          : this.easeFactor,
+      repetition: data.repetition.present
+          ? data.repetition.value
+          : this.repetition,
+      lastReviewedAt: data.lastReviewedAt.present
+          ? data.lastReviewedAt.value
+          : this.lastReviewedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClaimReviewSchedule(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('claimId: $claimId, ')
+          ..write('nextReviewAt: $nextReviewAt, ')
+          ..write('intervalHours: $intervalHours, ')
+          ..write('easeFactor: $easeFactor, ')
+          ..write('repetition: $repetition, ')
+          ..write('lastReviewedAt: $lastReviewedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    examUnitId,
+    claimId,
+    nextReviewAt,
+    intervalHours,
+    easeFactor,
+    repetition,
+    lastReviewedAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClaimReviewSchedule &&
+          other.id == this.id &&
+          other.examUnitId == this.examUnitId &&
+          other.claimId == this.claimId &&
+          other.nextReviewAt == this.nextReviewAt &&
+          other.intervalHours == this.intervalHours &&
+          other.easeFactor == this.easeFactor &&
+          other.repetition == this.repetition &&
+          other.lastReviewedAt == this.lastReviewedAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ClaimReviewSchedulesCompanion
+    extends UpdateCompanion<ClaimReviewSchedule> {
+  final Value<int> id;
+  final Value<int> examUnitId;
+  final Value<int> claimId;
+  final Value<DateTime> nextReviewAt;
+  final Value<int> intervalHours;
+  final Value<double> easeFactor;
+  final Value<int> repetition;
+  final Value<DateTime> lastReviewedAt;
+  final Value<DateTime> updatedAt;
+  const ClaimReviewSchedulesCompanion({
+    this.id = const Value.absent(),
+    this.examUnitId = const Value.absent(),
+    this.claimId = const Value.absent(),
+    this.nextReviewAt = const Value.absent(),
+    this.intervalHours = const Value.absent(),
+    this.easeFactor = const Value.absent(),
+    this.repetition = const Value.absent(),
+    this.lastReviewedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ClaimReviewSchedulesCompanion.insert({
+    this.id = const Value.absent(),
+    required int examUnitId,
+    required int claimId,
+    required DateTime nextReviewAt,
+    this.intervalHours = const Value.absent(),
+    this.easeFactor = const Value.absent(),
+    this.repetition = const Value.absent(),
+    this.lastReviewedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : examUnitId = Value(examUnitId),
+       claimId = Value(claimId),
+       nextReviewAt = Value(nextReviewAt);
+  static Insertable<ClaimReviewSchedule> custom({
+    Expression<int>? id,
+    Expression<int>? examUnitId,
+    Expression<int>? claimId,
+    Expression<DateTime>? nextReviewAt,
+    Expression<int>? intervalHours,
+    Expression<double>? easeFactor,
+    Expression<int>? repetition,
+    Expression<DateTime>? lastReviewedAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (examUnitId != null) 'exam_unit_id': examUnitId,
+      if (claimId != null) 'claim_id': claimId,
+      if (nextReviewAt != null) 'next_review_at': nextReviewAt,
+      if (intervalHours != null) 'interval_hours': intervalHours,
+      if (easeFactor != null) 'ease_factor': easeFactor,
+      if (repetition != null) 'repetition': repetition,
+      if (lastReviewedAt != null) 'last_reviewed_at': lastReviewedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ClaimReviewSchedulesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? examUnitId,
+    Value<int>? claimId,
+    Value<DateTime>? nextReviewAt,
+    Value<int>? intervalHours,
+    Value<double>? easeFactor,
+    Value<int>? repetition,
+    Value<DateTime>? lastReviewedAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ClaimReviewSchedulesCompanion(
+      id: id ?? this.id,
+      examUnitId: examUnitId ?? this.examUnitId,
+      claimId: claimId ?? this.claimId,
+      nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+      intervalHours: intervalHours ?? this.intervalHours,
+      easeFactor: easeFactor ?? this.easeFactor,
+      repetition: repetition ?? this.repetition,
+      lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (examUnitId.present) {
+      map['exam_unit_id'] = Variable<int>(examUnitId.value);
+    }
+    if (claimId.present) {
+      map['claim_id'] = Variable<int>(claimId.value);
+    }
+    if (nextReviewAt.present) {
+      map['next_review_at'] = Variable<DateTime>(nextReviewAt.value);
+    }
+    if (intervalHours.present) {
+      map['interval_hours'] = Variable<int>(intervalHours.value);
+    }
+    if (easeFactor.present) {
+      map['ease_factor'] = Variable<double>(easeFactor.value);
+    }
+    if (repetition.present) {
+      map['repetition'] = Variable<int>(repetition.value);
+    }
+    if (lastReviewedAt.present) {
+      map['last_reviewed_at'] = Variable<DateTime>(lastReviewedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClaimReviewSchedulesCompanion(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('claimId: $claimId, ')
+          ..write('nextReviewAt: $nextReviewAt, ')
+          ..write('intervalHours: $intervalHours, ')
+          ..write('easeFactor: $easeFactor, ')
+          ..write('repetition: $repetition, ')
+          ..write('lastReviewedAt: $lastReviewedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7047,6 +7624,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $QuizAttemptsTable quizAttempts = $QuizAttemptsTable(this);
+  late final $ClaimReviewSchedulesTable claimReviewSchedules =
+      $ClaimReviewSchedulesTable(this);
   late final SourcesDao sourcesDao = SourcesDao(this as AppDatabase);
   late final ExamUnitsDao examUnitsDao = ExamUnitsDao(this as AppDatabase);
   late final ClaimsDao claimsDao = ClaimsDao(this as AppDatabase);
@@ -7080,6 +7659,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     evidencePackItems,
     unitMergeHistory,
     quizAttempts,
+    claimReviewSchedules,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7194,6 +7774,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('quiz_attempts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'exam_units',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('claim_review_schedules', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'claims',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('claim_review_schedules', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -8468,6 +9062,34 @@ final class $$ExamUnitsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $ClaimReviewSchedulesTable,
+    List<ClaimReviewSchedule>
+  >
+  _claimReviewSchedulesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.claimReviewSchedules,
+        aliasName: $_aliasNameGenerator(
+          db.examUnits.id,
+          db.claimReviewSchedules.examUnitId,
+        ),
+      );
+
+  $$ClaimReviewSchedulesTableProcessedTableManager
+  get claimReviewSchedulesRefs {
+    final manager = $$ClaimReviewSchedulesTableTableManager(
+      $_db,
+      $_db.claimReviewSchedules,
+    ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _claimReviewSchedulesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ExamUnitsTableFilterComposer
@@ -8675,6 +9297,31 @@ class $$ExamUnitsTableFilterComposer
           }) => $$QuizAttemptsTableFilterComposer(
             $db: $db,
             $table: $db.quizAttempts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> claimReviewSchedulesRefs(
+    Expression<bool> Function($$ClaimReviewSchedulesTableFilterComposer f) f,
+  ) {
+    final $$ClaimReviewSchedulesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.claimReviewSchedules,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimReviewSchedulesTableFilterComposer(
+            $db: $db,
+            $table: $db.claimReviewSchedules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8951,6 +9598,32 @@ class $$ExamUnitsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> claimReviewSchedulesRefs<T extends Object>(
+    Expression<T> Function($$ClaimReviewSchedulesTableAnnotationComposer a) f,
+  ) {
+    final $$ClaimReviewSchedulesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.claimReviewSchedules,
+          getReferencedColumn: (t) => t.examUnitId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ClaimReviewSchedulesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.claimReviewSchedules,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ExamUnitsTableTableManager
@@ -8973,6 +9646,7 @@ class $$ExamUnitsTableTableManager
             bool unitStatsRefs,
             bool unitMergeHistoryRefs,
             bool quizAttemptsRefs,
+            bool claimReviewSchedulesRefs,
           })
         > {
   $$ExamUnitsTableTableManager(_$AppDatabase db, $ExamUnitsTable table)
@@ -9054,6 +9728,7 @@ class $$ExamUnitsTableTableManager
                 unitStatsRefs = false,
                 unitMergeHistoryRefs = false,
                 quizAttemptsRefs = false,
+                claimReviewSchedulesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9064,6 +9739,7 @@ class $$ExamUnitsTableTableManager
                     if (unitStatsRefs) db.unitStats,
                     if (unitMergeHistoryRefs) db.unitMergeHistory,
                     if (quizAttemptsRefs) db.quizAttempts,
+                    if (claimReviewSchedulesRefs) db.claimReviewSchedules,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -9194,6 +9870,27 @@ class $$ExamUnitsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (claimReviewSchedulesRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          ClaimReviewSchedule
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._claimReviewSchedulesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).claimReviewSchedulesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.examUnitId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9221,6 +9918,7 @@ typedef $$ExamUnitsTableProcessedTableManager =
         bool unitStatsRefs,
         bool unitMergeHistoryRefs,
         bool quizAttemptsRefs,
+        bool claimReviewSchedulesRefs,
       })
     >;
 typedef $$ClaimsTableCreateCompanionBuilder =
@@ -9332,6 +10030,34 @@ final class $$ClaimsTableReferences
     ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_quizAttemptsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $ClaimReviewSchedulesTable,
+    List<ClaimReviewSchedule>
+  >
+  _claimReviewSchedulesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.claimReviewSchedules,
+        aliasName: $_aliasNameGenerator(
+          db.claims.id,
+          db.claimReviewSchedules.claimId,
+        ),
+      );
+
+  $$ClaimReviewSchedulesTableProcessedTableManager
+  get claimReviewSchedulesRefs {
+    final manager = $$ClaimReviewSchedulesTableTableManager(
+      $_db,
+      $_db.claimReviewSchedules,
+    ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _claimReviewSchedulesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -9491,6 +10217,31 @@ class $$ClaimsTableFilterComposer
           }) => $$QuizAttemptsTableFilterComposer(
             $db: $db,
             $table: $db.quizAttempts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> claimReviewSchedulesRefs(
+    Expression<bool> Function($$ClaimReviewSchedulesTableFilterComposer f) f,
+  ) {
+    final $$ClaimReviewSchedulesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.claimReviewSchedules,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimReviewSchedulesTableFilterComposer(
+            $db: $db,
+            $table: $db.claimReviewSchedules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9717,6 +10468,32 @@ class $$ClaimsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> claimReviewSchedulesRefs<T extends Object>(
+    Expression<T> Function($$ClaimReviewSchedulesTableAnnotationComposer a) f,
+  ) {
+    final $$ClaimReviewSchedulesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.claimReviewSchedules,
+          getReferencedColumn: (t) => t.claimId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ClaimReviewSchedulesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.claimReviewSchedules,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ClaimsTableTableManager
@@ -9738,6 +10515,7 @@ class $$ClaimsTableTableManager
             bool conflictsRefs,
             bool evidencePacksRefs,
             bool quizAttemptsRefs,
+            bool claimReviewSchedulesRefs,
           })
         > {
   $$ClaimsTableTableManager(_$AppDatabase db, $ClaimsTable table)
@@ -9800,6 +10578,7 @@ class $$ClaimsTableTableManager
                 conflictsRefs = false,
                 evidencePacksRefs = false,
                 quizAttemptsRefs = false,
+                claimReviewSchedulesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9808,6 +10587,7 @@ class $$ClaimsTableTableManager
                     if (conflictsRefs) db.conflicts,
                     if (evidencePacksRefs) db.evidencePacks,
                     if (quizAttemptsRefs) db.quizAttempts,
+                    if (claimReviewSchedulesRefs) db.claimReviewSchedules,
                   ],
                   addJoins:
                       <
@@ -9927,6 +10707,27 @@ class $$ClaimsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (claimReviewSchedulesRefs)
+                        await $_getPrefetchedData<
+                          Claim,
+                          $ClaimsTable,
+                          ClaimReviewSchedule
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ClaimsTableReferences
+                              ._claimReviewSchedulesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ClaimsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).claimReviewSchedulesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.claimId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9953,6 +10754,7 @@ typedef $$ClaimsTableProcessedTableManager =
         bool conflictsRefs,
         bool evidencePacksRefs,
         bool quizAttemptsRefs,
+        bool claimReviewSchedulesRefs,
       })
     >;
 typedef $$EvidenceLinksTableCreateCompanionBuilder =
@@ -14180,6 +14982,516 @@ typedef $$QuizAttemptsTableProcessedTableManager =
       QuizAttempt,
       PrefetchHooks Function({bool examUnitId, bool claimId})
     >;
+typedef $$ClaimReviewSchedulesTableCreateCompanionBuilder =
+    ClaimReviewSchedulesCompanion Function({
+      Value<int> id,
+      required int examUnitId,
+      required int claimId,
+      required DateTime nextReviewAt,
+      Value<int> intervalHours,
+      Value<double> easeFactor,
+      Value<int> repetition,
+      Value<DateTime> lastReviewedAt,
+      Value<DateTime> updatedAt,
+    });
+typedef $$ClaimReviewSchedulesTableUpdateCompanionBuilder =
+    ClaimReviewSchedulesCompanion Function({
+      Value<int> id,
+      Value<int> examUnitId,
+      Value<int> claimId,
+      Value<DateTime> nextReviewAt,
+      Value<int> intervalHours,
+      Value<double> easeFactor,
+      Value<int> repetition,
+      Value<DateTime> lastReviewedAt,
+      Value<DateTime> updatedAt,
+    });
+
+final class $$ClaimReviewSchedulesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ClaimReviewSchedulesTable,
+          ClaimReviewSchedule
+        > {
+  $$ClaimReviewSchedulesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ExamUnitsTable _examUnitIdTable(_$AppDatabase db) =>
+      db.examUnits.createAlias(
+        $_aliasNameGenerator(
+          db.claimReviewSchedules.examUnitId,
+          db.examUnits.id,
+        ),
+      );
+
+  $$ExamUnitsTableProcessedTableManager get examUnitId {
+    final $_column = $_itemColumn<int>('exam_unit_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_examUnitIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ClaimsTable _claimIdTable(_$AppDatabase db) => db.claims.createAlias(
+    $_aliasNameGenerator(db.claimReviewSchedules.claimId, db.claims.id),
+  );
+
+  $$ClaimsTableProcessedTableManager get claimId {
+    final $_column = $_itemColumn<int>('claim_id')!;
+
+    final manager = $$ClaimsTableTableManager(
+      $_db,
+      $_db.claims,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_claimIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ClaimReviewSchedulesTableFilterComposer
+    extends Composer<_$AppDatabase, $ClaimReviewSchedulesTable> {
+  $$ClaimReviewSchedulesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextReviewAt => $composableBuilder(
+    column: $table.nextReviewAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get intervalHours => $composableBuilder(
+    column: $table.intervalHours,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get easeFactor => $composableBuilder(
+    column: $table.easeFactor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get repetition => $composableBuilder(
+    column: $table.repetition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastReviewedAt => $composableBuilder(
+    column: $table.lastReviewedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ExamUnitsTableFilterComposer get examUnitId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableFilterComposer get claimId {
+    final $$ClaimsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableFilterComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ClaimReviewSchedulesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ClaimReviewSchedulesTable> {
+  $$ClaimReviewSchedulesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextReviewAt => $composableBuilder(
+    column: $table.nextReviewAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get intervalHours => $composableBuilder(
+    column: $table.intervalHours,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get easeFactor => $composableBuilder(
+    column: $table.easeFactor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get repetition => $composableBuilder(
+    column: $table.repetition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastReviewedAt => $composableBuilder(
+    column: $table.lastReviewedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ExamUnitsTableOrderingComposer get examUnitId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableOrderingComposer get claimId {
+    final $$ClaimsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableOrderingComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ClaimReviewSchedulesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ClaimReviewSchedulesTable> {
+  $$ClaimReviewSchedulesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextReviewAt => $composableBuilder(
+    column: $table.nextReviewAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get intervalHours => $composableBuilder(
+    column: $table.intervalHours,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get easeFactor => $composableBuilder(
+    column: $table.easeFactor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get repetition => $composableBuilder(
+    column: $table.repetition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastReviewedAt => $composableBuilder(
+    column: $table.lastReviewedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ExamUnitsTableAnnotationComposer get examUnitId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableAnnotationComposer get claimId {
+    final $$ClaimsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ClaimReviewSchedulesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ClaimReviewSchedulesTable,
+          ClaimReviewSchedule,
+          $$ClaimReviewSchedulesTableFilterComposer,
+          $$ClaimReviewSchedulesTableOrderingComposer,
+          $$ClaimReviewSchedulesTableAnnotationComposer,
+          $$ClaimReviewSchedulesTableCreateCompanionBuilder,
+          $$ClaimReviewSchedulesTableUpdateCompanionBuilder,
+          (ClaimReviewSchedule, $$ClaimReviewSchedulesTableReferences),
+          ClaimReviewSchedule,
+          PrefetchHooks Function({bool examUnitId, bool claimId})
+        > {
+  $$ClaimReviewSchedulesTableTableManager(
+    _$AppDatabase db,
+    $ClaimReviewSchedulesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClaimReviewSchedulesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ClaimReviewSchedulesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ClaimReviewSchedulesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> examUnitId = const Value.absent(),
+                Value<int> claimId = const Value.absent(),
+                Value<DateTime> nextReviewAt = const Value.absent(),
+                Value<int> intervalHours = const Value.absent(),
+                Value<double> easeFactor = const Value.absent(),
+                Value<int> repetition = const Value.absent(),
+                Value<DateTime> lastReviewedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ClaimReviewSchedulesCompanion(
+                id: id,
+                examUnitId: examUnitId,
+                claimId: claimId,
+                nextReviewAt: nextReviewAt,
+                intervalHours: intervalHours,
+                easeFactor: easeFactor,
+                repetition: repetition,
+                lastReviewedAt: lastReviewedAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int examUnitId,
+                required int claimId,
+                required DateTime nextReviewAt,
+                Value<int> intervalHours = const Value.absent(),
+                Value<double> easeFactor = const Value.absent(),
+                Value<int> repetition = const Value.absent(),
+                Value<DateTime> lastReviewedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ClaimReviewSchedulesCompanion.insert(
+                id: id,
+                examUnitId: examUnitId,
+                claimId: claimId,
+                nextReviewAt: nextReviewAt,
+                intervalHours: intervalHours,
+                easeFactor: easeFactor,
+                repetition: repetition,
+                lastReviewedAt: lastReviewedAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ClaimReviewSchedulesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({examUnitId = false, claimId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (examUnitId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.examUnitId,
+                                referencedTable:
+                                    $$ClaimReviewSchedulesTableReferences
+                                        ._examUnitIdTable(db),
+                                referencedColumn:
+                                    $$ClaimReviewSchedulesTableReferences
+                                        ._examUnitIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (claimId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.claimId,
+                                referencedTable:
+                                    $$ClaimReviewSchedulesTableReferences
+                                        ._claimIdTable(db),
+                                referencedColumn:
+                                    $$ClaimReviewSchedulesTableReferences
+                                        ._claimIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ClaimReviewSchedulesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ClaimReviewSchedulesTable,
+      ClaimReviewSchedule,
+      $$ClaimReviewSchedulesTableFilterComposer,
+      $$ClaimReviewSchedulesTableOrderingComposer,
+      $$ClaimReviewSchedulesTableAnnotationComposer,
+      $$ClaimReviewSchedulesTableCreateCompanionBuilder,
+      $$ClaimReviewSchedulesTableUpdateCompanionBuilder,
+      (ClaimReviewSchedule, $$ClaimReviewSchedulesTableReferences),
+      ClaimReviewSchedule,
+      PrefetchHooks Function({bool examUnitId, bool claimId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14210,4 +15522,6 @@ class $AppDatabaseManager {
       $$UnitMergeHistoryTableTableManager(_db, _db.unitMergeHistory);
   $$QuizAttemptsTableTableManager get quizAttempts =>
       $$QuizAttemptsTableTableManager(_db, _db.quizAttempts);
+  $$ClaimReviewSchedulesTableTableManager get claimReviewSchedules =>
+      $$ClaimReviewSchedulesTableTableManager(_db, _db.claimReviewSchedules);
 }

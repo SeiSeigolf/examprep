@@ -1,14 +1,17 @@
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:exam_os/db/database.dart';
+import 'package:exam_os/db/database.provider.dart';
+import 'package:exam_os/features/review_queue/providers/review_queue.provider.dart';
 import 'package:exam_os/features/study_plan/providers/study_plan.provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 AppDatabase _makeInMemoryDb() =>
     AppDatabase.forTesting(NativeDatabase.memory());
 
 void main() {
-  test('quiz_attempts 保存で未習熟度とReview優先度が変化する', () async {
+  test('quiz_attempts で間隔反復と優先度反映が動く', () async {
     final db = _makeInMemoryDb();
     addTearDown(db.close);
 
@@ -79,36 +82,27 @@ void main() {
     final m2 = mastery[unit2]!;
 
     expect(computeUnmasteryScore(m2), greaterThan(computeUnmasteryScore(m1)));
+    final schedules = await db.select(db.claimReviewSchedules).get();
+    final s1 = schedules.firstWhere((s) => s.claimId == claim1);
+    final s2 = schedules.firstWhere((s) => s.claimId == claim2);
+    expect(s1.intervalHours, greaterThan(s2.intervalHours)); // 正解で伸びる
+    expect(s2.intervalHours, 6); // 不正解で短縮
 
-    final priorities = await db
-        .customSelect(
-          '''
-      SELECT
-        c.id AS claim_id,
-        (
-          COALESCE(us.point_weight, 1) *
-          COALESCE(us.frequency, 1) *
-          (1 - CASE c.content_confidence WHEN 'H' THEN 0.9 WHEN 'M' THEN 0.6 ELSE 0.3 END)
-        ) * (1 - COALESCE(qa.mastery, 0.0)) AS review_priority
-      FROM claims c
-      LEFT JOIN unit_stats us ON us.exam_unit_id = c.exam_unit_id
-      LEFT JOIN (
-        SELECT claim_id, AVG(CASE WHEN is_correct = 1 THEN 1.0 ELSE 0.0 END) AS mastery
-        FROM quiz_attempts
-        GROUP BY claim_id
-      ) qa ON qa.claim_id = c.id
-      WHERE c.id IN (?, ?)
-      ''',
-          variables: [Variable.withInt(claim1), Variable.withInt(claim2)],
-          readsFrom: {db.claims, db.unitStats, db.quizAttempts},
-        )
-        .get();
-    final p1 = priorities
-        .firstWhere((r) => r.read<int>('claim_id') == claim1)
-        .read<double>('review_priority');
-    final p2 = priorities
-        .firstWhere((r) => r.read<int>('claim_id') == claim2)
-        .read<double>('review_priority');
-    expect(p2, greaterThan(p1));
+    await (db.update(
+      db.claimReviewSchedules,
+    )..where((s) => s.claimId.equals(claim2))).write(
+      ClaimReviewSchedulesCompanion(
+        nextReviewAt: Value(DateTime.now().subtract(const Duration(hours: 1))),
+      ),
+    );
+
+    final container = ProviderContainer(
+      overrides: [databaseProvider.overrideWithValue(db)],
+    );
+    addTearDown(container.dispose);
+    final queue = await container.read(reviewQueueProvider.future);
+    final top = queue.first;
+    expect(top.claimId, claim2);
+    expect(buildReviewReason(top), contains('期限切れレビュー'));
   });
 }

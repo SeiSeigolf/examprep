@@ -17,6 +17,7 @@ import 'tables/evidence_packs.dart';
 import 'tables/evidence_pack_items.dart';
 import 'tables/unit_merge_history.dart';
 import 'tables/quiz_attempts.dart';
+import 'tables/claim_review_schedules.dart';
 import 'daos/sources_dao.dart';
 import 'daos/exam_units_dao.dart';
 import 'daos/claims_dao.dart';
@@ -40,6 +41,7 @@ export 'tables/evidence_packs.dart';
 export 'tables/evidence_pack_items.dart';
 export 'tables/unit_merge_history.dart';
 export 'tables/quiz_attempts.dart';
+export 'tables/claim_review_schedules.dart';
 export 'daos/evidence_packs_dao.dart';
 export 'daos/quiz_attempts_dao.dart';
 
@@ -60,6 +62,7 @@ part 'database.g.dart';
     EvidencePackItems,
     UnitMergeHistory,
     QuizAttempts,
+    ClaimReviewSchedules,
   ],
   daos: [
     SourcesDao,
@@ -80,7 +83,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -175,6 +178,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await m.createTable(quizAttempts);
+      }
+      if (from < 12) {
+        await m.createTable(claimReviewSchedules);
       }
     },
   );

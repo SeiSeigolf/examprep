@@ -137,6 +137,14 @@ class ReviewQueuePage extends ConsumerWidget {
                                     'Mastery ${(item.mastery * 100).toStringAsFixed(0)}%',
                               ),
                               _MetaChip(
+                                label: item.reviewOverdue
+                                    ? '期限切れ'
+                                    : '次回 ${item.nextReviewAt?.toLocal().toString().substring(0, 16) ?? '-'}',
+                                color: item.reviewOverdue
+                                    ? const Color(0xFFBF360C)
+                                    : const Color(0xFF2D3440),
+                              ),
+                              _MetaChip(
                                 label:
                                     'Conflict(open): ${item.openConflictCount > 0 ? 'Yes' : 'No'}',
                                 color: item.openConflictCount > 0
