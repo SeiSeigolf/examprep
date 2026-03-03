@@ -1,17 +1,40 @@
-# exam_os
+# ExamPrep OS (examprep)
 
-A new Flutter project.
+医学部の期末テスト対策を「根拠付き・監査可能・ローカル完結」で最適化する学習支援アプリです。  
+過去問・講義資料・課題・ノート（GoodNotesはPDF/画像エクスポート）を取り込み、重複を統合して「試験ユニット（Exam Unit）」単位のマスター学習単位を構築します。
 
-## Getting Started
+## ねらい（このプロダクトの本質）
+- **何を学ぶか**：頻出度・配点・出題可能性・依存関係・未習熟度から学習優先度を算出
+- **どう学ぶか**：知識タイプ × 問題形式 × 学習段階に応じて学習法（カード/空欄/自己説明/記述骨子/画像観察など）を提案
+- **信用できるか**：AIの自由作文ではなく、**根拠リンク必須**・**信頼度表示**・**Conflict検出**・**Coverage Audit（網羅監査）**で担保
 
-This project is a starting point for a Flutter application.
+## コアコンセプト
+### 1) 資料単位ではなく「Exam Unit」単位で管理
+同義・類似を統合し、出題頻度・配点推定・勉強法・根拠を紐づけます。
 
-A few resources to get you started if this is your first Flutter project:
+### 2) 網羅性は「監査」で担保（Coverage Audit）
+各ソースから抽出された論点が最終学習資料に反映されているかを分類します：
+- Covered / Partially covered / Uncovered / Conflict / Low confidence
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### 3) 正確性は「根拠付き設計」で担保（Evidence-first）
+- 根拠なし生成を避ける（根拠不足は保留/要確認）
+- 出典へジャンプできる
+- 競合情報は統合せず併記（授業準拠を優先）
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 想定機能（MVP）
+- 講義資料 / 過去問 / 課題 / GoodNotes(PDF/画像) の取り込み
+- Exam Unit 抽出（半自動）＋重複候補検出＋統合
+- Coverage Audit（未反映/重複/要確認の可視化）
+- claim単位の根拠リンク、信頼度（High/Medium/Low）
+- 要確認キュー（高配点 × 低信頼 × 頻出を優先）
+- 今日の学習プラン（「何を」＋「どうやるか」まで）
+
+## 技術方針
+- Flutter（Desktop中心）
+- ローカルDB：SQLite
+- ローカル解析：PDF/画像、OCR、ローカル検索・索引
+- ローカルLLM（段階的導入）：根拠付き編集者として使用（自由作文禁止）
+
+## セットアップ
+```bash
+flutter pub get
