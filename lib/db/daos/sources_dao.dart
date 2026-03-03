@@ -20,7 +20,15 @@ class SegmentUnitDraft {
 }
 
 @DriftAccessor(
-  tables: [Sources, SourceSegments, ExamUnits, Claims, EvidenceLinks],
+  tables: [
+    Sources,
+    SourceSegments,
+    ExamUnits,
+    Claims,
+    EvidenceLinks,
+    EvidencePacks,
+    EvidencePackItems,
+  ],
 )
 class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
   SourcesDao(super.db);
@@ -115,43 +123,66 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
             .get();
 
     final drafts = <SegmentUnitDraft>[];
-    final seenTitles = <String>{};
+    final seenTitles = <String>{}; // normalized title
     for (final seg in segments) {
       final text = seg.content.trim();
       if (text.length < 8) continue;
 
-      final chunks = text
-          .split(RegExp(r'\n{2,}|(?<=[。.!?])\s+'))
-          .map((e) => e.trim())
-          .where((e) => e.length >= 8)
-          .take(4);
+      final headingLines = _extractHeadingLikeLines(text);
+      if (headingLines.isNotEmpty) {
+        for (final heading in headingLines.take(5)) {
+          final title = _extractCandidateTitle(heading);
+          if (title.length < 3) continue;
+          final norm = _normalizeTitle(title);
+          if (seenTitles.contains(norm)) continue;
+          seenTitles.add(norm);
 
-      for (final chunk in chunks) {
-        final title = _extractCandidateTitle(chunk);
-        if (title.length < 3) continue;
-        final norm = title.toLowerCase();
-        if (seenTitles.contains(norm)) continue;
-        seenTitles.add(norm);
+          drafts.add(
+            SegmentUnitDraft(
+              sourceId: sourceId,
+              segmentId: seg.id,
+              pageNumber: seg.pageNumber,
+              title: title,
+              claimContent: _claimAroundHeading(text, heading),
+            ),
+          );
+          if (drafts.length >= limit) return drafts;
+        }
+      } else {
+        final chunks = text
+            .split(RegExp(r'\n{2,}|(?<=[。.!?])\s+'))
+            .map((e) => e.trim())
+            .where((e) => e.length >= 8)
+            .take(3);
+        for (final chunk in chunks) {
+          final title = _extractCandidateTitle(chunk);
+          if (title.length < 3) continue;
+          final norm = _normalizeTitle(title);
+          if (seenTitles.contains(norm)) continue;
+          seenTitles.add(norm);
 
-        drafts.add(
-          SegmentUnitDraft(
-            sourceId: sourceId,
-            segmentId: seg.id,
-            pageNumber: seg.pageNumber,
-            title: title,
-            claimContent: _toClaimContent(chunk),
-          ),
-        );
-        if (drafts.length >= limit) return drafts;
+          drafts.add(
+            SegmentUnitDraft(
+              sourceId: sourceId,
+              segmentId: seg.id,
+              pageNumber: seg.pageNumber,
+              title: title,
+              claimContent: _toClaimContent(chunk),
+            ),
+          );
+          if (drafts.length >= limit) return drafts;
+        }
       }
     }
     return drafts;
   }
 
-  Future<int> createExamUnitsFromDrafts(List<SegmentUnitDraft> drafts) async {
-    if (drafts.isEmpty) return 0;
+  Future<List<int>> createExamUnitsFromDrafts(
+    List<SegmentUnitDraft> drafts,
+  ) async {
+    if (drafts.isEmpty) return const [];
     return transaction(() async {
-      var created = 0;
+      final createdIds = <int>[];
       for (final draft in drafts) {
         final unitId = await into(examUnits).insert(
           ExamUnitsCompanion.insert(
@@ -178,30 +209,130 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
             note: const Value('auto-generated from source segment'),
           ),
         );
-        created++;
+        final packId = await into(evidencePacks).insert(
+          EvidencePacksCompanion.insert(
+            claimId: claimId,
+            contentConfidence: const Value('M'),
+            examConfidence: const Value('M'),
+          ),
+        );
+        await into(evidencePackItems).insert(
+          EvidencePackItemsCompanion.insert(
+            evidencePackId: packId,
+            sourceSegmentId: draft.segmentId,
+            pageNumber: Value(draft.pageNumber),
+            snippet: Value(_snippetFromClaim(draft.claimContent)),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+        createdIds.add(unitId);
       }
 
       await db.auditDao.refreshCoverageAudits();
-      return created;
+      return createdIds;
     });
   }
 
   String _extractCandidateTitle(String chunk) {
     final firstLine = chunk.split('\n').first.trim();
     var t = firstLine;
+    final bracketed = RegExp(r'【([^】]{1,40})】').firstMatch(t);
+    if (bracketed != null) {
+      t = bracketed.group(1)!.trim();
+    }
     if (t.contains('：')) {
       t = t.split('：').first.trim();
     } else if (t.contains(':')) {
       t = t.split(':').first.trim();
     }
-    t = t.replaceFirst(RegExp(r'^[\-\*\d\.\)\s]+'), '').trim();
+    t = t
+        .replaceFirst(RegExp(r'^\s*(?:\d+[\.\)]|[（(]\d+[）)])\s*'), '')
+        .replaceFirst(RegExp(r'^[\-\*\s]+'), '')
+        .trim();
     if (t.length > 32) t = t.substring(0, 32);
     return t;
+  }
+
+  List<String> _extractHeadingLikeLines(String text) {
+    final lines = text
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final scored = <(String line, int score)>[];
+    for (final line in lines) {
+      final score = _headingScore(line);
+      if (score >= 3) {
+        scored.add((line, score));
+      }
+    }
+    scored.sort((a, b) => b.$2.compareTo(a.$2));
+    return scored.map((e) => e.$1).toList();
+  }
+
+  int _headingScore(String line) {
+    var score = 0;
+    if (line.length <= 28) score += 2;
+    if (line.contains(':') || line.contains('：')) score += 2;
+    if (RegExp(r'^\s*【[^】]{1,40}】\s*$').hasMatch(line)) {
+      score += 5;
+    }
+    if (RegExp(r'^\s*(\d+[\.\)]|[（(]\d+[）)]|【[^】]{1,40}】)').hasMatch(line)) {
+      score += 2;
+    }
+    final letters = RegExp(r'[A-Za-z]').allMatches(line).length;
+    if (letters > 2) {
+      final uppers = RegExp(r'[A-Z]').allMatches(line).length;
+      final ratio = uppers / letters;
+      if (ratio >= 0.6) score += 2;
+    }
+    return score;
+  }
+
+  String _normalizeTitle(String s) {
+    final sb = StringBuffer();
+    for (final rune in s.runes) {
+      final ch = String.fromCharCode(rune);
+      final code = rune;
+      if (code >= 0xFF10 && code <= 0xFF19) {
+        sb.writeCharCode(code - 0xFF10 + 0x30);
+      } else if (code >= 0xFF21 && code <= 0xFF3A) {
+        sb.writeCharCode(code - 0xFF21 + 0x41);
+      } else if (code >= 0xFF41 && code <= 0xFF5A) {
+        sb.writeCharCode(code - 0xFF41 + 0x61);
+      } else if (_isIgnorablePunctuation(ch)) {
+        continue;
+      } else if (ch.trim().isEmpty) {
+        continue;
+      } else {
+        sb.write(ch);
+      }
+    }
+    return sb.toString().toLowerCase();
+  }
+
+  bool _isIgnorablePunctuation(String ch) {
+    const punct = '、。,.-_:：;；()[]【】「」『』"\'!?！？';
+    return punct.contains(ch);
+  }
+
+  String _claimAroundHeading(String text, String heading) {
+    final idx = text.indexOf(heading);
+    if (idx < 0) return _toClaimContent(text);
+    final tail = text.substring(idx + heading.length).trimLeft();
+    if (tail.isEmpty) return _toClaimContent(text);
+    return _toClaimContent('$heading $tail');
   }
 
   String _toClaimContent(String chunk) {
     final text = chunk.replaceAll('\n', ' ').trim();
     if (text.length <= 180) return text;
     return '${text.substring(0, 180)}…';
+  }
+
+  String _snippetFromClaim(String claim) {
+    final t = claim.trim();
+    if (t.length <= 200) return t;
+    return t.substring(0, 200);
   }
 }

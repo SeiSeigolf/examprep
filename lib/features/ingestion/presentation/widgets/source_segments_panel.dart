@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../db/database.dart';
 import '../../../../db/database.provider.dart';
 import '../../../../db/daos/sources_dao.dart';
+import '../../../../db/daos/exam_units_dao.dart';
+import '../../../../shared/providers/navigation.provider.dart';
+import '../../../exam_units/providers/exam_units.provider.dart';
 import '../../providers/selected_source.provider.dart';
 import '../../providers/sources_list.provider.dart';
 
@@ -165,14 +168,32 @@ class _AutoGenerateUnitsDialogState
       final selectedDrafts = drafts
           .where((d) => _selected.contains(d.segmentId))
           .toList();
-      final count = await ref
+      final createdUnitIds = await ref
           .read(databaseProvider)
           .sourcesDao
           .createExamUnitsFromDrafts(selectedDrafts);
+      final count = createdUnitIds.length;
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$count件のExam Unit/Claimを作成しました')),
+        );
+
+        final duplicates = await ref
+            .read(databaseProvider)
+            .examUnitsDao
+            .findDuplicateCandidates(limit: 20);
+        final related = duplicates
+            .where(
+              (p) =>
+                  createdUnitIds.contains(p.left.id) ||
+                  createdUnitIds.contains(p.right.id),
+            )
+            .toList();
+        if (!mounted || related.isEmpty) return;
+        showDialog(
+          context: context,
+          builder: (_) => _PostGenerateDuplicateDialog(candidates: related),
         );
       }
     } finally {
@@ -299,6 +320,52 @@ class _AutoGenerateUnitsDialogState
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PostGenerateDuplicateDialog extends ConsumerWidget {
+  const _PostGenerateDuplicateDialog({required this.candidates});
+  final List<UnitDuplicateCandidate> candidates;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AlertDialog(
+      title: const Text('重複候補が見つかりました'),
+      content: SizedBox(
+        width: 620,
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: candidates.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, i) {
+            final c = candidates[i];
+            return ListTile(
+              dense: true,
+              title: Text('${c.left.title}  <>  ${c.right.title}'),
+              subtitle: Text(
+                '類似度 ${(c.score * 100).toStringAsFixed(1)}% / ${c.overlapTokens.join(', ')}',
+              ),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('閉じる'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final target = candidates.first.left.id;
+            ref.read(selectedExamUnitIdProvider.notifier).state = target;
+            ref.read(selectedDestinationProvider.notifier).state =
+                AppDestination.examUnits;
+            Navigator.of(context).pop();
+          },
+          child: const Text('Exam Unitsで確認'),
+        ),
+      ],
     );
   }
 }
