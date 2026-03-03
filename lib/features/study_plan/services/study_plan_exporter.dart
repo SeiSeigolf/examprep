@@ -11,12 +11,28 @@ class StudyPlanExportEntry {
     required this.methodName,
     required this.evidenceLinkCount,
     required this.nextReviewAt,
+    required this.evidences,
   });
 
   final ExamUnit unit;
   final String methodName;
   final int evidenceLinkCount;
   final DateTime? nextReviewAt;
+  final List<StudyPlanEvidenceEntry> evidences;
+}
+
+class StudyPlanEvidenceEntry {
+  const StudyPlanEvidenceEntry({
+    required this.sourceName,
+    required this.filePath,
+    required this.pageNumber,
+    required this.snippet,
+  });
+
+  final String sourceName;
+  final String filePath;
+  final int pageNumber;
+  final String snippet;
 }
 
 class StudyPlanExporter {
@@ -109,12 +125,14 @@ class StudyPlanExporter {
           methodsByKey['${u.unitType}::${u.problemFormat}'] ??
           methodsByKey['${u.unitType}::選択肢'];
       final evidenceCount = await _countEvidenceLinks(db, u.id);
+      final evidences = await _loadTopEvidences(db, u.id, limit: 3);
       entries.add(
         StudyPlanExportEntry(
           unit: u,
           methodName: method?.methodName ?? '学習（方法未設定）',
           evidenceLinkCount: evidenceCount,
           nextReviewAt: dueByUnit[u.id]?.nextReviewAt,
+          evidences: evidences,
         ),
       );
     }
@@ -140,6 +158,7 @@ class StudyPlanExporter {
     b.writeln('mode: ${mode.name}');
     b.writeln('exam_date: ${examDate?.toIso8601String() ?? '-'}');
     b.writeln('top_n: $topN');
+    b.writeln('note: file:// リンクはOSやMarkdownビューア設定によって開けない場合があります。');
     b.writeln();
     b.writeln('## 今日やること');
     b.writeln();
@@ -149,6 +168,21 @@ class StudyPlanExporter {
       b.writeln('   - やること: ${e.methodName} (${e.unit.problemFormat})');
       b.writeln('   - 根拠リンク数: ${e.evidenceLinkCount}');
       b.writeln('   - 次回復習日時: ${_formatDate(e.nextReviewAt)}');
+      b.writeln('   - 根拠:');
+      if (e.evidences.isEmpty) {
+        b.writeln('     - なし');
+      } else {
+        for (final ev in e.evidences) {
+          final snippet = ev.snippet.replaceAll('\n', ' ').trim();
+          final short = snippet.length <= 120
+              ? snippet
+              : '${snippet.substring(0, 120)}...';
+          final fileUrl = _toFileUrl(ev.filePath);
+          b.writeln(
+            '     - ${ev.sourceName} p.${ev.pageNumber} | $short | [open]($fileUrl)',
+          );
+        }
+      }
     }
     return b.toString();
   }
@@ -218,5 +252,100 @@ class StudyPlanExporter {
         )
         .getSingle();
     return row.read<int>('evidence_count');
+  }
+
+  static Future<List<StudyPlanEvidenceEntry>> _loadTopEvidences(
+    AppDatabase db,
+    int examUnitId, {
+    int limit = 3,
+  }) async {
+    final rows = await db
+        .customSelect(
+          '''
+      SELECT
+        s.file_name AS source_name,
+        s.file_path AS file_path,
+        COALESCE(epi.page_number, ss.page_number) AS page_number,
+        COALESCE(epi.snippet, SUBSTR(ss.content, 1, 200), '') AS snippet
+      FROM claims c
+      JOIN evidence_packs ep
+        ON ep.claim_id = c.id
+      JOIN evidence_pack_items epi
+        ON epi.evidence_pack_id = ep.id
+      JOIN source_segments ss
+        ON ss.id = epi.source_segment_id
+      JOIN sources s
+        ON s.id = ss.source_id
+      WHERE c.exam_unit_id = ?
+      ORDER BY epi.weight DESC, epi.id ASC
+      LIMIT ?
+      ''',
+          variables: [Variable.withInt(examUnitId), Variable.withInt(limit)],
+          readsFrom: {
+            db.claims,
+            db.evidencePacks,
+            db.evidencePackItems,
+            db.sourceSegments,
+            db.sources,
+          },
+        )
+        .get();
+
+    if (rows.isEmpty) {
+      final fallback = await db
+          .customSelect(
+            '''
+        SELECT
+          s.file_name AS source_name,
+          s.file_path AS file_path,
+          ss.page_number AS page_number,
+          SUBSTR(ss.content, 1, 200) AS snippet
+        FROM claims c
+        JOIN evidence_links el
+          ON el.claim_id = c.id
+        JOIN source_segments ss
+          ON ss.id = el.source_segment_id
+        JOIN sources s
+          ON s.id = ss.source_id
+        WHERE c.exam_unit_id = ?
+        ORDER BY el.id ASC
+        LIMIT ?
+        ''',
+            variables: [Variable.withInt(examUnitId), Variable.withInt(limit)],
+            readsFrom: {
+              db.claims,
+              db.evidenceLinks,
+              db.sourceSegments,
+              db.sources,
+            },
+          )
+          .get();
+      return fallback
+          .map(
+            (r) => StudyPlanEvidenceEntry(
+              sourceName: r.read<String>('source_name'),
+              filePath: r.read<String>('file_path'),
+              pageNumber: r.read<int>('page_number'),
+              snippet: r.read<String>('snippet'),
+            ),
+          )
+          .toList();
+    }
+
+    return rows
+        .map(
+          (r) => StudyPlanEvidenceEntry(
+            sourceName: r.read<String>('source_name'),
+            filePath: r.read<String>('file_path'),
+            pageNumber: r.read<int>('page_number'),
+            snippet: r.read<String>('snippet'),
+          ),
+        )
+        .toList();
+  }
+
+  static String _toFileUrl(String path) {
+    final normalized = path.startsWith('/') ? path : '/$path';
+    return 'file://$normalized';
   }
 }

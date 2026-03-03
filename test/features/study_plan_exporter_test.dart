@@ -78,5 +78,8 @@ void main() {
     expect(md, contains('やること:'));
     expect(md, contains('根拠リンク数: 1'));
     expect(md, contains('次回復習日時:'));
+    expect(md, contains('根拠:'));
+    expect(md, contains('a.pdf p.1'));
+    expect(md, contains('file:///tmp/a.pdf'));
   });
 }
