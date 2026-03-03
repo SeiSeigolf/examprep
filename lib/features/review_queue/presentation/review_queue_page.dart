@@ -134,6 +134,10 @@ class ReviewQueuePage extends ConsumerWidget {
                               ),
                               _MetaChip(
                                 label:
+                                    'Mastery ${(item.mastery * 100).toStringAsFixed(0)}%',
+                              ),
+                              _MetaChip(
+                                label:
                                     'Conflict(open): ${item.openConflictCount > 0 ? 'Yes' : 'No'}',
                                 color: item.openConflictCount > 0
                                     ? const Color(0xFFB71C1C)

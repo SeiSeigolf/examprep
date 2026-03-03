@@ -32,17 +32,37 @@ StudyMethod? resolveRecommendedMethod(
       methodsByKey[_studyMethodKey(unit.unitType, '選択肢')];
 }
 
+final unitMasteryStatsProvider = StreamProvider<Map<int, UnitMasteryStat>>((
+  ref,
+) {
+  return ref.watch(databaseProvider).quizAttemptsDao.watchUnitMasteryStats();
+});
+
+double computeUnmasteryScore(UnitMasteryStat? stat) {
+  if (stat == null) return 0;
+  return stat.wrongRate + (stat.attemptCount.clamp(0, 10) / 10);
+}
+
 /// 推奨学習ユニットリスト
-/// 優先順位: low confidence → medium → high
-/// 同一 confidence 内は createdAt 昇順（古い順）
+/// 優先順位:
+/// 1) 信頼度（low > medium > high）
+/// 2) 未習熟度スコア（誤答率 + 回数）
+/// 3) createdAt（古い順）
 final recommendedUnitsProvider = StreamProvider<List<ExamUnit>>((ref) {
+  final masteryByUnit = ref.watch(unitMasteryStatsProvider).valueOrNull ?? {};
   return ref.watch(databaseProvider).examUnitsDao.watchAll().map((units) {
-    const order = {'low': 0, 'medium': 1, 'high': 2};
+    const confidenceScore = {'low': 2.0, 'medium': 1.0, 'high': 0.0};
     final sorted = [...units];
     sorted.sort((a, b) {
-      final ca = order[a.confidenceLevel] ?? 1;
-      final cb = order[b.confidenceLevel] ?? 1;
-      if (ca != cb) return ca.compareTo(cb);
+      final ma = masteryByUnit[a.id];
+      final mb = masteryByUnit[b.id];
+      final ua = computeUnmasteryScore(ma);
+      final ub = computeUnmasteryScore(mb);
+
+      final sa = (confidenceScore[a.confidenceLevel] ?? 1.0) + ua;
+      final sb = (confidenceScore[b.confidenceLevel] ?? 1.0) + ub;
+
+      if (sa != sb) return sb.compareTo(sa);
       return a.createdAt.compareTo(b.createdAt);
     });
     return sorted;

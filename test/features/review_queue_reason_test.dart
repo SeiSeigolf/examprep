@@ -14,6 +14,7 @@ void main() {
       frequency: 1,
       openConflictCount: 2,
       evidenceItemCount: 1,
+      mastery: 0.0,
       priority: 5,
     );
 
@@ -36,6 +37,7 @@ void main() {
       frequency: 1,
       openConflictCount: 0,
       evidenceItemCount: 3,
+      mastery: 1.0,
       priority: 0.1,
     );
     expect(buildReviewReason(item), '優先度スコアが高い');

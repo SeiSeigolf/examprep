@@ -16,6 +16,7 @@ import 'tables/unit_stats.dart';
 import 'tables/evidence_packs.dart';
 import 'tables/evidence_pack_items.dart';
 import 'tables/unit_merge_history.dart';
+import 'tables/quiz_attempts.dart';
 import 'daos/sources_dao.dart';
 import 'daos/exam_units_dao.dart';
 import 'daos/claims_dao.dart';
@@ -24,6 +25,7 @@ import 'daos/dashboard_dao.dart';
 import 'daos/search_dao.dart';
 import 'daos/study_methods_dao.dart';
 import 'daos/evidence_packs_dao.dart';
+import 'daos/quiz_attempts_dao.dart';
 
 export 'tables/sources.dart';
 export 'tables/source_segments.dart';
@@ -37,7 +39,9 @@ export 'tables/unit_stats.dart';
 export 'tables/evidence_packs.dart';
 export 'tables/evidence_pack_items.dart';
 export 'tables/unit_merge_history.dart';
+export 'tables/quiz_attempts.dart';
 export 'daos/evidence_packs_dao.dart';
+export 'daos/quiz_attempts_dao.dart';
 
 part 'database.g.dart';
 
@@ -55,6 +59,7 @@ part 'database.g.dart';
     EvidencePacks,
     EvidencePackItems,
     UnitMergeHistory,
+    QuizAttempts,
   ],
   daos: [
     SourcesDao,
@@ -65,6 +70,7 @@ part 'database.g.dart';
     SearchDao,
     StudyMethodsDao,
     EvidencePacksDao,
+    QuizAttemptsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -74,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -166,6 +172,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 10) {
         await m.addColumn(examUnits, examUnits.problemFormat);
+      }
+      if (from < 11) {
+        await m.createTable(quizAttempts);
       }
     },
   );

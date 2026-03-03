@@ -139,7 +139,7 @@ class ExamUnitDetailPage extends ConsumerWidget {
   }
 }
 
-class _QuizGeneratorPanel extends ConsumerWidget {
+class _QuizGeneratorPanel extends ConsumerStatefulWidget {
   const _QuizGeneratorPanel({
     required this.examUnitId,
     required this.problemFormat,
@@ -149,7 +149,78 @@ class _QuizGeneratorPanel extends ConsumerWidget {
   final String problemFormat;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QuizGeneratorPanel> createState() =>
+      _QuizGeneratorPanelState();
+}
+
+class _QuizGeneratorPanelState extends ConsumerState<_QuizGeneratorPanel> {
+  DateTime _startedAt = DateTime.now();
+  int? _lastClaimId;
+  int? _selectedChoiceIndex;
+  final _answerController = TextEditingController();
+  bool _saving = false;
+  bool? _lastResult;
+  int? _lastSeconds;
+
+  @override
+  void dispose() {
+    _answerController.dispose();
+    super.dispose();
+  }
+
+  void _resetForClaim(int claimId) {
+    if (_lastClaimId == claimId) return;
+    _lastClaimId = claimId;
+    _startedAt = DateTime.now();
+    _selectedChoiceIndex = null;
+    _answerController.clear();
+    _lastResult = null;
+    _lastSeconds = null;
+  }
+
+  Future<void> _saveAttempt({
+    required int examUnitId,
+    required int claimId,
+    required String format,
+    required bool isCorrect,
+  }) async {
+    final seconds = DateTime.now()
+        .difference(_startedAt)
+        .inSeconds
+        .clamp(0, 36000);
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(databaseProvider)
+          .quizAttemptsDao
+          .insertAttempt(
+            examUnitId: examUnitId,
+            claimId: claimId,
+            format: format,
+            isCorrect: isCorrect,
+            secondsSpent: seconds,
+          );
+      if (!mounted) return;
+      setState(() {
+        _lastResult = isCorrect;
+        _lastSeconds = seconds;
+        _startedAt = DateTime.now();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('回答を保存しました: ${isCorrect ? '正解' : '不正解'} / ${seconds}s'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final examUnitId = widget.examUnitId;
+    final problemFormat = widget.problemFormat;
     final claimsAsync = ref.watch(claimsForUnitProvider(examUnitId));
     final selectedClaimId = ref.watch(selectedClaimIdProvider);
     final segmentsAsync = ref.watch(allSegmentsWithSourceProvider);
@@ -174,6 +245,8 @@ class _QuizGeneratorPanel extends ConsumerWidget {
             (c) => c.id == selectedClaimId,
             orElse: () => claims.first,
           );
+          _resetForClaim(target.id);
+
           final quiz = generateQuizForUnit(
             problemFormat: problemFormat,
             targetClaim: target,
@@ -210,7 +283,57 @@ class _QuizGeneratorPanel extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              _QuizBody(quiz: quiz),
+              _QuizBody(
+                quiz: quiz,
+                selectedChoiceIndex: _selectedChoiceIndex,
+                answerController: _answerController,
+                saving: _saving,
+                onChoiceSelected: (v) =>
+                    setState(() => _selectedChoiceIndex = v),
+                onSubmitMcq: () async {
+                  final idx = _selectedChoiceIndex;
+                  if (idx == null) return;
+                  final isCorrect = idx == quiz.correctChoiceIndex;
+                  await _saveAttempt(
+                    examUnitId: examUnitId,
+                    claimId: target.id,
+                    format: '選択肢',
+                    isCorrect: isCorrect,
+                  );
+                },
+                onSubmitFill: () async {
+                  final user = _answerController.text.trim();
+                  final ans = (quiz.answer ?? '').trim();
+                  if (user.isEmpty || ans.isEmpty) return;
+                  final isCorrect = user.toLowerCase() == ans.toLowerCase();
+                  await _saveAttempt(
+                    examUnitId: examUnitId,
+                    claimId: target.id,
+                    format: '穴埋め',
+                    isCorrect: isCorrect,
+                  );
+                },
+                onSubmitDescriptive: (isCorrect) async {
+                  await _saveAttempt(
+                    examUnitId: examUnitId,
+                    claimId: target.id,
+                    format: '記述',
+                    isCorrect: isCorrect,
+                  );
+                },
+              ),
+              if (_lastResult != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '直近結果: ${_lastResult! ? '正解' : '不正解'} (${_lastSeconds ?? 0}s)',
+                  style: TextStyle(
+                    color: _lastResult!
+                        ? Colors.lightGreenAccent
+                        : Colors.amberAccent,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               const Text(
                 '根拠（EvidencePackItems）',
@@ -296,8 +419,24 @@ class _QuizGeneratorPanel extends ConsumerWidget {
 }
 
 class _QuizBody extends StatelessWidget {
-  const _QuizBody({required this.quiz});
+  const _QuizBody({
+    required this.quiz,
+    required this.selectedChoiceIndex,
+    required this.answerController,
+    required this.saving,
+    required this.onChoiceSelected,
+    required this.onSubmitMcq,
+    required this.onSubmitFill,
+    required this.onSubmitDescriptive,
+  });
   final GeneratedQuiz quiz;
+  final int? selectedChoiceIndex;
+  final TextEditingController answerController;
+  final bool saving;
+  final ValueChanged<int?> onChoiceSelected;
+  final VoidCallback onSubmitMcq;
+  final VoidCallback onSubmitFill;
+  final ValueChanged<bool> onSubmitDescriptive;
 
   @override
   Widget build(BuildContext context) {
@@ -312,9 +451,20 @@ class _QuizBody extends StatelessWidget {
                 style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
               const SizedBox(height: 6),
-              Text(
-                '解答: ${quiz.answer ?? '-'}',
-                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              TextField(
+                controller: answerController,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  hintText: '解答を入力',
+                  hintStyle: TextStyle(color: Colors.white30),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              FilledButton.tonal(
+                onPressed: saving ? null : onSubmitFill,
+                child: const Text('判定して保存'),
               ),
             ],
           ),
@@ -340,6 +490,32 @@ class _QuizBody extends StatelessWidget {
                   style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: answerController,
+                maxLines: 2,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  hintText: '回答を記述（MVPでは自己採点）',
+                  hintStyle: TextStyle(color: Colors.white30),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  FilledButton.tonal(
+                    onPressed: saving ? null : () => onSubmitDescriptive(true),
+                    child: const Text('正解として保存'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonal(
+                    onPressed: saving ? null : () => onSubmitDescriptive(false),
+                    child: const Text('不正解として保存'),
+                  ),
+                ],
+              ),
             ],
           ),
         );
@@ -355,15 +531,22 @@ class _QuizBody extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               ...quiz.choices.asMap().entries.map(
-                (e) => Text(
-                  '${e.key + 1}. ${e.value}',
-                  style: TextStyle(
-                    color: e.key == quiz.correctChoiceIndex
-                        ? Colors.lightGreenAccent
-                        : Colors.white38,
-                    fontSize: 11,
+                (e) => RadioListTile<int>(
+                  value: e.key,
+                  groupValue: selectedChoiceIndex,
+                  onChanged: saving ? null : onChoiceSelected,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    '${e.key + 1}. ${e.value}',
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
                 ),
+              ),
+              const SizedBox(height: 8),
+              FilledButton.tonal(
+                onPressed: saving ? null : onSubmitMcq,
+                child: const Text('判定して保存'),
               ),
             ],
           ),

@@ -6555,6 +6555,479 @@ class UnitMergeHistoryCompanion extends UpdateCompanion<UnitMergeHistoryData> {
   }
 }
 
+class $QuizAttemptsTable extends QuizAttempts
+    with TableInfo<$QuizAttemptsTable, QuizAttempt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QuizAttemptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _examUnitIdMeta = const VerificationMeta(
+    'examUnitId',
+  );
+  @override
+  late final GeneratedColumn<int> examUnitId = GeneratedColumn<int>(
+    'exam_unit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _claimIdMeta = const VerificationMeta(
+    'claimId',
+  );
+  @override
+  late final GeneratedColumn<int> claimId = GeneratedColumn<int>(
+    'claim_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES claims (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _formatMeta = const VerificationMeta('format');
+  @override
+  late final GeneratedColumn<String> format = GeneratedColumn<String>(
+    'format',
+    aliasedName,
+    false,
+    check: () => format.isIn(const ['選択肢', '穴埋め', '記述', '画像問題', '計算']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isCorrectMeta = const VerificationMeta(
+    'isCorrect',
+  );
+  @override
+  late final GeneratedColumn<bool> isCorrect = GeneratedColumn<bool>(
+    'is_correct',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_correct" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _secondsSpentMeta = const VerificationMeta(
+    'secondsSpent',
+  );
+  @override
+  late final GeneratedColumn<int> secondsSpent = GeneratedColumn<int>(
+    'seconds_spent',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _attemptedAtMeta = const VerificationMeta(
+    'attemptedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> attemptedAt = GeneratedColumn<DateTime>(
+    'attempted_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    examUnitId,
+    claimId,
+    format,
+    isCorrect,
+    secondsSpent,
+    attemptedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'quiz_attempts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QuizAttempt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('exam_unit_id')) {
+      context.handle(
+        _examUnitIdMeta,
+        examUnitId.isAcceptableOrUnknown(
+          data['exam_unit_id']!,
+          _examUnitIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_examUnitIdMeta);
+    }
+    if (data.containsKey('claim_id')) {
+      context.handle(
+        _claimIdMeta,
+        claimId.isAcceptableOrUnknown(data['claim_id']!, _claimIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claimIdMeta);
+    }
+    if (data.containsKey('format')) {
+      context.handle(
+        _formatMeta,
+        format.isAcceptableOrUnknown(data['format']!, _formatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formatMeta);
+    }
+    if (data.containsKey('is_correct')) {
+      context.handle(
+        _isCorrectMeta,
+        isCorrect.isAcceptableOrUnknown(data['is_correct']!, _isCorrectMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isCorrectMeta);
+    }
+    if (data.containsKey('seconds_spent')) {
+      context.handle(
+        _secondsSpentMeta,
+        secondsSpent.isAcceptableOrUnknown(
+          data['seconds_spent']!,
+          _secondsSpentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('attempted_at')) {
+      context.handle(
+        _attemptedAtMeta,
+        attemptedAt.isAcceptableOrUnknown(
+          data['attempted_at']!,
+          _attemptedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  QuizAttempt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QuizAttempt(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      examUnitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exam_unit_id'],
+      )!,
+      claimId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}claim_id'],
+      )!,
+      format: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}format'],
+      )!,
+      isCorrect: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_correct'],
+      )!,
+      secondsSpent: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seconds_spent'],
+      )!,
+      attemptedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}attempted_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QuizAttemptsTable createAlias(String alias) {
+    return $QuizAttemptsTable(attachedDatabase, alias);
+  }
+}
+
+class QuizAttempt extends DataClass implements Insertable<QuizAttempt> {
+  final int id;
+  final int examUnitId;
+  final int claimId;
+  final String format;
+  final bool isCorrect;
+  final int secondsSpent;
+  final DateTime attemptedAt;
+  const QuizAttempt({
+    required this.id,
+    required this.examUnitId,
+    required this.claimId,
+    required this.format,
+    required this.isCorrect,
+    required this.secondsSpent,
+    required this.attemptedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['exam_unit_id'] = Variable<int>(examUnitId);
+    map['claim_id'] = Variable<int>(claimId);
+    map['format'] = Variable<String>(format);
+    map['is_correct'] = Variable<bool>(isCorrect);
+    map['seconds_spent'] = Variable<int>(secondsSpent);
+    map['attempted_at'] = Variable<DateTime>(attemptedAt);
+    return map;
+  }
+
+  QuizAttemptsCompanion toCompanion(bool nullToAbsent) {
+    return QuizAttemptsCompanion(
+      id: Value(id),
+      examUnitId: Value(examUnitId),
+      claimId: Value(claimId),
+      format: Value(format),
+      isCorrect: Value(isCorrect),
+      secondsSpent: Value(secondsSpent),
+      attemptedAt: Value(attemptedAt),
+    );
+  }
+
+  factory QuizAttempt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QuizAttempt(
+      id: serializer.fromJson<int>(json['id']),
+      examUnitId: serializer.fromJson<int>(json['examUnitId']),
+      claimId: serializer.fromJson<int>(json['claimId']),
+      format: serializer.fromJson<String>(json['format']),
+      isCorrect: serializer.fromJson<bool>(json['isCorrect']),
+      secondsSpent: serializer.fromJson<int>(json['secondsSpent']),
+      attemptedAt: serializer.fromJson<DateTime>(json['attemptedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'examUnitId': serializer.toJson<int>(examUnitId),
+      'claimId': serializer.toJson<int>(claimId),
+      'format': serializer.toJson<String>(format),
+      'isCorrect': serializer.toJson<bool>(isCorrect),
+      'secondsSpent': serializer.toJson<int>(secondsSpent),
+      'attemptedAt': serializer.toJson<DateTime>(attemptedAt),
+    };
+  }
+
+  QuizAttempt copyWith({
+    int? id,
+    int? examUnitId,
+    int? claimId,
+    String? format,
+    bool? isCorrect,
+    int? secondsSpent,
+    DateTime? attemptedAt,
+  }) => QuizAttempt(
+    id: id ?? this.id,
+    examUnitId: examUnitId ?? this.examUnitId,
+    claimId: claimId ?? this.claimId,
+    format: format ?? this.format,
+    isCorrect: isCorrect ?? this.isCorrect,
+    secondsSpent: secondsSpent ?? this.secondsSpent,
+    attemptedAt: attemptedAt ?? this.attemptedAt,
+  );
+  QuizAttempt copyWithCompanion(QuizAttemptsCompanion data) {
+    return QuizAttempt(
+      id: data.id.present ? data.id.value : this.id,
+      examUnitId: data.examUnitId.present
+          ? data.examUnitId.value
+          : this.examUnitId,
+      claimId: data.claimId.present ? data.claimId.value : this.claimId,
+      format: data.format.present ? data.format.value : this.format,
+      isCorrect: data.isCorrect.present ? data.isCorrect.value : this.isCorrect,
+      secondsSpent: data.secondsSpent.present
+          ? data.secondsSpent.value
+          : this.secondsSpent,
+      attemptedAt: data.attemptedAt.present
+          ? data.attemptedAt.value
+          : this.attemptedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuizAttempt(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('claimId: $claimId, ')
+          ..write('format: $format, ')
+          ..write('isCorrect: $isCorrect, ')
+          ..write('secondsSpent: $secondsSpent, ')
+          ..write('attemptedAt: $attemptedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    examUnitId,
+    claimId,
+    format,
+    isCorrect,
+    secondsSpent,
+    attemptedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QuizAttempt &&
+          other.id == this.id &&
+          other.examUnitId == this.examUnitId &&
+          other.claimId == this.claimId &&
+          other.format == this.format &&
+          other.isCorrect == this.isCorrect &&
+          other.secondsSpent == this.secondsSpent &&
+          other.attemptedAt == this.attemptedAt);
+}
+
+class QuizAttemptsCompanion extends UpdateCompanion<QuizAttempt> {
+  final Value<int> id;
+  final Value<int> examUnitId;
+  final Value<int> claimId;
+  final Value<String> format;
+  final Value<bool> isCorrect;
+  final Value<int> secondsSpent;
+  final Value<DateTime> attemptedAt;
+  const QuizAttemptsCompanion({
+    this.id = const Value.absent(),
+    this.examUnitId = const Value.absent(),
+    this.claimId = const Value.absent(),
+    this.format = const Value.absent(),
+    this.isCorrect = const Value.absent(),
+    this.secondsSpent = const Value.absent(),
+    this.attemptedAt = const Value.absent(),
+  });
+  QuizAttemptsCompanion.insert({
+    this.id = const Value.absent(),
+    required int examUnitId,
+    required int claimId,
+    required String format,
+    required bool isCorrect,
+    this.secondsSpent = const Value.absent(),
+    this.attemptedAt = const Value.absent(),
+  }) : examUnitId = Value(examUnitId),
+       claimId = Value(claimId),
+       format = Value(format),
+       isCorrect = Value(isCorrect);
+  static Insertable<QuizAttempt> custom({
+    Expression<int>? id,
+    Expression<int>? examUnitId,
+    Expression<int>? claimId,
+    Expression<String>? format,
+    Expression<bool>? isCorrect,
+    Expression<int>? secondsSpent,
+    Expression<DateTime>? attemptedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (examUnitId != null) 'exam_unit_id': examUnitId,
+      if (claimId != null) 'claim_id': claimId,
+      if (format != null) 'format': format,
+      if (isCorrect != null) 'is_correct': isCorrect,
+      if (secondsSpent != null) 'seconds_spent': secondsSpent,
+      if (attemptedAt != null) 'attempted_at': attemptedAt,
+    });
+  }
+
+  QuizAttemptsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? examUnitId,
+    Value<int>? claimId,
+    Value<String>? format,
+    Value<bool>? isCorrect,
+    Value<int>? secondsSpent,
+    Value<DateTime>? attemptedAt,
+  }) {
+    return QuizAttemptsCompanion(
+      id: id ?? this.id,
+      examUnitId: examUnitId ?? this.examUnitId,
+      claimId: claimId ?? this.claimId,
+      format: format ?? this.format,
+      isCorrect: isCorrect ?? this.isCorrect,
+      secondsSpent: secondsSpent ?? this.secondsSpent,
+      attemptedAt: attemptedAt ?? this.attemptedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (examUnitId.present) {
+      map['exam_unit_id'] = Variable<int>(examUnitId.value);
+    }
+    if (claimId.present) {
+      map['claim_id'] = Variable<int>(claimId.value);
+    }
+    if (format.present) {
+      map['format'] = Variable<String>(format.value);
+    }
+    if (isCorrect.present) {
+      map['is_correct'] = Variable<bool>(isCorrect.value);
+    }
+    if (secondsSpent.present) {
+      map['seconds_spent'] = Variable<int>(secondsSpent.value);
+    }
+    if (attemptedAt.present) {
+      map['attempted_at'] = Variable<DateTime>(attemptedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuizAttemptsCompanion(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('claimId: $claimId, ')
+          ..write('format: $format, ')
+          ..write('isCorrect: $isCorrect, ')
+          ..write('secondsSpent: $secondsSpent, ')
+          ..write('attemptedAt: $attemptedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6573,6 +7046,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UnitMergeHistoryTable unitMergeHistory = $UnitMergeHistoryTable(
     this,
   );
+  late final $QuizAttemptsTable quizAttempts = $QuizAttemptsTable(this);
   late final SourcesDao sourcesDao = SourcesDao(this as AppDatabase);
   late final ExamUnitsDao examUnitsDao = ExamUnitsDao(this as AppDatabase);
   late final ClaimsDao claimsDao = ClaimsDao(this as AppDatabase);
@@ -6583,6 +7057,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final EvidencePacksDao evidencePacksDao = EvidencePacksDao(
+    this as AppDatabase,
+  );
+  late final QuizAttemptsDao quizAttemptsDao = QuizAttemptsDao(
     this as AppDatabase,
   );
   @override
@@ -6602,6 +7079,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     evidencePacks,
     evidencePackItems,
     unitMergeHistory,
+    quizAttempts,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6702,6 +7180,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('evidence_pack_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'exam_units',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('quiz_attempts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'claims',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('quiz_attempts', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -7955,6 +8447,27 @@ final class $$ExamUnitsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$QuizAttemptsTable, List<QuizAttempt>>
+  _quizAttemptsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.quizAttempts,
+    aliasName: $_aliasNameGenerator(
+      db.examUnits.id,
+      db.quizAttempts.examUnitId,
+    ),
+  );
+
+  $$QuizAttemptsTableProcessedTableManager get quizAttemptsRefs {
+    final manager = $$QuizAttemptsTableTableManager(
+      $_db,
+      $_db.quizAttempts,
+    ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_quizAttemptsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ExamUnitsTableFilterComposer
@@ -8137,6 +8650,31 @@ class $$ExamUnitsTableFilterComposer
           }) => $$UnitMergeHistoryTableFilterComposer(
             $db: $db,
             $table: $db.unitMergeHistory,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> quizAttemptsRefs(
+    Expression<bool> Function($$QuizAttemptsTableFilterComposer f) f,
+  ) {
+    final $$QuizAttemptsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.quizAttempts,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$QuizAttemptsTableFilterComposer(
+            $db: $db,
+            $table: $db.quizAttempts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8388,6 +8926,31 @@ class $$ExamUnitsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> quizAttemptsRefs<T extends Object>(
+    Expression<T> Function($$QuizAttemptsTableAnnotationComposer a) f,
+  ) {
+    final $$QuizAttemptsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.quizAttempts,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$QuizAttemptsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.quizAttempts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ExamUnitsTableTableManager
@@ -8409,6 +8972,7 @@ class $$ExamUnitsTableTableManager
             bool conflictsRefs,
             bool unitStatsRefs,
             bool unitMergeHistoryRefs,
+            bool quizAttemptsRefs,
           })
         > {
   $$ExamUnitsTableTableManager(_$AppDatabase db, $ExamUnitsTable table)
@@ -8489,6 +9053,7 @@ class $$ExamUnitsTableTableManager
                 conflictsRefs = false,
                 unitStatsRefs = false,
                 unitMergeHistoryRefs = false,
+                quizAttemptsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -8498,6 +9063,7 @@ class $$ExamUnitsTableTableManager
                     if (conflictsRefs) db.conflicts,
                     if (unitStatsRefs) db.unitStats,
                     if (unitMergeHistoryRefs) db.unitMergeHistory,
+                    if (quizAttemptsRefs) db.quizAttempts,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -8607,6 +9173,27 @@ class $$ExamUnitsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (quizAttemptsRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          QuizAttempt
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._quizAttemptsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).quizAttemptsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.examUnitId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -8633,6 +9220,7 @@ typedef $$ExamUnitsTableProcessedTableManager =
         bool conflictsRefs,
         bool unitStatsRefs,
         bool unitMergeHistoryRefs,
+        bool quizAttemptsRefs,
       })
     >;
 typedef $$ClaimsTableCreateCompanionBuilder =
@@ -8726,6 +9314,24 @@ final class $$ClaimsTableReferences
     ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_evidencePacksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$QuizAttemptsTable, List<QuizAttempt>>
+  _quizAttemptsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.quizAttempts,
+    aliasName: $_aliasNameGenerator(db.claims.id, db.quizAttempts.claimId),
+  );
+
+  $$QuizAttemptsTableProcessedTableManager get quizAttemptsRefs {
+    final manager = $$QuizAttemptsTableTableManager(
+      $_db,
+      $_db.quizAttempts,
+    ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_quizAttemptsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -8860,6 +9466,31 @@ class $$ClaimsTableFilterComposer
           }) => $$EvidencePacksTableFilterComposer(
             $db: $db,
             $table: $db.evidencePacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> quizAttemptsRefs(
+    Expression<bool> Function($$QuizAttemptsTableFilterComposer f) f,
+  ) {
+    final $$QuizAttemptsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.quizAttempts,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$QuizAttemptsTableFilterComposer(
+            $db: $db,
+            $table: $db.quizAttempts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9061,6 +9692,31 @@ class $$ClaimsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> quizAttemptsRefs<T extends Object>(
+    Expression<T> Function($$QuizAttemptsTableAnnotationComposer a) f,
+  ) {
+    final $$QuizAttemptsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.quizAttempts,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$QuizAttemptsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.quizAttempts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ClaimsTableTableManager
@@ -9081,6 +9737,7 @@ class $$ClaimsTableTableManager
             bool evidenceLinksRefs,
             bool conflictsRefs,
             bool evidencePacksRefs,
+            bool quizAttemptsRefs,
           })
         > {
   $$ClaimsTableTableManager(_$AppDatabase db, $ClaimsTable table)
@@ -9142,6 +9799,7 @@ class $$ClaimsTableTableManager
                 evidenceLinksRefs = false,
                 conflictsRefs = false,
                 evidencePacksRefs = false,
+                quizAttemptsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9149,6 +9807,7 @@ class $$ClaimsTableTableManager
                     if (evidenceLinksRefs) db.evidenceLinks,
                     if (conflictsRefs) db.conflicts,
                     if (evidencePacksRefs) db.evidencePacks,
+                    if (quizAttemptsRefs) db.quizAttempts,
                   ],
                   addJoins:
                       <
@@ -9247,6 +9906,27 @@ class $$ClaimsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (quizAttemptsRefs)
+                        await $_getPrefetchedData<
+                          Claim,
+                          $ClaimsTable,
+                          QuizAttempt
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ClaimsTableReferences
+                              ._quizAttemptsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ClaimsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).quizAttemptsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.claimId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9272,6 +9952,7 @@ typedef $$ClaimsTableProcessedTableManager =
         bool evidenceLinksRefs,
         bool conflictsRefs,
         bool evidencePacksRefs,
+        bool quizAttemptsRefs,
       })
     >;
 typedef $$EvidenceLinksTableCreateCompanionBuilder =
@@ -13057,6 +13738,448 @@ typedef $$UnitMergeHistoryTableProcessedTableManager =
       UnitMergeHistoryData,
       PrefetchHooks Function({bool parentId})
     >;
+typedef $$QuizAttemptsTableCreateCompanionBuilder =
+    QuizAttemptsCompanion Function({
+      Value<int> id,
+      required int examUnitId,
+      required int claimId,
+      required String format,
+      required bool isCorrect,
+      Value<int> secondsSpent,
+      Value<DateTime> attemptedAt,
+    });
+typedef $$QuizAttemptsTableUpdateCompanionBuilder =
+    QuizAttemptsCompanion Function({
+      Value<int> id,
+      Value<int> examUnitId,
+      Value<int> claimId,
+      Value<String> format,
+      Value<bool> isCorrect,
+      Value<int> secondsSpent,
+      Value<DateTime> attemptedAt,
+    });
+
+final class $$QuizAttemptsTableReferences
+    extends BaseReferences<_$AppDatabase, $QuizAttemptsTable, QuizAttempt> {
+  $$QuizAttemptsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ExamUnitsTable _examUnitIdTable(_$AppDatabase db) =>
+      db.examUnits.createAlias(
+        $_aliasNameGenerator(db.quizAttempts.examUnitId, db.examUnits.id),
+      );
+
+  $$ExamUnitsTableProcessedTableManager get examUnitId {
+    final $_column = $_itemColumn<int>('exam_unit_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_examUnitIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ClaimsTable _claimIdTable(_$AppDatabase db) => db.claims.createAlias(
+    $_aliasNameGenerator(db.quizAttempts.claimId, db.claims.id),
+  );
+
+  $$ClaimsTableProcessedTableManager get claimId {
+    final $_column = $_itemColumn<int>('claim_id')!;
+
+    final manager = $$ClaimsTableTableManager(
+      $_db,
+      $_db.claims,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_claimIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$QuizAttemptsTableFilterComposer
+    extends Composer<_$AppDatabase, $QuizAttemptsTable> {
+  $$QuizAttemptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isCorrect => $composableBuilder(
+    column: $table.isCorrect,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get secondsSpent => $composableBuilder(
+    column: $table.secondsSpent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get attemptedAt => $composableBuilder(
+    column: $table.attemptedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ExamUnitsTableFilterComposer get examUnitId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableFilterComposer get claimId {
+    final $$ClaimsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableFilterComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$QuizAttemptsTableOrderingComposer
+    extends Composer<_$AppDatabase, $QuizAttemptsTable> {
+  $$QuizAttemptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isCorrect => $composableBuilder(
+    column: $table.isCorrect,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get secondsSpent => $composableBuilder(
+    column: $table.secondsSpent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get attemptedAt => $composableBuilder(
+    column: $table.attemptedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ExamUnitsTableOrderingComposer get examUnitId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableOrderingComposer get claimId {
+    final $$ClaimsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableOrderingComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$QuizAttemptsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QuizAttemptsTable> {
+  $$QuizAttemptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
+  GeneratedColumn<bool> get isCorrect =>
+      $composableBuilder(column: $table.isCorrect, builder: (column) => column);
+
+  GeneratedColumn<int> get secondsSpent => $composableBuilder(
+    column: $table.secondsSpent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get attemptedAt => $composableBuilder(
+    column: $table.attemptedAt,
+    builder: (column) => column,
+  );
+
+  $$ExamUnitsTableAnnotationComposer get examUnitId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ClaimsTableAnnotationComposer get claimId {
+    final $$ClaimsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$QuizAttemptsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QuizAttemptsTable,
+          QuizAttempt,
+          $$QuizAttemptsTableFilterComposer,
+          $$QuizAttemptsTableOrderingComposer,
+          $$QuizAttemptsTableAnnotationComposer,
+          $$QuizAttemptsTableCreateCompanionBuilder,
+          $$QuizAttemptsTableUpdateCompanionBuilder,
+          (QuizAttempt, $$QuizAttemptsTableReferences),
+          QuizAttempt,
+          PrefetchHooks Function({bool examUnitId, bool claimId})
+        > {
+  $$QuizAttemptsTableTableManager(_$AppDatabase db, $QuizAttemptsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QuizAttemptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QuizAttemptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QuizAttemptsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> examUnitId = const Value.absent(),
+                Value<int> claimId = const Value.absent(),
+                Value<String> format = const Value.absent(),
+                Value<bool> isCorrect = const Value.absent(),
+                Value<int> secondsSpent = const Value.absent(),
+                Value<DateTime> attemptedAt = const Value.absent(),
+              }) => QuizAttemptsCompanion(
+                id: id,
+                examUnitId: examUnitId,
+                claimId: claimId,
+                format: format,
+                isCorrect: isCorrect,
+                secondsSpent: secondsSpent,
+                attemptedAt: attemptedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int examUnitId,
+                required int claimId,
+                required String format,
+                required bool isCorrect,
+                Value<int> secondsSpent = const Value.absent(),
+                Value<DateTime> attemptedAt = const Value.absent(),
+              }) => QuizAttemptsCompanion.insert(
+                id: id,
+                examUnitId: examUnitId,
+                claimId: claimId,
+                format: format,
+                isCorrect: isCorrect,
+                secondsSpent: secondsSpent,
+                attemptedAt: attemptedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$QuizAttemptsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({examUnitId = false, claimId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (examUnitId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.examUnitId,
+                                referencedTable: $$QuizAttemptsTableReferences
+                                    ._examUnitIdTable(db),
+                                referencedColumn: $$QuizAttemptsTableReferences
+                                    ._examUnitIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (claimId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.claimId,
+                                referencedTable: $$QuizAttemptsTableReferences
+                                    ._claimIdTable(db),
+                                referencedColumn: $$QuizAttemptsTableReferences
+                                    ._claimIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$QuizAttemptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QuizAttemptsTable,
+      QuizAttempt,
+      $$QuizAttemptsTableFilterComposer,
+      $$QuizAttemptsTableOrderingComposer,
+      $$QuizAttemptsTableAnnotationComposer,
+      $$QuizAttemptsTableCreateCompanionBuilder,
+      $$QuizAttemptsTableUpdateCompanionBuilder,
+      (QuizAttempt, $$QuizAttemptsTableReferences),
+      QuizAttempt,
+      PrefetchHooks Function({bool examUnitId, bool claimId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13085,4 +14208,6 @@ class $AppDatabaseManager {
       $$EvidencePackItemsTableTableManager(_db, _db.evidencePackItems);
   $$UnitMergeHistoryTableTableManager get unitMergeHistory =>
       $$UnitMergeHistoryTableTableManager(_db, _db.unitMergeHistory);
+  $$QuizAttemptsTableTableManager get quizAttempts =>
+      $$QuizAttemptsTableTableManager(_db, _db.quizAttempts);
 }
