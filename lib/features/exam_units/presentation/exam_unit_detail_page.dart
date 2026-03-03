@@ -5,11 +5,13 @@ import '../providers/exam_units.provider.dart';
 import '../providers/claims.provider.dart';
 import '../providers/unit_stats.provider.dart';
 import '../../../db/database.provider.dart';
+import '../../ingestion/presentation/widgets/pdf_viewer_dialog.dart';
 import 'widgets/add_claim_dialog.dart';
 import 'widgets/claim_list_item.dart';
 import 'widgets/confidence_badge.dart';
 import 'widgets/evidence_panel.dart';
 import 'widgets/exam_unit_dialog.dart';
+import '../services/quiz_generator.dart';
 
 class ExamUnitDetailPage extends ConsumerWidget {
   const ExamUnitDetailPage({super.key, required this.examUnitId});
@@ -114,6 +116,10 @@ class ExamUnitDetailPage extends ConsumerWidget {
             ),
           ),
         _ReviewSettingsBar(examUnitId: examUnitId),
+        _QuizGeneratorPanel(
+          examUnitId: examUnitId,
+          problemFormat: u.problemFormat,
+        ),
 
         // ---- 2カラムコンテンツ ----
         Expanded(
@@ -129,6 +135,283 @@ class ExamUnitDetailPage extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _QuizGeneratorPanel extends ConsumerWidget {
+  const _QuizGeneratorPanel({
+    required this.examUnitId,
+    required this.problemFormat,
+  });
+
+  final int examUnitId;
+  final String problemFormat;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimsAsync = ref.watch(claimsForUnitProvider(examUnitId));
+    final selectedClaimId = ref.watch(selectedClaimIdProvider);
+    final segmentsAsync = ref.watch(allSegmentsWithSourceProvider);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
+      color: const Color(0xFF16191F),
+      child: claimsAsync.when(
+        loading: () => const LinearProgressIndicator(minHeight: 2),
+        error: (e, _) => Text(
+          'クイズ生成エラー: $e',
+          style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+        ),
+        data: (claims) {
+          if (claims.isEmpty) {
+            return const Text(
+              'Claimがないためクイズを生成できません',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            );
+          }
+          final target = claims.firstWhere(
+            (c) => c.id == selectedClaimId,
+            orElse: () => claims.first,
+          );
+          final quiz = generateQuizForUnit(
+            problemFormat: problemFormat,
+            targetClaim: target,
+            allClaimsInUnit: claims,
+          );
+          final packAsync = ref.watch(evidencePackForClaimProvider(target.id));
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.quiz_outlined,
+                    size: 15,
+                    color: Colors.white54,
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'クイズ生成（MVP）',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _FormatChip(problemFormat),
+                  const Spacer(),
+                  Text(
+                    '対象Claim: ${target.id}',
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _QuizBody(quiz: quiz),
+              const SizedBox(height: 10),
+              const Text(
+                '根拠（EvidencePackItems）',
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              packAsync.when(
+                loading: () => const Text(
+                  '読み込み中...',
+                  style: TextStyle(color: Colors.white24, fontSize: 11),
+                ),
+                error: (e, _) => Text(
+                  '読み込みエラー: $e',
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                ),
+                data: (bundle) {
+                  if (bundle == null || bundle.items.isEmpty) {
+                    return const Text(
+                      'EvidencePackItemsなし',
+                      style: TextStyle(color: Colors.white24, fontSize: 11),
+                    );
+                  }
+                  return segmentsAsync.when(
+                    loading: () => const Text(
+                      '参照情報を読み込み中...',
+                      style: TextStyle(color: Colors.white24, fontSize: 11),
+                    ),
+                    error: (e, _) => Text(
+                      '参照情報エラー: $e',
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 11,
+                      ),
+                    ),
+                    data: (segments) {
+                      final map = {for (final s in segments) s.segment.id: s};
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: bundle.items.map((item) {
+                          final seg = map[item.sourceSegmentId];
+                          final page =
+                              item.pageNumber ?? seg?.segment.pageNumber;
+                          final enabled =
+                              seg != null && page != null && page > 0;
+                          return OutlinedButton.icon(
+                            onPressed: !enabled
+                                ? null
+                                : () => showDialog(
+                                    context: context,
+                                    builder: (_) => PdfViewerDialog(
+                                      filePath: seg.source.filePath,
+                                      fileName: seg.source.fileName,
+                                      pageNumber: page,
+                                    ),
+                                  ),
+                            icon: const Icon(Icons.picture_as_pdf, size: 13),
+                            label: Text(
+                              'p.${page ?? '-'}',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 30),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _QuizBody extends StatelessWidget {
+  const _QuizBody({required this.quiz});
+  final GeneratedQuiz quiz;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (quiz.problemFormat) {
+      case '穴埋め':
+        return _Panel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                quiz.prompt,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '解答: ${quiz.answer ?? '-'}',
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+            ],
+          ),
+        );
+      case '記述':
+        return _Panel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                quiz.prompt,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '採点要素',
+                style: TextStyle(color: Colors.white60, fontSize: 11),
+              ),
+              const SizedBox(height: 4),
+              ...quiz.rubric.map(
+                (r) => Text(
+                  '• $r',
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+        );
+      case '選択肢':
+      default:
+        return _Panel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                quiz.prompt,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              ...quiz.choices.asMap().entries.map(
+                (e) => Text(
+                  '${e.key + 1}. ${e.value}',
+                  style: TextStyle(
+                    color: e.key == quiz.correctChoiceIndex
+                        ? Colors.lightGreenAccent
+                        : Colors.white38,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+    }
+  }
+}
+
+class _Panel extends StatelessWidget {
+  const _Panel({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _FormatChip extends StatelessWidget {
+  const _FormatChip(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
