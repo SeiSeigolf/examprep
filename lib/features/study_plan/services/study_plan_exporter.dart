@@ -173,10 +173,7 @@ class StudyPlanExporter {
         b.writeln('     - なし');
       } else {
         for (final ev in e.evidences) {
-          final snippet = ev.snippet.replaceAll('\n', ' ').trim();
-          final short = snippet.length <= 120
-              ? snippet
-              : '${snippet.substring(0, 120)}...';
+          final short = _normalizeSnippet(ev.snippet);
           final fileUrl = _toFileUrl(ev.filePath);
           b.writeln(
             '     - ${ev.sourceName} p.${ev.pageNumber} | $short | [open]($fileUrl)',
@@ -277,7 +274,10 @@ class StudyPlanExporter {
       JOIN sources s
         ON s.id = ss.source_id
       WHERE c.exam_unit_id = ?
-      ORDER BY epi.weight DESC, epi.id ASC
+      ORDER BY
+        epi.weight DESC,
+        COALESCE(epi.page_number, ss.page_number) ASC,
+        s.file_name ASC
       LIMIT ?
       ''',
           variables: [Variable.withInt(examUnitId), Variable.withInt(limit)],
@@ -308,7 +308,9 @@ class StudyPlanExporter {
         JOIN sources s
           ON s.id = ss.source_id
         WHERE c.exam_unit_id = ?
-        ORDER BY el.id ASC
+        ORDER BY
+          ss.page_number ASC,
+          s.file_name ASC
         LIMIT ?
         ''',
             variables: [Variable.withInt(examUnitId), Variable.withInt(limit)],
@@ -347,5 +349,11 @@ class StudyPlanExporter {
   static String _toFileUrl(String path) {
     final normalized = path.startsWith('/') ? path : '/$path';
     return 'file://$normalized';
+  }
+
+  static String _normalizeSnippet(String snippet) {
+    final normalized = snippet.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= 200) return normalized;
+    return '${normalized.substring(0, 200)}...';
   }
 }
