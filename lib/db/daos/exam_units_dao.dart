@@ -33,6 +33,38 @@ class UnitMergeSummary {
   final String auditStatus;
 }
 
+class UnitMergeResult {
+  const UnitMergeResult({
+    required this.parentUnitId,
+    required this.childUnitId,
+    required this.movedClaimIds,
+    required this.movedEvidenceCount,
+  });
+
+  final int parentUnitId;
+  final int childUnitId;
+  final List<int> movedClaimIds;
+  final int movedEvidenceCount;
+}
+
+class UnitMergeHistoryEntry {
+  const UnitMergeHistoryEntry({
+    required this.id,
+    required this.parentId,
+    required this.childId,
+    required this.mergedAt,
+    required this.movedClaimIds,
+    required this.undoneAt,
+  });
+
+  final int id;
+  final int parentId;
+  final int childId;
+  final DateTime mergedAt;
+  final List<int> movedClaimIds;
+  final DateTime? undoneAt;
+}
+
 @DriftAccessor(
   tables: [
     ExamUnits,
@@ -43,6 +75,7 @@ class UnitMergeSummary {
     Audits,
     UnitStats,
     Conflicts,
+    UnitMergeHistory,
   ],
 )
 class ExamUnitsDao extends DatabaseAccessor<AppDatabase>
@@ -197,13 +230,55 @@ class ExamUnitsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  Future<void> mergeUnits({
+  Future<UnitMergeResult> mergeUnits({
     required int parentUnitId,
     required int childUnitId,
   }) async {
-    if (parentUnitId == childUnitId) return;
+    if (parentUnitId == childUnitId) {
+      return UnitMergeResult(
+        parentUnitId: parentUnitId,
+        childUnitId: childUnitId,
+        movedClaimIds: const [],
+        movedEvidenceCount: 0,
+      );
+    }
 
-    await transaction(() async {
+    return transaction(() async {
+      final childUnit =
+          await (select(examUnits)
+                ..where((u) => u.id.equals(childUnitId))
+                ..limit(1))
+              .getSingle();
+
+      final childClaimRows = await (select(
+        claims,
+      )..where((c) => c.examUnitId.equals(childUnitId))).get();
+      final movedClaimIds = childClaimRows.map((c) => c.id).toList();
+      var movedEvidenceCount = 0;
+      if (movedClaimIds.isNotEmpty) {
+        final evidenceCountRow = await customSelect(
+          '''
+          SELECT
+            COALESCE((SELECT COUNT(*) FROM evidence_links WHERE claim_id IN (${_inClause(movedClaimIds.length)})), 0)
+            +
+            COALESCE((SELECT COUNT(*) FROM evidence_pack_items epi JOIN evidence_packs ep ON ep.id = epi.evidence_pack_id WHERE ep.claim_id IN (${_inClause(movedClaimIds.length)})), 0)
+            AS evidence_count
+          ''',
+          variables: [
+            ...movedClaimIds.map(Variable.withInt),
+            ...movedClaimIds.map(Variable.withInt),
+          ],
+          readsFrom: {evidenceLinks, evidencePacks, evidencePackItems},
+        ).getSingle();
+        movedEvidenceCount = evidenceCountRow.read<int>('evidence_count');
+      }
+
+      await _saveMergeHistory(
+        parentUnitId: parentUnitId,
+        childUnit: childUnit,
+        movedClaimIds: movedClaimIds,
+      );
+
       await (update(claims)..where((c) => c.examUnitId.equals(childUnitId)))
           .write(ClaimsCompanion(examUnitId: Value(parentUnitId)));
 
@@ -219,6 +294,126 @@ class ExamUnitsDao extends DatabaseAccessor<AppDatabase>
       await (delete(examUnits)..where((u) => u.id.equals(childUnitId))).go();
 
       await db.auditDao.refreshCoverageAudits();
+      await db.sourcesDao.recalculatePastExamFrequency();
+
+      return UnitMergeResult(
+        parentUnitId: parentUnitId,
+        childUnitId: childUnitId,
+        movedClaimIds: movedClaimIds,
+        movedEvidenceCount: movedEvidenceCount,
+      );
+    });
+  }
+
+  Future<void> _saveMergeHistory({
+    required int parentUnitId,
+    required ExamUnit childUnit,
+    required List<int> movedClaimIds,
+  }) async {
+    await into(unitMergeHistory).insert(
+      UnitMergeHistoryCompanion.insert(
+        parentId: parentUnitId,
+        childId: childUnit.id,
+        movedClaimIds: movedClaimIds.join(','),
+        childTitle: childUnit.title,
+        childUnitType: Value(childUnit.unitType),
+        childDescription: Value(childUnit.description),
+        childConfidenceLevel: Value(childUnit.confidenceLevel),
+        childExamConfidence: Value(childUnit.examConfidence),
+        childAuditStatus: Value(childUnit.auditStatus),
+        childSortOrder: Value(childUnit.sortOrder),
+      ),
+    );
+  }
+
+  Future<List<UnitMergeHistoryEntry>> getRecentMergeHistory({
+    int limit = 10,
+  }) async {
+    final rows =
+        await (select(unitMergeHistory)
+              ..orderBy([(h) => OrderingTerm.desc(h.id)])
+              ..limit(limit))
+            .get();
+    return rows
+        .map(
+          (h) => UnitMergeHistoryEntry(
+            id: h.id,
+            parentId: h.parentId,
+            childId: h.childId,
+            mergedAt: h.mergedAt,
+            movedClaimIds: h.movedClaimIds
+                .split(',')
+                .where((e) => e.isNotEmpty)
+                .map(int.parse)
+                .toList(),
+            undoneAt: h.undoneAt,
+          ),
+        )
+        .toList();
+  }
+
+  Future<int?> undoLatestMerge() async {
+    return transaction(() async {
+      final latest =
+          await (select(unitMergeHistory)
+                ..where((h) => h.undoneAt.isNull())
+                ..orderBy([(h) => OrderingTerm.desc(h.id)])
+                ..limit(1))
+              .getSingleOrNull();
+      if (latest == null) return null;
+
+      final claimsToRestore = latest.movedClaimIds
+          .split(',')
+          .where((e) => e.isNotEmpty)
+          .map(int.parse)
+          .toList();
+
+      final existingChild =
+          await (select(examUnits)
+                ..where((u) => u.id.equals(latest.childId))
+                ..limit(1))
+              .getSingleOrNull();
+      if (existingChild == null) {
+        await into(examUnits).insert(
+          ExamUnitsCompanion(
+            id: Value(latest.childId),
+            title: Value(latest.childTitle),
+            unitType: Value(latest.childUnitType),
+            description: Value(latest.childDescription),
+            confidenceLevel: Value(latest.childConfidenceLevel),
+            examConfidence: Value(latest.childExamConfidence),
+            auditStatus: Value(latest.childAuditStatus),
+            sortOrder: Value(latest.childSortOrder),
+            createdAt: Value(DateTime.now()),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+
+      if (claimsToRestore.isNotEmpty) {
+        await (update(claims)..where((c) => c.id.isIn(claimsToRestore))).write(
+          ClaimsCompanion(examUnitId: Value(latest.childId)),
+        );
+      }
+
+      final childStats =
+          await (select(unitStats)
+                ..where((u) => u.examUnitId.equals(latest.childId))
+                ..limit(1))
+              .getSingleOrNull();
+      if (childStats == null) {
+        await into(unitStats).insert(
+          UnitStatsCompanion.insert(examUnitId: latest.childId),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+
+      await (update(unitMergeHistory)..where((h) => h.id.equals(latest.id)))
+          .write(UnitMergeHistoryCompanion(undoneAt: Value(DateTime.now())));
+
+      await db.auditDao.refreshCoverageAudits();
+      await db.sourcesDao.recalculatePastExamFrequency();
+      return latest.parentId;
     });
   }
 
@@ -344,5 +539,9 @@ class ExamUnitsDao extends DatabaseAccessor<AppDatabase>
   String _worseConfidence(String a, String b) {
     const rank = <String, int>{'L': 3, 'M': 2, 'H': 1};
     return (rank[a] ?? 0) >= (rank[b] ?? 0) ? a : b;
+  }
+
+  String _inClause(int count) {
+    return List.filled(count, '?').join(',');
   }
 }

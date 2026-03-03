@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../db/database.dart';
 import '../../../db/daos/exam_units_dao.dart';
 import '../providers/exam_units.provider.dart';
+import '../providers/claims.provider.dart';
 import '../../../db/database.provider.dart';
 import '../services/exam_exporter.dart';
 import 'exam_unit_detail_page.dart';
@@ -245,12 +246,15 @@ class _DuplicateCandidatesDialog extends ConsumerStatefulWidget {
 class _DuplicateCandidatesDialogState
     extends ConsumerState<_DuplicateCandidatesDialog> {
   bool _merging = false;
+  bool _undoing = false;
   late Future<List<_PairViewData>> _future;
+  late Future<List<UnitMergeHistoryEntry>> _historyFuture;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+    _historyFuture = _loadHistory();
   }
 
   Future<List<_PairViewData>> _load() async {
@@ -265,26 +269,66 @@ class _DuplicateCandidatesDialogState
     return result;
   }
 
+  Future<List<UnitMergeHistoryEntry>> _loadHistory() {
+    return ref
+        .read(databaseProvider)
+        .examUnitsDao
+        .getRecentMergeHistory(limit: 10);
+  }
+
   Future<void> _merge({
     required int parentUnitId,
     required int childUnitId,
   }) async {
     setState(() => _merging = true);
     try {
-      await ref
+      final result = await ref
           .read(databaseProvider)
           .examUnitsDao
           .mergeUnits(parentUnitId: parentUnitId, childUnitId: childUnitId);
       setState(() {
         _future = _load();
+        _historyFuture = _loadHistory();
       });
+      ref.read(selectedExamUnitIdProvider.notifier).state = parentUnitId;
+      ref.read(selectedClaimIdProvider.notifier).state = null;
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Unitを統合しました')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '統合完了: claims ${result.movedClaimIds.length}件 / evidence ${result.movedEvidenceCount}件 を移動',
+            ),
+          ),
+        );
+        Navigator.of(context).pop();
       }
     } finally {
       if (mounted) setState(() => _merging = false);
+    }
+  }
+
+  Future<void> _undo() async {
+    setState(() => _undoing = true);
+    try {
+      final parentId = await ref
+          .read(databaseProvider)
+          .examUnitsDao
+          .undoLatestMerge();
+      setState(() {
+        _future = _load();
+        _historyFuture = _loadHistory();
+      });
+      if (parentId != null) {
+        ref.read(selectedExamUnitIdProvider.notifier).state = parentId;
+      }
+      ref.read(selectedClaimIdProvider.notifier).state = null;
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('直近の統合をUndoしました')));
+      }
+    } finally {
+      if (mounted) setState(() => _undoing = false);
     }
   }
 
@@ -355,6 +399,55 @@ class _DuplicateCandidatesDialogState
                     ],
                   ),
                   const SizedBox(height: 8),
+                  FutureBuilder<List<UnitMergeHistoryEntry>>(
+                    future: _historyFuture,
+                    builder: (context, historySnapshot) {
+                      final history =
+                          historySnapshot.data ??
+                          const <UnitMergeHistoryEntry>[];
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white12),
+                          borderRadius: BorderRadius.circular(8),
+                          color: const Color(0xFF1A1D23),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                history.isEmpty
+                                    ? '統合履歴なし'
+                                    : '履歴: ${history.take(3).map((h) => '${h.parentId}<-${h.childId}${h.undoneAt != null ? '(undo)' : ''}').join(' / ')}',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            OutlinedButton(
+                              onPressed: (_undoing || history.isEmpty)
+                                  ? null
+                                  : _undo,
+                              child: _undoing
+                                  ? const SizedBox(
+                                      width: 12,
+                                      height: 12,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Undo'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   Expanded(
                     child: ListView.separated(
                       itemCount: items.length,

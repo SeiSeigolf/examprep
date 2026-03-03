@@ -5719,6 +5719,791 @@ class EvidencePackItemsCompanion extends UpdateCompanion<EvidencePackItem> {
   }
 }
 
+class $UnitMergeHistoryTable extends UnitMergeHistory
+    with TableInfo<$UnitMergeHistoryTable, UnitMergeHistoryData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UnitMergeHistoryTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _parentIdMeta = const VerificationMeta(
+    'parentId',
+  );
+  @override
+  late final GeneratedColumn<int> parentId = GeneratedColumn<int>(
+    'parent_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id) ON DELETE NO ACTION',
+    ),
+  );
+  static const VerificationMeta _childIdMeta = const VerificationMeta(
+    'childId',
+  );
+  @override
+  late final GeneratedColumn<int> childId = GeneratedColumn<int>(
+    'child_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mergedAtMeta = const VerificationMeta(
+    'mergedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> mergedAt = GeneratedColumn<DateTime>(
+    'merged_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _movedClaimIdsMeta = const VerificationMeta(
+    'movedClaimIds',
+  );
+  @override
+  late final GeneratedColumn<String> movedClaimIds = GeneratedColumn<String>(
+    'moved_claim_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _childTitleMeta = const VerificationMeta(
+    'childTitle',
+  );
+  @override
+  late final GeneratedColumn<String> childTitle = GeneratedColumn<String>(
+    'child_title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _childUnitTypeMeta = const VerificationMeta(
+    'childUnitType',
+  );
+  @override
+  late final GeneratedColumn<String> childUnitType = GeneratedColumn<String>(
+    'child_unit_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('定義'),
+  );
+  static const VerificationMeta _childDescriptionMeta = const VerificationMeta(
+    'childDescription',
+  );
+  @override
+  late final GeneratedColumn<String> childDescription = GeneratedColumn<String>(
+    'child_description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _childConfidenceLevelMeta =
+      const VerificationMeta('childConfidenceLevel');
+  @override
+  late final GeneratedColumn<String> childConfidenceLevel =
+      GeneratedColumn<String>(
+        'child_confidence_level',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('medium'),
+      );
+  static const VerificationMeta _childExamConfidenceMeta =
+      const VerificationMeta('childExamConfidence');
+  @override
+  late final GeneratedColumn<String> childExamConfidence =
+      GeneratedColumn<String>(
+        'child_exam_confidence',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('M'),
+      );
+  static const VerificationMeta _childAuditStatusMeta = const VerificationMeta(
+    'childAuditStatus',
+  );
+  @override
+  late final GeneratedColumn<String> childAuditStatus = GeneratedColumn<String>(
+    'child_audit_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Uncovered'),
+  );
+  static const VerificationMeta _childSortOrderMeta = const VerificationMeta(
+    'childSortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> childSortOrder = GeneratedColumn<int>(
+    'child_sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _undoneAtMeta = const VerificationMeta(
+    'undoneAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> undoneAt = GeneratedColumn<DateTime>(
+    'undone_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    parentId,
+    childId,
+    mergedAt,
+    movedClaimIds,
+    childTitle,
+    childUnitType,
+    childDescription,
+    childConfidenceLevel,
+    childExamConfidence,
+    childAuditStatus,
+    childSortOrder,
+    undoneAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'unit_merge_history';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UnitMergeHistoryData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('parent_id')) {
+      context.handle(
+        _parentIdMeta,
+        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_parentIdMeta);
+    }
+    if (data.containsKey('child_id')) {
+      context.handle(
+        _childIdMeta,
+        childId.isAcceptableOrUnknown(data['child_id']!, _childIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_childIdMeta);
+    }
+    if (data.containsKey('merged_at')) {
+      context.handle(
+        _mergedAtMeta,
+        mergedAt.isAcceptableOrUnknown(data['merged_at']!, _mergedAtMeta),
+      );
+    }
+    if (data.containsKey('moved_claim_ids')) {
+      context.handle(
+        _movedClaimIdsMeta,
+        movedClaimIds.isAcceptableOrUnknown(
+          data['moved_claim_ids']!,
+          _movedClaimIdsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_movedClaimIdsMeta);
+    }
+    if (data.containsKey('child_title')) {
+      context.handle(
+        _childTitleMeta,
+        childTitle.isAcceptableOrUnknown(data['child_title']!, _childTitleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_childTitleMeta);
+    }
+    if (data.containsKey('child_unit_type')) {
+      context.handle(
+        _childUnitTypeMeta,
+        childUnitType.isAcceptableOrUnknown(
+          data['child_unit_type']!,
+          _childUnitTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('child_description')) {
+      context.handle(
+        _childDescriptionMeta,
+        childDescription.isAcceptableOrUnknown(
+          data['child_description']!,
+          _childDescriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('child_confidence_level')) {
+      context.handle(
+        _childConfidenceLevelMeta,
+        childConfidenceLevel.isAcceptableOrUnknown(
+          data['child_confidence_level']!,
+          _childConfidenceLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('child_exam_confidence')) {
+      context.handle(
+        _childExamConfidenceMeta,
+        childExamConfidence.isAcceptableOrUnknown(
+          data['child_exam_confidence']!,
+          _childExamConfidenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('child_audit_status')) {
+      context.handle(
+        _childAuditStatusMeta,
+        childAuditStatus.isAcceptableOrUnknown(
+          data['child_audit_status']!,
+          _childAuditStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('child_sort_order')) {
+      context.handle(
+        _childSortOrderMeta,
+        childSortOrder.isAcceptableOrUnknown(
+          data['child_sort_order']!,
+          _childSortOrderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('undone_at')) {
+      context.handle(
+        _undoneAtMeta,
+        undoneAt.isAcceptableOrUnknown(data['undone_at']!, _undoneAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UnitMergeHistoryData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UnitMergeHistoryData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      parentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parent_id'],
+      )!,
+      childId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}child_id'],
+      )!,
+      mergedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}merged_at'],
+      )!,
+      movedClaimIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}moved_claim_ids'],
+      )!,
+      childTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_title'],
+      )!,
+      childUnitType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_unit_type'],
+      )!,
+      childDescription: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_description'],
+      ),
+      childConfidenceLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_confidence_level'],
+      )!,
+      childExamConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_exam_confidence'],
+      )!,
+      childAuditStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}child_audit_status'],
+      )!,
+      childSortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}child_sort_order'],
+      )!,
+      undoneAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}undone_at'],
+      ),
+    );
+  }
+
+  @override
+  $UnitMergeHistoryTable createAlias(String alias) {
+    return $UnitMergeHistoryTable(attachedDatabase, alias);
+  }
+}
+
+class UnitMergeHistoryData extends DataClass
+    implements Insertable<UnitMergeHistoryData> {
+  final int id;
+  final int parentId;
+  final int childId;
+  final DateTime mergedAt;
+  final String movedClaimIds;
+  final String childTitle;
+  final String childUnitType;
+  final String? childDescription;
+  final String childConfidenceLevel;
+  final String childExamConfidence;
+  final String childAuditStatus;
+  final int childSortOrder;
+  final DateTime? undoneAt;
+  const UnitMergeHistoryData({
+    required this.id,
+    required this.parentId,
+    required this.childId,
+    required this.mergedAt,
+    required this.movedClaimIds,
+    required this.childTitle,
+    required this.childUnitType,
+    this.childDescription,
+    required this.childConfidenceLevel,
+    required this.childExamConfidence,
+    required this.childAuditStatus,
+    required this.childSortOrder,
+    this.undoneAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['parent_id'] = Variable<int>(parentId);
+    map['child_id'] = Variable<int>(childId);
+    map['merged_at'] = Variable<DateTime>(mergedAt);
+    map['moved_claim_ids'] = Variable<String>(movedClaimIds);
+    map['child_title'] = Variable<String>(childTitle);
+    map['child_unit_type'] = Variable<String>(childUnitType);
+    if (!nullToAbsent || childDescription != null) {
+      map['child_description'] = Variable<String>(childDescription);
+    }
+    map['child_confidence_level'] = Variable<String>(childConfidenceLevel);
+    map['child_exam_confidence'] = Variable<String>(childExamConfidence);
+    map['child_audit_status'] = Variable<String>(childAuditStatus);
+    map['child_sort_order'] = Variable<int>(childSortOrder);
+    if (!nullToAbsent || undoneAt != null) {
+      map['undone_at'] = Variable<DateTime>(undoneAt);
+    }
+    return map;
+  }
+
+  UnitMergeHistoryCompanion toCompanion(bool nullToAbsent) {
+    return UnitMergeHistoryCompanion(
+      id: Value(id),
+      parentId: Value(parentId),
+      childId: Value(childId),
+      mergedAt: Value(mergedAt),
+      movedClaimIds: Value(movedClaimIds),
+      childTitle: Value(childTitle),
+      childUnitType: Value(childUnitType),
+      childDescription: childDescription == null && nullToAbsent
+          ? const Value.absent()
+          : Value(childDescription),
+      childConfidenceLevel: Value(childConfidenceLevel),
+      childExamConfidence: Value(childExamConfidence),
+      childAuditStatus: Value(childAuditStatus),
+      childSortOrder: Value(childSortOrder),
+      undoneAt: undoneAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(undoneAt),
+    );
+  }
+
+  factory UnitMergeHistoryData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UnitMergeHistoryData(
+      id: serializer.fromJson<int>(json['id']),
+      parentId: serializer.fromJson<int>(json['parentId']),
+      childId: serializer.fromJson<int>(json['childId']),
+      mergedAt: serializer.fromJson<DateTime>(json['mergedAt']),
+      movedClaimIds: serializer.fromJson<String>(json['movedClaimIds']),
+      childTitle: serializer.fromJson<String>(json['childTitle']),
+      childUnitType: serializer.fromJson<String>(json['childUnitType']),
+      childDescription: serializer.fromJson<String?>(json['childDescription']),
+      childConfidenceLevel: serializer.fromJson<String>(
+        json['childConfidenceLevel'],
+      ),
+      childExamConfidence: serializer.fromJson<String>(
+        json['childExamConfidence'],
+      ),
+      childAuditStatus: serializer.fromJson<String>(json['childAuditStatus']),
+      childSortOrder: serializer.fromJson<int>(json['childSortOrder']),
+      undoneAt: serializer.fromJson<DateTime?>(json['undoneAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'parentId': serializer.toJson<int>(parentId),
+      'childId': serializer.toJson<int>(childId),
+      'mergedAt': serializer.toJson<DateTime>(mergedAt),
+      'movedClaimIds': serializer.toJson<String>(movedClaimIds),
+      'childTitle': serializer.toJson<String>(childTitle),
+      'childUnitType': serializer.toJson<String>(childUnitType),
+      'childDescription': serializer.toJson<String?>(childDescription),
+      'childConfidenceLevel': serializer.toJson<String>(childConfidenceLevel),
+      'childExamConfidence': serializer.toJson<String>(childExamConfidence),
+      'childAuditStatus': serializer.toJson<String>(childAuditStatus),
+      'childSortOrder': serializer.toJson<int>(childSortOrder),
+      'undoneAt': serializer.toJson<DateTime?>(undoneAt),
+    };
+  }
+
+  UnitMergeHistoryData copyWith({
+    int? id,
+    int? parentId,
+    int? childId,
+    DateTime? mergedAt,
+    String? movedClaimIds,
+    String? childTitle,
+    String? childUnitType,
+    Value<String?> childDescription = const Value.absent(),
+    String? childConfidenceLevel,
+    String? childExamConfidence,
+    String? childAuditStatus,
+    int? childSortOrder,
+    Value<DateTime?> undoneAt = const Value.absent(),
+  }) => UnitMergeHistoryData(
+    id: id ?? this.id,
+    parentId: parentId ?? this.parentId,
+    childId: childId ?? this.childId,
+    mergedAt: mergedAt ?? this.mergedAt,
+    movedClaimIds: movedClaimIds ?? this.movedClaimIds,
+    childTitle: childTitle ?? this.childTitle,
+    childUnitType: childUnitType ?? this.childUnitType,
+    childDescription: childDescription.present
+        ? childDescription.value
+        : this.childDescription,
+    childConfidenceLevel: childConfidenceLevel ?? this.childConfidenceLevel,
+    childExamConfidence: childExamConfidence ?? this.childExamConfidence,
+    childAuditStatus: childAuditStatus ?? this.childAuditStatus,
+    childSortOrder: childSortOrder ?? this.childSortOrder,
+    undoneAt: undoneAt.present ? undoneAt.value : this.undoneAt,
+  );
+  UnitMergeHistoryData copyWithCompanion(UnitMergeHistoryCompanion data) {
+    return UnitMergeHistoryData(
+      id: data.id.present ? data.id.value : this.id,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      childId: data.childId.present ? data.childId.value : this.childId,
+      mergedAt: data.mergedAt.present ? data.mergedAt.value : this.mergedAt,
+      movedClaimIds: data.movedClaimIds.present
+          ? data.movedClaimIds.value
+          : this.movedClaimIds,
+      childTitle: data.childTitle.present
+          ? data.childTitle.value
+          : this.childTitle,
+      childUnitType: data.childUnitType.present
+          ? data.childUnitType.value
+          : this.childUnitType,
+      childDescription: data.childDescription.present
+          ? data.childDescription.value
+          : this.childDescription,
+      childConfidenceLevel: data.childConfidenceLevel.present
+          ? data.childConfidenceLevel.value
+          : this.childConfidenceLevel,
+      childExamConfidence: data.childExamConfidence.present
+          ? data.childExamConfidence.value
+          : this.childExamConfidence,
+      childAuditStatus: data.childAuditStatus.present
+          ? data.childAuditStatus.value
+          : this.childAuditStatus,
+      childSortOrder: data.childSortOrder.present
+          ? data.childSortOrder.value
+          : this.childSortOrder,
+      undoneAt: data.undoneAt.present ? data.undoneAt.value : this.undoneAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnitMergeHistoryData(')
+          ..write('id: $id, ')
+          ..write('parentId: $parentId, ')
+          ..write('childId: $childId, ')
+          ..write('mergedAt: $mergedAt, ')
+          ..write('movedClaimIds: $movedClaimIds, ')
+          ..write('childTitle: $childTitle, ')
+          ..write('childUnitType: $childUnitType, ')
+          ..write('childDescription: $childDescription, ')
+          ..write('childConfidenceLevel: $childConfidenceLevel, ')
+          ..write('childExamConfidence: $childExamConfidence, ')
+          ..write('childAuditStatus: $childAuditStatus, ')
+          ..write('childSortOrder: $childSortOrder, ')
+          ..write('undoneAt: $undoneAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    parentId,
+    childId,
+    mergedAt,
+    movedClaimIds,
+    childTitle,
+    childUnitType,
+    childDescription,
+    childConfidenceLevel,
+    childExamConfidence,
+    childAuditStatus,
+    childSortOrder,
+    undoneAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UnitMergeHistoryData &&
+          other.id == this.id &&
+          other.parentId == this.parentId &&
+          other.childId == this.childId &&
+          other.mergedAt == this.mergedAt &&
+          other.movedClaimIds == this.movedClaimIds &&
+          other.childTitle == this.childTitle &&
+          other.childUnitType == this.childUnitType &&
+          other.childDescription == this.childDescription &&
+          other.childConfidenceLevel == this.childConfidenceLevel &&
+          other.childExamConfidence == this.childExamConfidence &&
+          other.childAuditStatus == this.childAuditStatus &&
+          other.childSortOrder == this.childSortOrder &&
+          other.undoneAt == this.undoneAt);
+}
+
+class UnitMergeHistoryCompanion extends UpdateCompanion<UnitMergeHistoryData> {
+  final Value<int> id;
+  final Value<int> parentId;
+  final Value<int> childId;
+  final Value<DateTime> mergedAt;
+  final Value<String> movedClaimIds;
+  final Value<String> childTitle;
+  final Value<String> childUnitType;
+  final Value<String?> childDescription;
+  final Value<String> childConfidenceLevel;
+  final Value<String> childExamConfidence;
+  final Value<String> childAuditStatus;
+  final Value<int> childSortOrder;
+  final Value<DateTime?> undoneAt;
+  const UnitMergeHistoryCompanion({
+    this.id = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.childId = const Value.absent(),
+    this.mergedAt = const Value.absent(),
+    this.movedClaimIds = const Value.absent(),
+    this.childTitle = const Value.absent(),
+    this.childUnitType = const Value.absent(),
+    this.childDescription = const Value.absent(),
+    this.childConfidenceLevel = const Value.absent(),
+    this.childExamConfidence = const Value.absent(),
+    this.childAuditStatus = const Value.absent(),
+    this.childSortOrder = const Value.absent(),
+    this.undoneAt = const Value.absent(),
+  });
+  UnitMergeHistoryCompanion.insert({
+    this.id = const Value.absent(),
+    required int parentId,
+    required int childId,
+    this.mergedAt = const Value.absent(),
+    required String movedClaimIds,
+    required String childTitle,
+    this.childUnitType = const Value.absent(),
+    this.childDescription = const Value.absent(),
+    this.childConfidenceLevel = const Value.absent(),
+    this.childExamConfidence = const Value.absent(),
+    this.childAuditStatus = const Value.absent(),
+    this.childSortOrder = const Value.absent(),
+    this.undoneAt = const Value.absent(),
+  }) : parentId = Value(parentId),
+       childId = Value(childId),
+       movedClaimIds = Value(movedClaimIds),
+       childTitle = Value(childTitle);
+  static Insertable<UnitMergeHistoryData> custom({
+    Expression<int>? id,
+    Expression<int>? parentId,
+    Expression<int>? childId,
+    Expression<DateTime>? mergedAt,
+    Expression<String>? movedClaimIds,
+    Expression<String>? childTitle,
+    Expression<String>? childUnitType,
+    Expression<String>? childDescription,
+    Expression<String>? childConfidenceLevel,
+    Expression<String>? childExamConfidence,
+    Expression<String>? childAuditStatus,
+    Expression<int>? childSortOrder,
+    Expression<DateTime>? undoneAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (parentId != null) 'parent_id': parentId,
+      if (childId != null) 'child_id': childId,
+      if (mergedAt != null) 'merged_at': mergedAt,
+      if (movedClaimIds != null) 'moved_claim_ids': movedClaimIds,
+      if (childTitle != null) 'child_title': childTitle,
+      if (childUnitType != null) 'child_unit_type': childUnitType,
+      if (childDescription != null) 'child_description': childDescription,
+      if (childConfidenceLevel != null)
+        'child_confidence_level': childConfidenceLevel,
+      if (childExamConfidence != null)
+        'child_exam_confidence': childExamConfidence,
+      if (childAuditStatus != null) 'child_audit_status': childAuditStatus,
+      if (childSortOrder != null) 'child_sort_order': childSortOrder,
+      if (undoneAt != null) 'undone_at': undoneAt,
+    });
+  }
+
+  UnitMergeHistoryCompanion copyWith({
+    Value<int>? id,
+    Value<int>? parentId,
+    Value<int>? childId,
+    Value<DateTime>? mergedAt,
+    Value<String>? movedClaimIds,
+    Value<String>? childTitle,
+    Value<String>? childUnitType,
+    Value<String?>? childDescription,
+    Value<String>? childConfidenceLevel,
+    Value<String>? childExamConfidence,
+    Value<String>? childAuditStatus,
+    Value<int>? childSortOrder,
+    Value<DateTime?>? undoneAt,
+  }) {
+    return UnitMergeHistoryCompanion(
+      id: id ?? this.id,
+      parentId: parentId ?? this.parentId,
+      childId: childId ?? this.childId,
+      mergedAt: mergedAt ?? this.mergedAt,
+      movedClaimIds: movedClaimIds ?? this.movedClaimIds,
+      childTitle: childTitle ?? this.childTitle,
+      childUnitType: childUnitType ?? this.childUnitType,
+      childDescription: childDescription ?? this.childDescription,
+      childConfidenceLevel: childConfidenceLevel ?? this.childConfidenceLevel,
+      childExamConfidence: childExamConfidence ?? this.childExamConfidence,
+      childAuditStatus: childAuditStatus ?? this.childAuditStatus,
+      childSortOrder: childSortOrder ?? this.childSortOrder,
+      undoneAt: undoneAt ?? this.undoneAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (parentId.present) {
+      map['parent_id'] = Variable<int>(parentId.value);
+    }
+    if (childId.present) {
+      map['child_id'] = Variable<int>(childId.value);
+    }
+    if (mergedAt.present) {
+      map['merged_at'] = Variable<DateTime>(mergedAt.value);
+    }
+    if (movedClaimIds.present) {
+      map['moved_claim_ids'] = Variable<String>(movedClaimIds.value);
+    }
+    if (childTitle.present) {
+      map['child_title'] = Variable<String>(childTitle.value);
+    }
+    if (childUnitType.present) {
+      map['child_unit_type'] = Variable<String>(childUnitType.value);
+    }
+    if (childDescription.present) {
+      map['child_description'] = Variable<String>(childDescription.value);
+    }
+    if (childConfidenceLevel.present) {
+      map['child_confidence_level'] = Variable<String>(
+        childConfidenceLevel.value,
+      );
+    }
+    if (childExamConfidence.present) {
+      map['child_exam_confidence'] = Variable<String>(
+        childExamConfidence.value,
+      );
+    }
+    if (childAuditStatus.present) {
+      map['child_audit_status'] = Variable<String>(childAuditStatus.value);
+    }
+    if (childSortOrder.present) {
+      map['child_sort_order'] = Variable<int>(childSortOrder.value);
+    }
+    if (undoneAt.present) {
+      map['undone_at'] = Variable<DateTime>(undoneAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnitMergeHistoryCompanion(')
+          ..write('id: $id, ')
+          ..write('parentId: $parentId, ')
+          ..write('childId: $childId, ')
+          ..write('mergedAt: $mergedAt, ')
+          ..write('movedClaimIds: $movedClaimIds, ')
+          ..write('childTitle: $childTitle, ')
+          ..write('childUnitType: $childUnitType, ')
+          ..write('childDescription: $childDescription, ')
+          ..write('childConfidenceLevel: $childConfidenceLevel, ')
+          ..write('childExamConfidence: $childExamConfidence, ')
+          ..write('childAuditStatus: $childAuditStatus, ')
+          ..write('childSortOrder: $childSortOrder, ')
+          ..write('undoneAt: $undoneAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5734,6 +6519,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $EvidencePacksTable evidencePacks = $EvidencePacksTable(this);
   late final $EvidencePackItemsTable evidencePackItems =
       $EvidencePackItemsTable(this);
+  late final $UnitMergeHistoryTable unitMergeHistory = $UnitMergeHistoryTable(
+    this,
+  );
   late final SourcesDao sourcesDao = SourcesDao(this as AppDatabase);
   late final ExamUnitsDao examUnitsDao = ExamUnitsDao(this as AppDatabase);
   late final ClaimsDao claimsDao = ClaimsDao(this as AppDatabase);
@@ -5762,6 +6550,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     unitStats,
     evidencePacks,
     evidencePackItems,
+    unitMergeHistory,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7090,6 +7879,29 @@ final class $$ExamUnitsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$UnitMergeHistoryTable, List<UnitMergeHistoryData>>
+  _unitMergeHistoryRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.unitMergeHistory,
+    aliasName: $_aliasNameGenerator(
+      db.examUnits.id,
+      db.unitMergeHistory.parentId,
+    ),
+  );
+
+  $$UnitMergeHistoryTableProcessedTableManager get unitMergeHistoryRefs {
+    final manager = $$UnitMergeHistoryTableTableManager(
+      $_db,
+      $_db.unitMergeHistory,
+    ).filter((f) => f.parentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _unitMergeHistoryRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ExamUnitsTableFilterComposer
@@ -7242,6 +8054,31 @@ class $$ExamUnitsTableFilterComposer
           }) => $$UnitStatsTableFilterComposer(
             $db: $db,
             $table: $db.unitStats,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> unitMergeHistoryRefs(
+    Expression<bool> Function($$UnitMergeHistoryTableFilterComposer f) f,
+  ) {
+    final $$UnitMergeHistoryTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.unitMergeHistory,
+      getReferencedColumn: (t) => t.parentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UnitMergeHistoryTableFilterComposer(
+            $db: $db,
+            $table: $db.unitMergeHistory,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7458,6 +8295,31 @@ class $$ExamUnitsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> unitMergeHistoryRefs<T extends Object>(
+    Expression<T> Function($$UnitMergeHistoryTableAnnotationComposer a) f,
+  ) {
+    final $$UnitMergeHistoryTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.unitMergeHistory,
+      getReferencedColumn: (t) => t.parentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UnitMergeHistoryTableAnnotationComposer(
+            $db: $db,
+            $table: $db.unitMergeHistory,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ExamUnitsTableTableManager
@@ -7478,6 +8340,7 @@ class $$ExamUnitsTableTableManager
             bool auditsRefs,
             bool conflictsRefs,
             bool unitStatsRefs,
+            bool unitMergeHistoryRefs,
           })
         > {
   $$ExamUnitsTableTableManager(_$AppDatabase db, $ExamUnitsTable table)
@@ -7553,6 +8416,7 @@ class $$ExamUnitsTableTableManager
                 auditsRefs = false,
                 conflictsRefs = false,
                 unitStatsRefs = false,
+                unitMergeHistoryRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -7561,6 +8425,7 @@ class $$ExamUnitsTableTableManager
                     if (auditsRefs) db.audits,
                     if (conflictsRefs) db.conflicts,
                     if (unitStatsRefs) db.unitStats,
+                    if (unitMergeHistoryRefs) db.unitMergeHistory,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -7649,6 +8514,27 @@ class $$ExamUnitsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (unitMergeHistoryRefs)
+                        await $_getPrefetchedData<
+                          ExamUnit,
+                          $ExamUnitsTable,
+                          UnitMergeHistoryData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExamUnitsTableReferences
+                              ._unitMergeHistoryRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExamUnitsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).unitMergeHistoryRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.parentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -7674,6 +8560,7 @@ typedef $$ExamUnitsTableProcessedTableManager =
         bool auditsRefs,
         bool conflictsRefs,
         bool unitStatsRefs,
+        bool unitMergeHistoryRefs,
       })
     >;
 typedef $$ClaimsTableCreateCompanionBuilder =
@@ -11604,6 +12491,500 @@ typedef $$EvidencePackItemsTableProcessedTableManager =
       EvidencePackItem,
       PrefetchHooks Function({bool evidencePackId, bool sourceSegmentId})
     >;
+typedef $$UnitMergeHistoryTableCreateCompanionBuilder =
+    UnitMergeHistoryCompanion Function({
+      Value<int> id,
+      required int parentId,
+      required int childId,
+      Value<DateTime> mergedAt,
+      required String movedClaimIds,
+      required String childTitle,
+      Value<String> childUnitType,
+      Value<String?> childDescription,
+      Value<String> childConfidenceLevel,
+      Value<String> childExamConfidence,
+      Value<String> childAuditStatus,
+      Value<int> childSortOrder,
+      Value<DateTime?> undoneAt,
+    });
+typedef $$UnitMergeHistoryTableUpdateCompanionBuilder =
+    UnitMergeHistoryCompanion Function({
+      Value<int> id,
+      Value<int> parentId,
+      Value<int> childId,
+      Value<DateTime> mergedAt,
+      Value<String> movedClaimIds,
+      Value<String> childTitle,
+      Value<String> childUnitType,
+      Value<String?> childDescription,
+      Value<String> childConfidenceLevel,
+      Value<String> childExamConfidence,
+      Value<String> childAuditStatus,
+      Value<int> childSortOrder,
+      Value<DateTime?> undoneAt,
+    });
+
+final class $$UnitMergeHistoryTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $UnitMergeHistoryTable,
+          UnitMergeHistoryData
+        > {
+  $$UnitMergeHistoryTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ExamUnitsTable _parentIdTable(_$AppDatabase db) =>
+      db.examUnits.createAlias(
+        $_aliasNameGenerator(db.unitMergeHistory.parentId, db.examUnits.id),
+      );
+
+  $$ExamUnitsTableProcessedTableManager get parentId {
+    final $_column = $_itemColumn<int>('parent_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_parentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$UnitMergeHistoryTableFilterComposer
+    extends Composer<_$AppDatabase, $UnitMergeHistoryTable> {
+  $$UnitMergeHistoryTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get childId => $composableBuilder(
+    column: $table.childId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get mergedAt => $composableBuilder(
+    column: $table.mergedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get movedClaimIds => $composableBuilder(
+    column: $table.movedClaimIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childTitle => $composableBuilder(
+    column: $table.childTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childUnitType => $composableBuilder(
+    column: $table.childUnitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childDescription => $composableBuilder(
+    column: $table.childDescription,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childConfidenceLevel => $composableBuilder(
+    column: $table.childConfidenceLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childExamConfidence => $composableBuilder(
+    column: $table.childExamConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get childAuditStatus => $composableBuilder(
+    column: $table.childAuditStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get childSortOrder => $composableBuilder(
+    column: $table.childSortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get undoneAt => $composableBuilder(
+    column: $table.undoneAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ExamUnitsTableFilterComposer get parentId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.parentId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UnitMergeHistoryTableOrderingComposer
+    extends Composer<_$AppDatabase, $UnitMergeHistoryTable> {
+  $$UnitMergeHistoryTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get childId => $composableBuilder(
+    column: $table.childId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get mergedAt => $composableBuilder(
+    column: $table.mergedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get movedClaimIds => $composableBuilder(
+    column: $table.movedClaimIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childTitle => $composableBuilder(
+    column: $table.childTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childUnitType => $composableBuilder(
+    column: $table.childUnitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childDescription => $composableBuilder(
+    column: $table.childDescription,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childConfidenceLevel => $composableBuilder(
+    column: $table.childConfidenceLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childExamConfidence => $composableBuilder(
+    column: $table.childExamConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get childAuditStatus => $composableBuilder(
+    column: $table.childAuditStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get childSortOrder => $composableBuilder(
+    column: $table.childSortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get undoneAt => $composableBuilder(
+    column: $table.undoneAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ExamUnitsTableOrderingComposer get parentId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.parentId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UnitMergeHistoryTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UnitMergeHistoryTable> {
+  $$UnitMergeHistoryTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get childId =>
+      $composableBuilder(column: $table.childId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get mergedAt =>
+      $composableBuilder(column: $table.mergedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get movedClaimIds => $composableBuilder(
+    column: $table.movedClaimIds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get childTitle => $composableBuilder(
+    column: $table.childTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get childUnitType => $composableBuilder(
+    column: $table.childUnitType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get childDescription => $composableBuilder(
+    column: $table.childDescription,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get childConfidenceLevel => $composableBuilder(
+    column: $table.childConfidenceLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get childExamConfidence => $composableBuilder(
+    column: $table.childExamConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get childAuditStatus => $composableBuilder(
+    column: $table.childAuditStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get childSortOrder => $composableBuilder(
+    column: $table.childSortOrder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get undoneAt =>
+      $composableBuilder(column: $table.undoneAt, builder: (column) => column);
+
+  $$ExamUnitsTableAnnotationComposer get parentId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.parentId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UnitMergeHistoryTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UnitMergeHistoryTable,
+          UnitMergeHistoryData,
+          $$UnitMergeHistoryTableFilterComposer,
+          $$UnitMergeHistoryTableOrderingComposer,
+          $$UnitMergeHistoryTableAnnotationComposer,
+          $$UnitMergeHistoryTableCreateCompanionBuilder,
+          $$UnitMergeHistoryTableUpdateCompanionBuilder,
+          (UnitMergeHistoryData, $$UnitMergeHistoryTableReferences),
+          UnitMergeHistoryData,
+          PrefetchHooks Function({bool parentId})
+        > {
+  $$UnitMergeHistoryTableTableManager(
+    _$AppDatabase db,
+    $UnitMergeHistoryTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UnitMergeHistoryTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UnitMergeHistoryTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UnitMergeHistoryTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> parentId = const Value.absent(),
+                Value<int> childId = const Value.absent(),
+                Value<DateTime> mergedAt = const Value.absent(),
+                Value<String> movedClaimIds = const Value.absent(),
+                Value<String> childTitle = const Value.absent(),
+                Value<String> childUnitType = const Value.absent(),
+                Value<String?> childDescription = const Value.absent(),
+                Value<String> childConfidenceLevel = const Value.absent(),
+                Value<String> childExamConfidence = const Value.absent(),
+                Value<String> childAuditStatus = const Value.absent(),
+                Value<int> childSortOrder = const Value.absent(),
+                Value<DateTime?> undoneAt = const Value.absent(),
+              }) => UnitMergeHistoryCompanion(
+                id: id,
+                parentId: parentId,
+                childId: childId,
+                mergedAt: mergedAt,
+                movedClaimIds: movedClaimIds,
+                childTitle: childTitle,
+                childUnitType: childUnitType,
+                childDescription: childDescription,
+                childConfidenceLevel: childConfidenceLevel,
+                childExamConfidence: childExamConfidence,
+                childAuditStatus: childAuditStatus,
+                childSortOrder: childSortOrder,
+                undoneAt: undoneAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int parentId,
+                required int childId,
+                Value<DateTime> mergedAt = const Value.absent(),
+                required String movedClaimIds,
+                required String childTitle,
+                Value<String> childUnitType = const Value.absent(),
+                Value<String?> childDescription = const Value.absent(),
+                Value<String> childConfidenceLevel = const Value.absent(),
+                Value<String> childExamConfidence = const Value.absent(),
+                Value<String> childAuditStatus = const Value.absent(),
+                Value<int> childSortOrder = const Value.absent(),
+                Value<DateTime?> undoneAt = const Value.absent(),
+              }) => UnitMergeHistoryCompanion.insert(
+                id: id,
+                parentId: parentId,
+                childId: childId,
+                mergedAt: mergedAt,
+                movedClaimIds: movedClaimIds,
+                childTitle: childTitle,
+                childUnitType: childUnitType,
+                childDescription: childDescription,
+                childConfidenceLevel: childConfidenceLevel,
+                childExamConfidence: childExamConfidence,
+                childAuditStatus: childAuditStatus,
+                childSortOrder: childSortOrder,
+                undoneAt: undoneAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$UnitMergeHistoryTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({parentId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (parentId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.parentId,
+                                referencedTable:
+                                    $$UnitMergeHistoryTableReferences
+                                        ._parentIdTable(db),
+                                referencedColumn:
+                                    $$UnitMergeHistoryTableReferences
+                                        ._parentIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$UnitMergeHistoryTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UnitMergeHistoryTable,
+      UnitMergeHistoryData,
+      $$UnitMergeHistoryTableFilterComposer,
+      $$UnitMergeHistoryTableOrderingComposer,
+      $$UnitMergeHistoryTableAnnotationComposer,
+      $$UnitMergeHistoryTableCreateCompanionBuilder,
+      $$UnitMergeHistoryTableUpdateCompanionBuilder,
+      (UnitMergeHistoryData, $$UnitMergeHistoryTableReferences),
+      UnitMergeHistoryData,
+      PrefetchHooks Function({bool parentId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11630,4 +13011,6 @@ class $AppDatabaseManager {
       $$EvidencePacksTableTableManager(_db, _db.evidencePacks);
   $$EvidencePackItemsTableTableManager get evidencePackItems =>
       $$EvidencePackItemsTableTableManager(_db, _db.evidencePackItems);
+  $$UnitMergeHistoryTableTableManager get unitMergeHistory =>
+      $$UnitMergeHistoryTableTableManager(_db, _db.unitMergeHistory);
 }

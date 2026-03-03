@@ -128,4 +128,58 @@ void main() {
     expect(parentStat.claimCount, greaterThanOrEqualTo(2));
     expect(parentStat.evidenceCount, greaterThanOrEqualTo(2));
   });
+
+  test('統合履歴が保存されUndoでchildとclaimsが戻る', () async {
+    final sourceId = await db.sourcesDao.insertSource(
+      SourcesCompanion.insert(fileName: 'undo.pdf', filePath: '/tmp/undo.pdf'),
+    );
+    final seg = await db
+        .into(db.sourceSegments)
+        .insert(
+          SourceSegmentsCompanion.insert(
+            sourceId: sourceId,
+            pageNumber: 1,
+            content: const Value('undo segment'),
+          ),
+        );
+
+    final parentId = await db.examUnitsDao.insertUnit(
+      ExamUnitsCompanion.insert(title: 'parent'),
+    );
+    final childId = await db.examUnitsDao.insertUnit(
+      ExamUnitsCompanion.insert(title: 'child'),
+    );
+    final childClaim = await db.claimsDao.insertClaimWithEvidence(
+      ClaimsCompanion.insert(examUnitId: childId, content: 'child claim'),
+      [seg],
+    );
+
+    final merge = await db.examUnitsDao.mergeUnits(
+      parentUnitId: parentId,
+      childUnitId: childId,
+    );
+    expect(merge.movedClaimIds, contains(childClaim));
+
+    final history = await db.examUnitsDao.getRecentMergeHistory(limit: 1);
+    expect(history, isNotEmpty);
+    expect(history.first.childId, childId);
+    expect(history.first.undoneAt, isNull);
+
+    await db.examUnitsDao.undoLatestMerge();
+
+    final restoredChild = await (db.select(
+      db.examUnits,
+    )..where((u) => u.id.equals(childId))).getSingleOrNull();
+    expect(restoredChild, isNotNull);
+
+    final restoredClaim = await (db.select(
+      db.claims,
+    )..where((c) => c.id.equals(childClaim))).getSingle();
+    expect(restoredClaim.examUnitId, childId);
+
+    final historyAfterUndo = await db.examUnitsDao.getRecentMergeHistory(
+      limit: 1,
+    );
+    expect(historyAfterUndo.first.undoneAt, isNotNull);
+  });
 }

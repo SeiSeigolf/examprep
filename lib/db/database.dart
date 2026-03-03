@@ -15,6 +15,7 @@ import 'tables/study_methods.dart';
 import 'tables/unit_stats.dart';
 import 'tables/evidence_packs.dart';
 import 'tables/evidence_pack_items.dart';
+import 'tables/unit_merge_history.dart';
 import 'daos/sources_dao.dart';
 import 'daos/exam_units_dao.dart';
 import 'daos/claims_dao.dart';
@@ -35,6 +36,7 @@ export 'tables/study_methods.dart';
 export 'tables/unit_stats.dart';
 export 'tables/evidence_packs.dart';
 export 'tables/evidence_pack_items.dart';
+export 'tables/unit_merge_history.dart';
 export 'daos/evidence_packs_dao.dart';
 
 part 'database.g.dart';
@@ -52,6 +54,7 @@ part 'database.g.dart';
     UnitStats,
     EvidencePacks,
     EvidencePackItems,
+    UnitMergeHistory,
   ],
   daos: [
     SourcesDao,
@@ -71,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -157,6 +160,9 @@ class AppDatabase extends _$AppDatabase {
           ), 1, 200)
           WHERE snippet IS NULL
         ''');
+      }
+      if (from < 9) {
+        await m.createTable(unitMergeHistory);
       }
     },
   );
