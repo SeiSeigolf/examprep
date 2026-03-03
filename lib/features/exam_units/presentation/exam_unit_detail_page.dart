@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/exam_units.provider.dart';
 import '../providers/claims.provider.dart';
+import '../providers/unit_stats.provider.dart';
 import '../../../db/database.provider.dart';
 import 'widgets/add_claim_dialog.dart';
 import 'widgets/claim_list_item.dart';
@@ -49,8 +51,11 @@ class ExamUnitDetailPage extends ConsumerWidget {
             children: [
               // 戻るボタン
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new,
-                    size: 16, color: Colors.white54),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 16,
+                  color: Colors.white54,
+                ),
                 onPressed: () {
                   ref.read(selectedExamUnitIdProvider.notifier).state = null;
                   ref.read(selectedClaimIdProvider.notifier).state = null;
@@ -83,8 +88,10 @@ class ExamUnitDetailPage extends ConsumerWidget {
                 icon: const Icon(Icons.edit_outlined, size: 14),
                 label: const Text('編集', style: TextStyle(fontSize: 12)),
                 style: OutlinedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -106,6 +113,7 @@ class ExamUnitDetailPage extends ConsumerWidget {
               style: const TextStyle(color: Colors.white38, fontSize: 13),
             ),
           ),
+        _ReviewSettingsBar(examUnitId: examUnitId),
 
         // ---- 2カラムコンテンツ ----
         Expanded(
@@ -113,15 +121,10 @@ class ExamUnitDetailPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ---- 左: Claim 一覧 ----
-              SizedBox(
-                width: 340,
-                child: _ClaimsPanel(examUnitId: examUnitId),
-              ),
+              SizedBox(width: 340, child: _ClaimsPanel(examUnitId: examUnitId)),
               const VerticalDivider(width: 1),
               // ---- 右: Evidence パネル ----
-              Expanded(
-                child: _EvidencePanelWrapper(),
-              ),
+              Expanded(child: _EvidencePanelWrapper()),
             ],
           ),
         ),
@@ -161,18 +164,18 @@ class _ClaimsPanel extends ConsumerWidget {
               const Spacer(),
               TextButton.icon(
                 icon: const Icon(Icons.add, size: 14),
-                label:
-                    const Text('追加', style: TextStyle(fontSize: 12)),
+                label: const Text('追加', style: TextStyle(fontSize: 12)),
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: () => showDialog(
                   context: context,
-                  builder: (_) =>
-                      AddClaimDialog(examUnitId: examUnitId),
+                  builder: (_) => AddClaimDialog(examUnitId: examUnitId),
                 ),
               ),
             ],
@@ -181,11 +184,12 @@ class _ClaimsPanel extends ConsumerWidget {
         const Divider(height: 1),
         Expanded(
           child: claimsAsync.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
-              child: Text('エラー: $e',
-                  style: const TextStyle(color: Colors.redAccent)),
+              child: Text(
+                'エラー: $e',
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             ),
             data: (claimList) {
               if (claimList.isEmpty) {
@@ -235,8 +239,7 @@ class _ClaimsPanel extends ConsumerWidget {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style:
-                FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () async {
               Navigator.of(context).pop();
               if (ref.read(selectedClaimIdProvider) == claimId) {
@@ -286,6 +289,181 @@ class _EvidencePanelWrapper extends ConsumerWidget {
   }
 }
 
+class _ReviewSettingsBar extends ConsumerStatefulWidget {
+  const _ReviewSettingsBar({required this.examUnitId});
+  final int examUnitId;
+
+  @override
+  ConsumerState<_ReviewSettingsBar> createState() => _ReviewSettingsBarState();
+}
+
+class _ReviewSettingsBarState extends ConsumerState<_ReviewSettingsBar> {
+  final _pointWeightController = TextEditingController();
+  final _frequencyController = TextEditingController();
+  final _pointWeightFocus = FocusNode();
+  final _frequencyFocus = FocusNode();
+  bool? _manualOverride;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _pointWeightController.dispose();
+    _frequencyController.dispose();
+    _pointWeightFocus.dispose();
+    _frequencyFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final pointWeight = int.tryParse(_pointWeightController.text);
+    final frequency = int.tryParse(_frequencyController.text);
+    final manualOverride = _manualOverride ?? false;
+    if (pointWeight == null || frequency == null) return;
+    if (pointWeight < 1 || frequency < 1) return;
+
+    setState(() => _saving = true);
+    try {
+      await ref.read(saveUnitReviewSettingsProvider)(
+        examUnitId: widget.examUnitId,
+        pointWeight: pointWeight,
+        frequency: frequency,
+        frequencyManualOverride: manualOverride,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Review Queueパラメータを保存しました'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsAsync = ref.watch(
+      unitReviewSettingsProvider(widget.examUnitId),
+    );
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
+      color: const Color(0xFF16191F),
+      child: settingsAsync.when(
+        loading: () => const LinearProgressIndicator(minHeight: 2),
+        error: (e, _) => Text(
+          'Review設定の読み込みエラー: $e',
+          style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+        ),
+        data: (settings) {
+          if (!_pointWeightFocus.hasFocus &&
+              _pointWeightController.text != settings.pointWeight.toString()) {
+            _pointWeightController.text = settings.pointWeight.toString();
+          }
+          if (!_frequencyFocus.hasFocus &&
+              _frequencyController.text != settings.frequency.toString()) {
+            _frequencyController.text = settings.frequency.toString();
+          }
+          _manualOverride ??= settings.frequencyManualOverride;
+
+          return Row(
+            children: [
+              const Text(
+                'Review Queue',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 12),
+              _NumberField(
+                label: 'pointWeight',
+                controller: _pointWeightController,
+                focusNode: _pointWeightFocus,
+              ),
+              const SizedBox(width: 10),
+              _NumberField(
+                label: 'frequency',
+                controller: _frequencyController,
+                focusNode: _frequencyFocus,
+                enabled: _manualOverride ?? false,
+              ),
+              const SizedBox(width: 8),
+              Row(
+                children: [
+                  Switch(
+                    value: _manualOverride ?? false,
+                    onChanged: (v) => setState(() => _manualOverride = v),
+                  ),
+                  Text(
+                    _manualOverride == true ? 'manual' : 'auto',
+                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 10),
+              FilledButton.tonal(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('保存'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _NumberField extends StatelessWidget {
+  const _NumberField({
+    required this.label,
+    required this.controller,
+    required this.focusNode,
+    this.enabled = true,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 120,
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        enabled: enabled,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: const TextStyle(color: Colors.white, fontSize: 12),
+        decoration: InputDecoration(
+          isDense: true,
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white54, fontSize: 11),
+          border: const OutlineInputBorder(),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 8,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ---- 補助ウィジェット ----
 
 class _UnitTypeLabel extends StatelessWidget {
@@ -312,8 +490,11 @@ class _UnitTypeLabel extends StatelessWidget {
       ),
       child: Text(
         type,
-        style:
-            TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

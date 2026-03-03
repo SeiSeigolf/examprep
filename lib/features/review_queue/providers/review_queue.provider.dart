@@ -12,6 +12,7 @@ class ReviewQueueItem {
     required this.pointWeight,
     required this.frequency,
     required this.openConflictCount,
+    required this.evidenceItemCount,
     required this.priority,
   });
 
@@ -24,7 +25,28 @@ class ReviewQueueItem {
   final int pointWeight;
   final int frequency;
   final int openConflictCount;
+  final int evidenceItemCount;
   final double priority;
+}
+
+String buildReviewReason(ReviewQueueItem item) {
+  final reasons = <String>[];
+  if (item.openConflictCount > 0) {
+    reasons.add('1) Conflict(open) がある');
+  }
+  if (item.auditStatus == 'LowConfidence') {
+    reasons.add('2) auditStatus=LowConfidence');
+  }
+  if (item.contentConfidence == 'L') {
+    reasons.add('3) contentConfidence=L');
+  }
+  if (item.evidenceItemCount <= 1) {
+    reasons.add('4) evidence数が少ない (${item.evidenceItemCount})');
+  }
+  if (reasons.isEmpty) {
+    return '優先度スコアが高い';
+  }
+  return reasons.join(' / ');
 }
 
 final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
@@ -44,6 +66,7 @@ final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
           COALESCE(us.point_weight, 1) AS point_weight,
           COALESCE(us.frequency, 1) AS frequency,
           COUNT(DISTINCT cf.id) AS open_conflict_count,
+          COUNT(DISTINCT epi.id) AS evidence_item_count,
           (
             COALESCE(us.point_weight, 1) *
             COALESCE(us.frequency, 1) *
@@ -68,6 +91,10 @@ final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
         LEFT JOIN conflicts cf
           ON (cf.claim_id = c.id OR cf.exam_unit_id = u.id)
           AND cf.status = 'open'
+        LEFT JOIN evidence_packs ep
+          ON ep.claim_id = c.id
+        LEFT JOIN evidence_pack_items epi
+          ON epi.evidence_pack_id = ep.id
         GROUP BY
           c.id,
           c.exam_unit_id,
@@ -83,7 +110,14 @@ final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
           c.id ASC
         LIMIT $limit
         ''',
-        readsFrom: {db.claims, db.examUnits, db.unitStats, db.conflicts},
+        readsFrom: {
+          db.claims,
+          db.examUnits,
+          db.unitStats,
+          db.conflicts,
+          db.evidencePacks,
+          db.evidencePackItems,
+        },
       )
       .watch()
       .map(
@@ -99,6 +133,7 @@ final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
                 pointWeight: row.read<int>('point_weight'),
                 frequency: row.read<int>('frequency'),
                 openConflictCount: row.read<int>('open_conflict_count'),
+                evidenceItemCount: row.read<int>('evidence_item_count'),
                 priority: row.read<num>('review_priority').toDouble(),
               ),
             )

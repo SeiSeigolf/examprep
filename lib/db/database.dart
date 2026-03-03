@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -135,6 +135,28 @@ class AppDatabase extends _$AppDatabase {
       if (from < 7) {
         await m.addColumn(unitStats, unitStats.pointWeight);
         await m.addColumn(unitStats, unitStats.frequency);
+      }
+      if (from < 8) {
+        await m.addColumn(sources, sources.sourceType);
+        await m.addColumn(unitStats, unitStats.frequencyManualOverride);
+        await m.database.customStatement('''
+          UPDATE evidence_pack_items
+          SET page_number = (
+            SELECT ss.page_number
+            FROM source_segments ss
+            WHERE ss.id = evidence_pack_items.source_segment_id
+          )
+          WHERE page_number IS NULL
+        ''');
+        await m.database.customStatement('''
+          UPDATE evidence_pack_items
+          SET snippet = SUBSTR((
+            SELECT ss.content
+            FROM source_segments ss
+            WHERE ss.id = evidence_pack_items.source_segment_id
+          ), 1, 200)
+          WHERE snippet IS NULL
+        ''');
       }
     },
   );

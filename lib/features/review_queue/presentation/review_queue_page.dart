@@ -102,6 +102,16 @@ class ReviewQueuePage extends ConsumerWidget {
                               fontSize: 12,
                             ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '要確認理由: ${buildReviewReason(item)}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.amberAccent,
+                              fontSize: 11,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           Wrap(
                             spacing: 6,
@@ -116,18 +126,26 @@ class ReviewQueuePage extends ConsumerWidget {
                                     'W${item.pointWeight} x F${item.frequency}',
                               ),
                               _MetaChip(
-                                label: 'Conf ${item.contentConfidence}',
+                                label:
+                                    'Conf ${item.contentConfidence} (${_confScore(item.contentConfidence).toStringAsFixed(1)})',
                               ),
-                              if (item.openConflictCount > 0)
-                                const _MetaChip(
-                                  label: 'Open Conflict',
-                                  color: Color(0xFFB71C1C),
-                                ),
-                              if (item.auditStatus == 'LowConfidence')
-                                const _MetaChip(
-                                  label: 'LowConfidence',
-                                  color: Color(0xFF8E24AA),
-                                ),
+                              _MetaChip(
+                                label: 'Evidence ${item.evidenceItemCount}',
+                              ),
+                              _MetaChip(
+                                label:
+                                    'Conflict(open): ${item.openConflictCount > 0 ? 'Yes' : 'No'}',
+                                color: item.openConflictCount > 0
+                                    ? const Color(0xFFB71C1C)
+                                    : const Color(0xFF2D3440),
+                              ),
+                              _MetaChip(
+                                label:
+                                    'LowConfidence: ${item.auditStatus == 'LowConfidence' ? 'Yes' : 'No'}',
+                                color: item.auditStatus == 'LowConfidence'
+                                    ? const Color(0xFF8E24AA)
+                                    : const Color(0xFF2D3440),
+                              ),
                             ],
                           ),
                         ],
@@ -176,5 +194,16 @@ class _MetaChip extends StatelessWidget {
         style: const TextStyle(color: Colors.white70, fontSize: 10),
       ),
     );
+  }
+}
+
+double _confScore(String confidence) {
+  switch (confidence) {
+    case 'H':
+      return 0.9;
+    case 'M':
+      return 0.6;
+    default:
+      return 0.3;
   }
 }

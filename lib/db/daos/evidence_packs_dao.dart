@@ -18,17 +18,20 @@ class EvidencePackItemInput {
 }
 
 class EvidencePackBundle {
-  const EvidencePackBundle({
-    required this.pack,
-    required this.items,
-  });
+  const EvidencePackBundle({required this.pack, required this.items});
 
   final EvidencePack pack;
   final List<EvidencePackItem> items;
 }
 
 @DriftAccessor(
-  tables: [Claims, EvidenceLinks, EvidencePacks, EvidencePackItems, SourceSegments],
+  tables: [
+    Claims,
+    EvidenceLinks,
+    EvidencePacks,
+    EvidencePackItems,
+    SourceSegments,
+  ],
 )
 class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
     with _$EvidencePacksDaoMixin {
@@ -44,9 +47,9 @@ class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
 
     return packQuery.watchSingleOrNull().asyncMap((pack) async {
       if (pack == null) return null;
-      final items = await (itemsQuery
-            ..where((i) => i.evidencePackId.equals(pack.id)))
-          .get();
+      final items =
+          await (itemsQuery..where((i) => i.evidencePackId.equals(pack.id)))
+              .get();
       return EvidencePackBundle(pack: pack, items: items);
     });
   }
@@ -57,10 +60,11 @@ class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
     String contentConfidence = 'M',
     String examConfidence = 'M',
   }) async {
-    final existing = await (select(evidencePacks)
-          ..where((p) => p.claimId.equals(claimId))
-          ..limit(1))
-        .getSingleOrNull();
+    final existing =
+        await (select(evidencePacks)
+              ..where((p) => p.claimId.equals(claimId))
+              ..limit(1))
+            .getSingleOrNull();
 
     if (existing == null) {
       return into(evidencePacks).insert(
@@ -86,9 +90,9 @@ class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> replaceItems(int packId, List<EvidencePackItemInput> items) =>
       transaction(() async {
-        await (delete(evidencePackItems)
-              ..where((i) => i.evidencePackId.equals(packId)))
-            .go();
+        await (delete(
+          evidencePackItems,
+        )..where((i) => i.evidencePackId.equals(packId))).go();
 
         final deduped = <int, EvidencePackItemInput>{};
         for (final item in items) {
@@ -96,6 +100,11 @@ class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
         }
 
         if (deduped.isEmpty) return;
+        final segmentRows = await (select(
+          sourceSegments,
+        )..where((s) => s.id.isIn(deduped.keys))).get();
+        final segmentMap = {for (final s in segmentRows) s.id: s};
+
         await batch((b) {
           b.insertAll(
             evidencePackItems,
@@ -104,17 +113,34 @@ class EvidencePacksDao extends DatabaseAccessor<AppDatabase>
                   (item) => EvidencePackItemsCompanion.insert(
                     evidencePackId: packId,
                     sourceSegmentId: item.sourceSegmentId,
-                    pageNumber: Value(item.pageNumber),
-                    snippet: Value(item.snippet),
+                    pageNumber: Value(
+                      item.pageNumber ??
+                          segmentMap[item.sourceSegmentId]?.pageNumber,
+                    ),
+                    snippet: Value(
+                      (item.snippet != null && item.snippet!.trim().isNotEmpty)
+                          ? item.snippet
+                          : _snippetFromSegment(
+                              segmentMap[item.sourceSegmentId]?.content,
+                            ),
+                    ),
                     weight: Value(item.weight),
                   ),
                 )
                 .toList(),
           );
         });
+        await db.sourcesDao.recalculatePastExamFrequency();
       });
 
   Future<void> deleteClaimCascade(int claimId) async {
     await (delete(claims)..where((c) => c.id.equals(claimId))).go();
+  }
+
+  String? _snippetFromSegment(String? content) {
+    if (content == null) return null;
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) return null;
+    return trimmed.length <= 200 ? trimmed : trimmed.substring(0, 200);
   }
 }

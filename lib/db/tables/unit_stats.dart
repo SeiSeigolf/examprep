@@ -13,6 +13,8 @@ class UnitStats extends Table {
   IntColumn get conflictCount => integer().withDefault(const Constant(0))();
   IntColumn get pointWeight => integer().withDefault(const Constant(1))();
   IntColumn get frequency => integer().withDefault(const Constant(1))();
+  BoolColumn get frequencyManualOverride =>
+      boolean().withDefault(const Constant(false))();
 
   DateTimeColumn get lastAuditedAt => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

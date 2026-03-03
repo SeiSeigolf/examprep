@@ -161,7 +161,7 @@ class _EvidencePackItemCard extends StatelessWidget {
     final pageFromPack = item.pageNumber;
     final pageFromSegment = segmentWithSource?.segment.pageNumber;
     final pageForViewer = pageFromPack ?? pageFromSegment;
-    final snippet = (item.snippet ?? '').trim();
+    final snippet = _effectiveSnippet(item.snippet, segmentWithSource?.segment.content);
     final sourceName = segmentWithSource?.source.fileName ?? 'Unknown source';
     final canOpen =
         segmentWithSource != null && pageForViewer != null && pageForViewer > 0;
@@ -199,7 +199,7 @@ class _EvidencePackItemCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'page=${pageFromPack?.toString() ?? '-'}',
+            'page=${pageForViewer?.toString() ?? '-'}',
             style: const TextStyle(color: Colors.white54, fontSize: 11),
           ),
           const SizedBox(height: 4),
@@ -252,6 +252,14 @@ class _EvidencePackItemCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _effectiveSnippet(String? itemSnippet, String? segmentContent) {
+    final snippet = itemSnippet?.trim() ?? '';
+    if (snippet.isNotEmpty) return snippet;
+    final content = segmentContent?.trim() ?? '';
+    if (content.isEmpty) return '';
+    return content.length <= 200 ? content : content.substring(0, 200);
   }
 }
 

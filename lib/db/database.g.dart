@@ -44,6 +44,20 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
+  static const VerificationMeta _sourceTypeMeta = const VerificationMeta(
+    'sourceType',
+  );
+  @override
+  late final GeneratedColumn<String> sourceType = GeneratedColumn<String>(
+    'source_type',
+    aliasedName,
+    false,
+    check: () =>
+        sourceType.isIn(const ['lecture', 'past_exam', 'assignment', 'notes']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('lecture'),
+  );
   static const VerificationMeta _fileSizeMeta = const VerificationMeta(
     'fileSize',
   );
@@ -92,6 +106,7 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     id,
     fileName,
     filePath,
+    sourceType,
     fileSize,
     pageCount,
     title,
@@ -127,6 +142,12 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
       );
     } else if (isInserting) {
       context.missing(_filePathMeta);
+    }
+    if (data.containsKey('source_type')) {
+      context.handle(
+        _sourceTypeMeta,
+        sourceType.isAcceptableOrUnknown(data['source_type']!, _sourceTypeMeta),
+      );
     }
     if (data.containsKey('file_size')) {
       context.handle(
@@ -173,6 +194,10 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
         DriftSqlType.string,
         data['${effectivePrefix}file_path'],
       )!,
+      sourceType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_type'],
+      )!,
       fileSize: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}file_size'],
@@ -202,6 +227,7 @@ class Source extends DataClass implements Insertable<Source> {
   final int id;
   final String fileName;
   final String filePath;
+  final String sourceType;
   final int? fileSize;
   final int? pageCount;
   final String? title;
@@ -210,6 +236,7 @@ class Source extends DataClass implements Insertable<Source> {
     required this.id,
     required this.fileName,
     required this.filePath,
+    required this.sourceType,
     this.fileSize,
     this.pageCount,
     this.title,
@@ -221,6 +248,7 @@ class Source extends DataClass implements Insertable<Source> {
     map['id'] = Variable<int>(id);
     map['file_name'] = Variable<String>(fileName);
     map['file_path'] = Variable<String>(filePath);
+    map['source_type'] = Variable<String>(sourceType);
     if (!nullToAbsent || fileSize != null) {
       map['file_size'] = Variable<int>(fileSize);
     }
@@ -239,6 +267,7 @@ class Source extends DataClass implements Insertable<Source> {
       id: Value(id),
       fileName: Value(fileName),
       filePath: Value(filePath),
+      sourceType: Value(sourceType),
       fileSize: fileSize == null && nullToAbsent
           ? const Value.absent()
           : Value(fileSize),
@@ -261,6 +290,7 @@ class Source extends DataClass implements Insertable<Source> {
       id: serializer.fromJson<int>(json['id']),
       fileName: serializer.fromJson<String>(json['fileName']),
       filePath: serializer.fromJson<String>(json['filePath']),
+      sourceType: serializer.fromJson<String>(json['sourceType']),
       fileSize: serializer.fromJson<int?>(json['fileSize']),
       pageCount: serializer.fromJson<int?>(json['pageCount']),
       title: serializer.fromJson<String?>(json['title']),
@@ -274,6 +304,7 @@ class Source extends DataClass implements Insertable<Source> {
       'id': serializer.toJson<int>(id),
       'fileName': serializer.toJson<String>(fileName),
       'filePath': serializer.toJson<String>(filePath),
+      'sourceType': serializer.toJson<String>(sourceType),
       'fileSize': serializer.toJson<int?>(fileSize),
       'pageCount': serializer.toJson<int?>(pageCount),
       'title': serializer.toJson<String?>(title),
@@ -285,6 +316,7 @@ class Source extends DataClass implements Insertable<Source> {
     int? id,
     String? fileName,
     String? filePath,
+    String? sourceType,
     Value<int?> fileSize = const Value.absent(),
     Value<int?> pageCount = const Value.absent(),
     Value<String?> title = const Value.absent(),
@@ -293,6 +325,7 @@ class Source extends DataClass implements Insertable<Source> {
     id: id ?? this.id,
     fileName: fileName ?? this.fileName,
     filePath: filePath ?? this.filePath,
+    sourceType: sourceType ?? this.sourceType,
     fileSize: fileSize.present ? fileSize.value : this.fileSize,
     pageCount: pageCount.present ? pageCount.value : this.pageCount,
     title: title.present ? title.value : this.title,
@@ -303,6 +336,9 @@ class Source extends DataClass implements Insertable<Source> {
       id: data.id.present ? data.id.value : this.id,
       fileName: data.fileName.present ? data.fileName.value : this.fileName,
       filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      sourceType: data.sourceType.present
+          ? data.sourceType.value
+          : this.sourceType,
       fileSize: data.fileSize.present ? data.fileSize.value : this.fileSize,
       pageCount: data.pageCount.present ? data.pageCount.value : this.pageCount,
       title: data.title.present ? data.title.value : this.title,
@@ -318,6 +354,7 @@ class Source extends DataClass implements Insertable<Source> {
           ..write('id: $id, ')
           ..write('fileName: $fileName, ')
           ..write('filePath: $filePath, ')
+          ..write('sourceType: $sourceType, ')
           ..write('fileSize: $fileSize, ')
           ..write('pageCount: $pageCount, ')
           ..write('title: $title, ')
@@ -331,6 +368,7 @@ class Source extends DataClass implements Insertable<Source> {
     id,
     fileName,
     filePath,
+    sourceType,
     fileSize,
     pageCount,
     title,
@@ -343,6 +381,7 @@ class Source extends DataClass implements Insertable<Source> {
           other.id == this.id &&
           other.fileName == this.fileName &&
           other.filePath == this.filePath &&
+          other.sourceType == this.sourceType &&
           other.fileSize == this.fileSize &&
           other.pageCount == this.pageCount &&
           other.title == this.title &&
@@ -353,6 +392,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
   final Value<int> id;
   final Value<String> fileName;
   final Value<String> filePath;
+  final Value<String> sourceType;
   final Value<int?> fileSize;
   final Value<int?> pageCount;
   final Value<String?> title;
@@ -361,6 +401,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     this.id = const Value.absent(),
     this.fileName = const Value.absent(),
     this.filePath = const Value.absent(),
+    this.sourceType = const Value.absent(),
     this.fileSize = const Value.absent(),
     this.pageCount = const Value.absent(),
     this.title = const Value.absent(),
@@ -370,6 +411,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     this.id = const Value.absent(),
     required String fileName,
     required String filePath,
+    this.sourceType = const Value.absent(),
     this.fileSize = const Value.absent(),
     this.pageCount = const Value.absent(),
     this.title = const Value.absent(),
@@ -380,6 +422,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     Expression<int>? id,
     Expression<String>? fileName,
     Expression<String>? filePath,
+    Expression<String>? sourceType,
     Expression<int>? fileSize,
     Expression<int>? pageCount,
     Expression<String>? title,
@@ -389,6 +432,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       if (id != null) 'id': id,
       if (fileName != null) 'file_name': fileName,
       if (filePath != null) 'file_path': filePath,
+      if (sourceType != null) 'source_type': sourceType,
       if (fileSize != null) 'file_size': fileSize,
       if (pageCount != null) 'page_count': pageCount,
       if (title != null) 'title': title,
@@ -400,6 +444,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     Value<int>? id,
     Value<String>? fileName,
     Value<String>? filePath,
+    Value<String>? sourceType,
     Value<int?>? fileSize,
     Value<int?>? pageCount,
     Value<String?>? title,
@@ -409,6 +454,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       id: id ?? this.id,
       fileName: fileName ?? this.fileName,
       filePath: filePath ?? this.filePath,
+      sourceType: sourceType ?? this.sourceType,
       fileSize: fileSize ?? this.fileSize,
       pageCount: pageCount ?? this.pageCount,
       title: title ?? this.title,
@@ -427,6 +473,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     }
     if (filePath.present) {
       map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (sourceType.present) {
+      map['source_type'] = Variable<String>(sourceType.value);
     }
     if (fileSize.present) {
       map['file_size'] = Variable<int>(fileSize.value);
@@ -449,6 +498,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
           ..write('id: $id, ')
           ..write('fileName: $fileName, ')
           ..write('filePath: $filePath, ')
+          ..write('sourceType: $sourceType, ')
           ..write('fileSize: $fileSize, ')
           ..write('pageCount: $pageCount, ')
           ..write('title: $title, ')
@@ -4105,6 +4155,21 @@ class $UnitStatsTable extends UnitStats
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _frequencyManualOverrideMeta =
+      const VerificationMeta('frequencyManualOverride');
+  @override
+  late final GeneratedColumn<bool> frequencyManualOverride =
+      GeneratedColumn<bool>(
+        'frequency_manual_override',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("frequency_manual_override" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
   static const VerificationMeta _lastAuditedAtMeta = const VerificationMeta(
     'lastAuditedAt',
   );
@@ -4140,6 +4205,7 @@ class $UnitStatsTable extends UnitStats
     conflictCount,
     pointWeight,
     frequency,
+    frequencyManualOverride,
     lastAuditedAt,
     updatedAt,
   ];
@@ -4226,6 +4292,15 @@ class $UnitStatsTable extends UnitStats
         frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
       );
     }
+    if (data.containsKey('frequency_manual_override')) {
+      context.handle(
+        _frequencyManualOverrideMeta,
+        frequencyManualOverride.isAcceptableOrUnknown(
+          data['frequency_manual_override']!,
+          _frequencyManualOverrideMeta,
+        ),
+      );
+    }
     if (data.containsKey('last_audited_at')) {
       context.handle(
         _lastAuditedAtMeta,
@@ -4290,6 +4365,10 @@ class $UnitStatsTable extends UnitStats
         DriftSqlType.int,
         data['${effectivePrefix}frequency'],
       )!,
+      frequencyManualOverride: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}frequency_manual_override'],
+      )!,
       lastAuditedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_audited_at'],
@@ -4317,6 +4396,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
   final int conflictCount;
   final int pointWeight;
   final int frequency;
+  final bool frequencyManualOverride;
   final DateTime? lastAuditedAt;
   final DateTime updatedAt;
   const UnitStat({
@@ -4329,6 +4409,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     required this.conflictCount,
     required this.pointWeight,
     required this.frequency,
+    required this.frequencyManualOverride,
     this.lastAuditedAt,
     required this.updatedAt,
   });
@@ -4344,6 +4425,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     map['conflict_count'] = Variable<int>(conflictCount);
     map['point_weight'] = Variable<int>(pointWeight);
     map['frequency'] = Variable<int>(frequency);
+    map['frequency_manual_override'] = Variable<bool>(frequencyManualOverride);
     if (!nullToAbsent || lastAuditedAt != null) {
       map['last_audited_at'] = Variable<DateTime>(lastAuditedAt);
     }
@@ -4362,6 +4444,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       conflictCount: Value(conflictCount),
       pointWeight: Value(pointWeight),
       frequency: Value(frequency),
+      frequencyManualOverride: Value(frequencyManualOverride),
       lastAuditedAt: lastAuditedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastAuditedAt),
@@ -4384,6 +4467,9 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       conflictCount: serializer.fromJson<int>(json['conflictCount']),
       pointWeight: serializer.fromJson<int>(json['pointWeight']),
       frequency: serializer.fromJson<int>(json['frequency']),
+      frequencyManualOverride: serializer.fromJson<bool>(
+        json['frequencyManualOverride'],
+      ),
       lastAuditedAt: serializer.fromJson<DateTime?>(json['lastAuditedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -4401,6 +4487,9 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       'conflictCount': serializer.toJson<int>(conflictCount),
       'pointWeight': serializer.toJson<int>(pointWeight),
       'frequency': serializer.toJson<int>(frequency),
+      'frequencyManualOverride': serializer.toJson<bool>(
+        frequencyManualOverride,
+      ),
       'lastAuditedAt': serializer.toJson<DateTime?>(lastAuditedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -4416,6 +4505,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     int? conflictCount,
     int? pointWeight,
     int? frequency,
+    bool? frequencyManualOverride,
     Value<DateTime?> lastAuditedAt = const Value.absent(),
     DateTime? updatedAt,
   }) => UnitStat(
@@ -4428,6 +4518,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     conflictCount: conflictCount ?? this.conflictCount,
     pointWeight: pointWeight ?? this.pointWeight,
     frequency: frequency ?? this.frequency,
+    frequencyManualOverride:
+        frequencyManualOverride ?? this.frequencyManualOverride,
     lastAuditedAt: lastAuditedAt.present
         ? lastAuditedAt.value
         : this.lastAuditedAt,
@@ -4458,6 +4550,9 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
           ? data.pointWeight.value
           : this.pointWeight,
       frequency: data.frequency.present ? data.frequency.value : this.frequency,
+      frequencyManualOverride: data.frequencyManualOverride.present
+          ? data.frequencyManualOverride.value
+          : this.frequencyManualOverride,
       lastAuditedAt: data.lastAuditedAt.present
           ? data.lastAuditedAt.value
           : this.lastAuditedAt,
@@ -4477,6 +4572,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
           ..write('conflictCount: $conflictCount, ')
           ..write('pointWeight: $pointWeight, ')
           ..write('frequency: $frequency, ')
+          ..write('frequencyManualOverride: $frequencyManualOverride, ')
           ..write('lastAuditedAt: $lastAuditedAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -4494,6 +4590,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     conflictCount,
     pointWeight,
     frequency,
+    frequencyManualOverride,
     lastAuditedAt,
     updatedAt,
   );
@@ -4510,6 +4607,7 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
           other.conflictCount == this.conflictCount &&
           other.pointWeight == this.pointWeight &&
           other.frequency == this.frequency &&
+          other.frequencyManualOverride == this.frequencyManualOverride &&
           other.lastAuditedAt == this.lastAuditedAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -4524,6 +4622,7 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
   final Value<int> conflictCount;
   final Value<int> pointWeight;
   final Value<int> frequency;
+  final Value<bool> frequencyManualOverride;
   final Value<DateTime?> lastAuditedAt;
   final Value<DateTime> updatedAt;
   const UnitStatsCompanion({
@@ -4536,6 +4635,7 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     this.conflictCount = const Value.absent(),
     this.pointWeight = const Value.absent(),
     this.frequency = const Value.absent(),
+    this.frequencyManualOverride = const Value.absent(),
     this.lastAuditedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -4549,6 +4649,7 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     this.conflictCount = const Value.absent(),
     this.pointWeight = const Value.absent(),
     this.frequency = const Value.absent(),
+    this.frequencyManualOverride = const Value.absent(),
     this.lastAuditedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : examUnitId = Value(examUnitId);
@@ -4562,6 +4663,7 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     Expression<int>? conflictCount,
     Expression<int>? pointWeight,
     Expression<int>? frequency,
+    Expression<bool>? frequencyManualOverride,
     Expression<DateTime>? lastAuditedAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -4575,6 +4677,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
       if (conflictCount != null) 'conflict_count': conflictCount,
       if (pointWeight != null) 'point_weight': pointWeight,
       if (frequency != null) 'frequency': frequency,
+      if (frequencyManualOverride != null)
+        'frequency_manual_override': frequencyManualOverride,
       if (lastAuditedAt != null) 'last_audited_at': lastAuditedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -4590,6 +4694,7 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     Value<int>? conflictCount,
     Value<int>? pointWeight,
     Value<int>? frequency,
+    Value<bool>? frequencyManualOverride,
     Value<DateTime?>? lastAuditedAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -4603,6 +4708,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
       conflictCount: conflictCount ?? this.conflictCount,
       pointWeight: pointWeight ?? this.pointWeight,
       frequency: frequency ?? this.frequency,
+      frequencyManualOverride:
+          frequencyManualOverride ?? this.frequencyManualOverride,
       lastAuditedAt: lastAuditedAt ?? this.lastAuditedAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -4638,6 +4745,11 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     if (frequency.present) {
       map['frequency'] = Variable<int>(frequency.value);
     }
+    if (frequencyManualOverride.present) {
+      map['frequency_manual_override'] = Variable<bool>(
+        frequencyManualOverride.value,
+      );
+    }
     if (lastAuditedAt.present) {
       map['last_audited_at'] = Variable<DateTime>(lastAuditedAt.value);
     }
@@ -4659,6 +4771,7 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
           ..write('conflictCount: $conflictCount, ')
           ..write('pointWeight: $pointWeight, ')
           ..write('frequency: $frequency, ')
+          ..write('frequencyManualOverride: $frequencyManualOverride, ')
           ..write('lastAuditedAt: $lastAuditedAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5758,6 +5871,7 @@ typedef $$SourcesTableCreateCompanionBuilder =
       Value<int> id,
       required String fileName,
       required String filePath,
+      Value<String> sourceType,
       Value<int?> fileSize,
       Value<int?> pageCount,
       Value<String?> title,
@@ -5768,6 +5882,7 @@ typedef $$SourcesTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String> fileName,
       Value<String> filePath,
+      Value<String> sourceType,
       Value<int?> fileSize,
       Value<int?> pageCount,
       Value<String?> title,
@@ -5818,6 +5933,11 @@ class $$SourcesTableFilterComposer
 
   ColumnFilters<String> get filePath => $composableBuilder(
     column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5891,6 +6011,11 @@ class $$SourcesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get fileSize => $composableBuilder(
     column: $table.fileSize,
     builder: (column) => ColumnOrderings(column),
@@ -5929,6 +6054,11 @@ class $$SourcesTableAnnotationComposer
 
   GeneratedColumn<String> get filePath =>
       $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get fileSize =>
       $composableBuilder(column: $table.fileSize, builder: (column) => column);
@@ -6001,6 +6131,7 @@ class $$SourcesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> fileName = const Value.absent(),
                 Value<String> filePath = const Value.absent(),
+                Value<String> sourceType = const Value.absent(),
                 Value<int?> fileSize = const Value.absent(),
                 Value<int?> pageCount = const Value.absent(),
                 Value<String?> title = const Value.absent(),
@@ -6009,6 +6140,7 @@ class $$SourcesTableTableManager
                 id: id,
                 fileName: fileName,
                 filePath: filePath,
+                sourceType: sourceType,
                 fileSize: fileSize,
                 pageCount: pageCount,
                 title: title,
@@ -6019,6 +6151,7 @@ class $$SourcesTableTableManager
                 Value<int> id = const Value.absent(),
                 required String fileName,
                 required String filePath,
+                Value<String> sourceType = const Value.absent(),
                 Value<int?> fileSize = const Value.absent(),
                 Value<int?> pageCount = const Value.absent(),
                 Value<String?> title = const Value.absent(),
@@ -6027,6 +6160,7 @@ class $$SourcesTableTableManager
                 id: id,
                 fileName: fileName,
                 filePath: filePath,
+                sourceType: sourceType,
                 fileSize: fileSize,
                 pageCount: pageCount,
                 title: title,
@@ -10093,6 +10227,7 @@ typedef $$UnitStatsTableCreateCompanionBuilder =
       Value<int> conflictCount,
       Value<int> pointWeight,
       Value<int> frequency,
+      Value<bool> frequencyManualOverride,
       Value<DateTime?> lastAuditedAt,
       Value<DateTime> updatedAt,
     });
@@ -10107,6 +10242,7 @@ typedef $$UnitStatsTableUpdateCompanionBuilder =
       Value<int> conflictCount,
       Value<int> pointWeight,
       Value<int> frequency,
+      Value<bool> frequencyManualOverride,
       Value<DateTime?> lastAuditedAt,
       Value<DateTime> updatedAt,
     });
@@ -10181,6 +10317,11 @@ class $$UnitStatsTableFilterComposer
 
   ColumnFilters<int> get frequency => $composableBuilder(
     column: $table.frequency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get frequencyManualOverride => $composableBuilder(
+    column: $table.frequencyManualOverride,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10267,6 +10408,11 @@ class $$UnitStatsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get frequencyManualOverride => $composableBuilder(
+    column: $table.frequencyManualOverride,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastAuditedAt => $composableBuilder(
     column: $table.lastAuditedAt,
     builder: (column) => ColumnOrderings(column),
@@ -10346,6 +10492,11 @@ class $$UnitStatsTableAnnotationComposer
   GeneratedColumn<int> get frequency =>
       $composableBuilder(column: $table.frequency, builder: (column) => column);
 
+  GeneratedColumn<bool> get frequencyManualOverride => $composableBuilder(
+    column: $table.frequencyManualOverride,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get lastAuditedAt => $composableBuilder(
     column: $table.lastAuditedAt,
     builder: (column) => column,
@@ -10415,6 +10566,7 @@ class $$UnitStatsTableTableManager
                 Value<int> conflictCount = const Value.absent(),
                 Value<int> pointWeight = const Value.absent(),
                 Value<int> frequency = const Value.absent(),
+                Value<bool> frequencyManualOverride = const Value.absent(),
                 Value<DateTime?> lastAuditedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UnitStatsCompanion(
@@ -10427,6 +10579,7 @@ class $$UnitStatsTableTableManager
                 conflictCount: conflictCount,
                 pointWeight: pointWeight,
                 frequency: frequency,
+                frequencyManualOverride: frequencyManualOverride,
                 lastAuditedAt: lastAuditedAt,
                 updatedAt: updatedAt,
               ),
@@ -10441,6 +10594,7 @@ class $$UnitStatsTableTableManager
                 Value<int> conflictCount = const Value.absent(),
                 Value<int> pointWeight = const Value.absent(),
                 Value<int> frequency = const Value.absent(),
+                Value<bool> frequencyManualOverride = const Value.absent(),
                 Value<DateTime?> lastAuditedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UnitStatsCompanion.insert(
@@ -10453,6 +10607,7 @@ class $$UnitStatsTableTableManager
                 conflictCount: conflictCount,
                 pointWeight: pointWeight,
                 frequency: frequency,
+                frequencyManualOverride: frequencyManualOverride,
                 lastAuditedAt: lastAuditedAt,
                 updatedAt: updatedAt,
               ),

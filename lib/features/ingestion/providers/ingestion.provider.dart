@@ -17,19 +17,18 @@ class IngestionState {
   });
 
   final IngestionStatus status;
-  final String? currentFile;  // 処理中のファイル名
+  final String? currentFile; // 処理中のファイル名
   final String? errorMessage;
 
   IngestionState copyWith({
     IngestionStatus? status,
     String? currentFile,
     String? errorMessage,
-  }) =>
-      IngestionState(
-        status: status ?? this.status,
-        currentFile: currentFile ?? this.currentFile,
-        errorMessage: errorMessage ?? this.errorMessage,
-      );
+  }) => IngestionState(
+    status: status ?? this.status,
+    currentFile: currentFile ?? this.currentFile,
+    errorMessage: errorMessage ?? this.errorMessage,
+  );
 }
 
 class IngestionNotifier extends StateNotifier<IngestionState> {
@@ -68,11 +67,13 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         state = state.copyWith(status: IngestionStatus.inserting);
 
         final fileSize = File(path).lengthSync();
+        final sourceType = _inferSourceType(file.name);
 
         final sourceId = await _db.sourcesDao.insertSource(
           SourcesCompanion.insert(
             fileName: file.name,
             filePath: path,
+            sourceType: Value(sourceType),
             fileSize: Value(fileSize),
             pageCount: Value(pages.length),
           ),
@@ -81,19 +82,20 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         // ページごとにセグメントを登録（テキスト付き）
         await _db.sourcesDao.insertSegments(
           pages
-              .map((p) => SourceSegmentsCompanion.insert(
-                    sourceId: sourceId,
-                    pageNumber: p.pageNumber,
-                    content: Value(p.text),
-                  ))
+              .map(
+                (p) => SourceSegmentsCompanion.insert(
+                  sourceId: sourceId,
+                  pageNumber: p.pageNumber,
+                  content: Value(p.text),
+                ),
+              )
               .toList(),
         );
+
+        await _db.sourcesDao.recalculatePastExamFrequency();
       }
 
-      state = state.copyWith(
-        status: IngestionStatus.done,
-        currentFile: null,
-      );
+      state = state.copyWith(status: IngestionStatus.done, currentFile: null);
       await Future.delayed(const Duration(seconds: 1));
       state = state.copyWith(status: IngestionStatus.idle);
     } catch (e) {
@@ -104,10 +106,26 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
       );
     }
   }
+
+  String _inferSourceType(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.contains('past') ||
+        lower.contains('exam') ||
+        fileName.contains('過去問')) {
+      return 'past_exam';
+    }
+    if (lower.contains('assignment') || fileName.contains('課題')) {
+      return 'assignment';
+    }
+    if (lower.contains('note') || fileName.contains('ノート')) {
+      return 'notes';
+    }
+    return 'lecture';
+  }
 }
 
 final ingestionProvider =
     StateNotifierProvider<IngestionNotifier, IngestionState>((ref) {
-  final db = ref.watch(databaseProvider);
-  return IngestionNotifier(db);
-});
+      final db = ref.watch(databaseProvider);
+      return IngestionNotifier(db);
+    });
