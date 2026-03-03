@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../db/daos/audit_dao.dart';
+import '../../../db/database.provider.dart';
 import '../providers/audit.provider.dart';
 import '../../../shared/providers/navigation.provider.dart';
 import '../../exam_units/providers/exam_units.provider.dart';
+import '../../exam_units/providers/claims.provider.dart';
 import 'widgets/coverage_summary_bar.dart';
 import 'widgets/segment_coverage_tile.dart';
 
@@ -27,17 +29,16 @@ class AuditPage extends ConsumerWidget {
               Text(
                 'Coverage Audit',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 '各ソースセグメントの網羅状況を確認します',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Colors.white38),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
               ),
             ],
           ),
@@ -57,11 +58,12 @@ class AuditPage extends ConsumerWidget {
         // ---- セグメント一覧 ----
         Expanded(
           child: coverageAsync.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
-              child: Text('読み込みエラー: $e',
-                  style: const TextStyle(color: Colors.redAccent)),
+              child: Text(
+                '読み込みエラー: $e',
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             ),
             data: (results) {
               if (results.isEmpty) {
@@ -69,8 +71,11 @@ class AuditPage extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.inbox_outlined,
-                          size: 64, color: Colors.white12),
+                      Icon(
+                        Icons.inbox_outlined,
+                        size: 64,
+                        color: Colors.white12,
+                      ),
                       SizedBox(height: 16),
                       Text(
                         'ソースがまだ取り込まれていません',
@@ -84,9 +89,7 @@ class AuditPage extends ConsumerWidget {
               // フィルター適用
               final filtered = filter == 'all'
                   ? results
-                  : results
-                      .where((r) => r.auditStatus == filter)
-                      .toList();
+                  : results.where((r) => r.auditStatus == filter).toList();
 
               if (filtered.isEmpty) {
                 return Center(
@@ -107,6 +110,14 @@ class AuditPage extends ConsumerWidget {
                   ref.read(selectedExamUnitIdProvider.notifier).state = unitId;
                   ref.read(selectedDestinationProvider.notifier).state =
                       AppDestination.examUnits;
+                },
+                onAssistUncovered: (segment) {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: const Color(0xFF1A1D23),
+                    builder: (_) => _UncoveredAssistSheet(segment: segment),
+                  );
                 },
               );
             },
@@ -168,9 +179,14 @@ class _FilterBar extends ConsumerWidget {
 // ---- ソースごとグループ表示 ----
 
 class _GroupedList extends StatelessWidget {
-  const _GroupedList({required this.results, required this.onTapUnit});
+  const _GroupedList({
+    required this.results,
+    required this.onTapUnit,
+    required this.onAssistUncovered,
+  });
   final List<SegmentCoverageResult> results;
   final ValueChanged<int> onTapUnit;
+  final ValueChanged<SegmentCoverageResult> onAssistUncovered;
 
   @override
   Widget build(BuildContext context) {
@@ -192,12 +208,14 @@ class _GroupedList extends StatelessWidget {
           children: [
             // ソースヘッダー
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(16, 16, 16, 6),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
               child: Row(
                 children: [
-                  const Icon(Icons.picture_as_pdf,
-                      size: 14, color: Colors.redAccent),
+                  const Icon(
+                    Icons.picture_as_pdf,
+                    size: 14,
+                    color: Colors.redAccent,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -212,8 +230,7 @@ class _GroupedList extends StatelessWidget {
                   ),
                   Text(
                     '${segments.length} ページ',
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 11),
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
                 ],
               ),
@@ -223,11 +240,16 @@ class _GroupedList extends StatelessWidget {
             ...segments.map(
               (r) => Column(
                 children: [
-                  SegmentCoverageTile(result: r, onTapUnit: onTapUnit),
+                  SegmentCoverageTile(
+                    result: r,
+                    onTapUnit: onTapUnit,
+                    onAssistUncovered: onAssistUncovered,
+                  ),
                   const Divider(
-                      height: 1,
-                      indent: 16,
-                      color: Color(0xFF252830)),
+                    height: 1,
+                    indent: 16,
+                    color: Color(0xFF252830),
+                  ),
                 ],
               ),
             ),
@@ -235,6 +257,149 @@ class _GroupedList extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _UncoveredAssistSheet extends ConsumerStatefulWidget {
+  const _UncoveredAssistSheet({required this.segment});
+  final SegmentCoverageResult segment;
+
+  @override
+  ConsumerState<_UncoveredAssistSheet> createState() =>
+      _UncoveredAssistSheetState();
+}
+
+class _UncoveredAssistSheetState extends ConsumerState<_UncoveredAssistSheet> {
+  bool _linking = false;
+
+  Future<void> _link(int unitId) async {
+    setState(() => _linking = true);
+    try {
+      await ref
+          .read(databaseProvider)
+          .auditDao
+          .linkSegmentToUnit(segmentId: widget.segment.segId, unitId: unitId);
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('紐づけを追加しました')));
+      }
+    } finally {
+      if (mounted) setState(() => _linking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: FutureBuilder<List<AuditUnitSuggestion>>(
+          future: ref
+              .read(databaseProvider)
+              .auditDao
+              .suggestExamUnitsForSegment(widget.segment.segId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const SizedBox(
+                height: 220,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final suggestions = snapshot.data ?? const <AuditUnitSuggestion>[];
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Uncovered 解消支援',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'p.${widget.segment.pageNumber} の候補 ExamUnit（上位5件）',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                if (suggestions.isEmpty)
+                  const Text(
+                    '候補が見つかりませんでした',
+                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                  )
+                else
+                  ...suggestions.map(
+                    (s) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF222733),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  s.unitTitle,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'score=${s.score}'
+                                  '${s.claimPreview.isEmpty ? '' : ' / ${s.claimPreview}'}',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              ref
+                                      .read(selectedExamUnitIdProvider.notifier)
+                                      .state =
+                                  s.unitId;
+                              ref.read(selectedClaimIdProvider.notifier).state =
+                                  null;
+                              ref
+                                  .read(selectedDestinationProvider.notifier)
+                                  .state = AppDestination
+                                  .examUnits;
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('詳細へ'),
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton.tonal(
+                            onPressed: _linking ? null : () => _link(s.unitId),
+                            child: const Text('このUnitに紐づける'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
