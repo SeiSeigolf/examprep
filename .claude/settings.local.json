@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter:*)",
+      "Bash(export:*)",
+      "Bash(brew list)",
+      "Bash(dart --version)",
+      "Bash(brew install:*)",
+      "Bash(dart run:*)",
+      "Bash(xcodebuild -version)",
+      "Bash(grep:*)"
+    ]
+  }
+}

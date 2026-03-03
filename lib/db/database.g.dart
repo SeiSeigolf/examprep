@@ -1,0 +1,4855 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'database.dart';
+
+// ignore_for_file: type=lint
+class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SourcesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  @override
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _filePathMeta = const VerificationMeta(
+    'filePath',
+  );
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+    'file_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileSizeMeta = const VerificationMeta(
+    'fileSize',
+  );
+  @override
+  late final GeneratedColumn<int> fileSize = GeneratedColumn<int>(
+    'file_size',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pageCountMeta = const VerificationMeta(
+    'pageCount',
+  );
+  @override
+  late final GeneratedColumn<int> pageCount = GeneratedColumn<int>(
+    'page_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _importedAtMeta = const VerificationMeta(
+    'importedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> importedAt = GeneratedColumn<DateTime>(
+    'imported_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    fileName,
+    filePath,
+    fileSize,
+    pageCount,
+    title,
+    importedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sources';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Source> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(
+        _filePathMeta,
+        filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('file_size')) {
+      context.handle(
+        _fileSizeMeta,
+        fileSize.isAcceptableOrUnknown(data['file_size']!, _fileSizeMeta),
+      );
+    }
+    if (data.containsKey('page_count')) {
+      context.handle(
+        _pageCountMeta,
+        pageCount.isAcceptableOrUnknown(data['page_count']!, _pageCountMeta),
+      );
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('imported_at')) {
+      context.handle(
+        _importedAtMeta,
+        importedAt.isAcceptableOrUnknown(data['imported_at']!, _importedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Source map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Source(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      filePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_path'],
+      )!,
+      fileSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_size'],
+      ),
+      pageCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}page_count'],
+      ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      importedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}imported_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SourcesTable createAlias(String alias) {
+    return $SourcesTable(attachedDatabase, alias);
+  }
+}
+
+class Source extends DataClass implements Insertable<Source> {
+  final int id;
+  final String fileName;
+  final String filePath;
+  final int? fileSize;
+  final int? pageCount;
+  final String? title;
+  final DateTime importedAt;
+  const Source({
+    required this.id,
+    required this.fileName,
+    required this.filePath,
+    this.fileSize,
+    this.pageCount,
+    this.title,
+    required this.importedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['file_name'] = Variable<String>(fileName);
+    map['file_path'] = Variable<String>(filePath);
+    if (!nullToAbsent || fileSize != null) {
+      map['file_size'] = Variable<int>(fileSize);
+    }
+    if (!nullToAbsent || pageCount != null) {
+      map['page_count'] = Variable<int>(pageCount);
+    }
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    map['imported_at'] = Variable<DateTime>(importedAt);
+    return map;
+  }
+
+  SourcesCompanion toCompanion(bool nullToAbsent) {
+    return SourcesCompanion(
+      id: Value(id),
+      fileName: Value(fileName),
+      filePath: Value(filePath),
+      fileSize: fileSize == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fileSize),
+      pageCount: pageCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pageCount),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      importedAt: Value(importedAt),
+    );
+  }
+
+  factory Source.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Source(
+      id: serializer.fromJson<int>(json['id']),
+      fileName: serializer.fromJson<String>(json['fileName']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      fileSize: serializer.fromJson<int?>(json['fileSize']),
+      pageCount: serializer.fromJson<int?>(json['pageCount']),
+      title: serializer.fromJson<String?>(json['title']),
+      importedAt: serializer.fromJson<DateTime>(json['importedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'fileName': serializer.toJson<String>(fileName),
+      'filePath': serializer.toJson<String>(filePath),
+      'fileSize': serializer.toJson<int?>(fileSize),
+      'pageCount': serializer.toJson<int?>(pageCount),
+      'title': serializer.toJson<String?>(title),
+      'importedAt': serializer.toJson<DateTime>(importedAt),
+    };
+  }
+
+  Source copyWith({
+    int? id,
+    String? fileName,
+    String? filePath,
+    Value<int?> fileSize = const Value.absent(),
+    Value<int?> pageCount = const Value.absent(),
+    Value<String?> title = const Value.absent(),
+    DateTime? importedAt,
+  }) => Source(
+    id: id ?? this.id,
+    fileName: fileName ?? this.fileName,
+    filePath: filePath ?? this.filePath,
+    fileSize: fileSize.present ? fileSize.value : this.fileSize,
+    pageCount: pageCount.present ? pageCount.value : this.pageCount,
+    title: title.present ? title.value : this.title,
+    importedAt: importedAt ?? this.importedAt,
+  );
+  Source copyWithCompanion(SourcesCompanion data) {
+    return Source(
+      id: data.id.present ? data.id.value : this.id,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      fileSize: data.fileSize.present ? data.fileSize.value : this.fileSize,
+      pageCount: data.pageCount.present ? data.pageCount.value : this.pageCount,
+      title: data.title.present ? data.title.value : this.title,
+      importedAt: data.importedAt.present
+          ? data.importedAt.value
+          : this.importedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Source(')
+          ..write('id: $id, ')
+          ..write('fileName: $fileName, ')
+          ..write('filePath: $filePath, ')
+          ..write('fileSize: $fileSize, ')
+          ..write('pageCount: $pageCount, ')
+          ..write('title: $title, ')
+          ..write('importedAt: $importedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    fileName,
+    filePath,
+    fileSize,
+    pageCount,
+    title,
+    importedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Source &&
+          other.id == this.id &&
+          other.fileName == this.fileName &&
+          other.filePath == this.filePath &&
+          other.fileSize == this.fileSize &&
+          other.pageCount == this.pageCount &&
+          other.title == this.title &&
+          other.importedAt == this.importedAt);
+}
+
+class SourcesCompanion extends UpdateCompanion<Source> {
+  final Value<int> id;
+  final Value<String> fileName;
+  final Value<String> filePath;
+  final Value<int?> fileSize;
+  final Value<int?> pageCount;
+  final Value<String?> title;
+  final Value<DateTime> importedAt;
+  const SourcesCompanion({
+    this.id = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.fileSize = const Value.absent(),
+    this.pageCount = const Value.absent(),
+    this.title = const Value.absent(),
+    this.importedAt = const Value.absent(),
+  });
+  SourcesCompanion.insert({
+    this.id = const Value.absent(),
+    required String fileName,
+    required String filePath,
+    this.fileSize = const Value.absent(),
+    this.pageCount = const Value.absent(),
+    this.title = const Value.absent(),
+    this.importedAt = const Value.absent(),
+  }) : fileName = Value(fileName),
+       filePath = Value(filePath);
+  static Insertable<Source> custom({
+    Expression<int>? id,
+    Expression<String>? fileName,
+    Expression<String>? filePath,
+    Expression<int>? fileSize,
+    Expression<int>? pageCount,
+    Expression<String>? title,
+    Expression<DateTime>? importedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (fileName != null) 'file_name': fileName,
+      if (filePath != null) 'file_path': filePath,
+      if (fileSize != null) 'file_size': fileSize,
+      if (pageCount != null) 'page_count': pageCount,
+      if (title != null) 'title': title,
+      if (importedAt != null) 'imported_at': importedAt,
+    });
+  }
+
+  SourcesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? fileName,
+    Value<String>? filePath,
+    Value<int?>? fileSize,
+    Value<int?>? pageCount,
+    Value<String?>? title,
+    Value<DateTime>? importedAt,
+  }) {
+    return SourcesCompanion(
+      id: id ?? this.id,
+      fileName: fileName ?? this.fileName,
+      filePath: filePath ?? this.filePath,
+      fileSize: fileSize ?? this.fileSize,
+      pageCount: pageCount ?? this.pageCount,
+      title: title ?? this.title,
+      importedAt: importedAt ?? this.importedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (fileSize.present) {
+      map['file_size'] = Variable<int>(fileSize.value);
+    }
+    if (pageCount.present) {
+      map['page_count'] = Variable<int>(pageCount.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (importedAt.present) {
+      map['imported_at'] = Variable<DateTime>(importedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SourcesCompanion(')
+          ..write('id: $id, ')
+          ..write('fileName: $fileName, ')
+          ..write('filePath: $filePath, ')
+          ..write('fileSize: $fileSize, ')
+          ..write('pageCount: $pageCount, ')
+          ..write('title: $title, ')
+          ..write('importedAt: $importedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SourceSegmentsTable extends SourceSegments
+    with TableInfo<$SourceSegmentsTable, SourceSegment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SourceSegmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<int> sourceId = GeneratedColumn<int>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES sources (id)',
+    ),
+  );
+  static const VerificationMeta _pageNumberMeta = const VerificationMeta(
+    'pageNumber',
+  );
+  @override
+  late final GeneratedColumn<int> pageNumber = GeneratedColumn<int>(
+    'page_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _segmentTypeMeta = const VerificationMeta(
+    'segmentType',
+  );
+  @override
+  late final GeneratedColumn<String> segmentType = GeneratedColumn<String>(
+    'segment_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('page'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sourceId,
+    pageNumber,
+    content,
+    segmentType,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'source_segments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SourceSegment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('page_number')) {
+      context.handle(
+        _pageNumberMeta,
+        pageNumber.isAcceptableOrUnknown(data['page_number']!, _pageNumberMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pageNumberMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    }
+    if (data.containsKey('segment_type')) {
+      context.handle(
+        _segmentTypeMeta,
+        segmentType.isAcceptableOrUnknown(
+          data['segment_type']!,
+          _segmentTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SourceSegment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SourceSegment(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_id'],
+      )!,
+      pageNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}page_number'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      segmentType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}segment_type'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SourceSegmentsTable createAlias(String alias) {
+    return $SourceSegmentsTable(attachedDatabase, alias);
+  }
+}
+
+class SourceSegment extends DataClass implements Insertable<SourceSegment> {
+  final int id;
+  final int sourceId;
+  final int pageNumber;
+  final String content;
+  final String segmentType;
+  final DateTime createdAt;
+  const SourceSegment({
+    required this.id,
+    required this.sourceId,
+    required this.pageNumber,
+    required this.content,
+    required this.segmentType,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_id'] = Variable<int>(sourceId);
+    map['page_number'] = Variable<int>(pageNumber);
+    map['content'] = Variable<String>(content);
+    map['segment_type'] = Variable<String>(segmentType);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SourceSegmentsCompanion toCompanion(bool nullToAbsent) {
+    return SourceSegmentsCompanion(
+      id: Value(id),
+      sourceId: Value(sourceId),
+      pageNumber: Value(pageNumber),
+      content: Value(content),
+      segmentType: Value(segmentType),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SourceSegment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SourceSegment(
+      id: serializer.fromJson<int>(json['id']),
+      sourceId: serializer.fromJson<int>(json['sourceId']),
+      pageNumber: serializer.fromJson<int>(json['pageNumber']),
+      content: serializer.fromJson<String>(json['content']),
+      segmentType: serializer.fromJson<String>(json['segmentType']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceId': serializer.toJson<int>(sourceId),
+      'pageNumber': serializer.toJson<int>(pageNumber),
+      'content': serializer.toJson<String>(content),
+      'segmentType': serializer.toJson<String>(segmentType),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SourceSegment copyWith({
+    int? id,
+    int? sourceId,
+    int? pageNumber,
+    String? content,
+    String? segmentType,
+    DateTime? createdAt,
+  }) => SourceSegment(
+    id: id ?? this.id,
+    sourceId: sourceId ?? this.sourceId,
+    pageNumber: pageNumber ?? this.pageNumber,
+    content: content ?? this.content,
+    segmentType: segmentType ?? this.segmentType,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SourceSegment copyWithCompanion(SourceSegmentsCompanion data) {
+    return SourceSegment(
+      id: data.id.present ? data.id.value : this.id,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      pageNumber: data.pageNumber.present
+          ? data.pageNumber.value
+          : this.pageNumber,
+      content: data.content.present ? data.content.value : this.content,
+      segmentType: data.segmentType.present
+          ? data.segmentType.value
+          : this.segmentType,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SourceSegment(')
+          ..write('id: $id, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('pageNumber: $pageNumber, ')
+          ..write('content: $content, ')
+          ..write('segmentType: $segmentType, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, sourceId, pageNumber, content, segmentType, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SourceSegment &&
+          other.id == this.id &&
+          other.sourceId == this.sourceId &&
+          other.pageNumber == this.pageNumber &&
+          other.content == this.content &&
+          other.segmentType == this.segmentType &&
+          other.createdAt == this.createdAt);
+}
+
+class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
+  final Value<int> id;
+  final Value<int> sourceId;
+  final Value<int> pageNumber;
+  final Value<String> content;
+  final Value<String> segmentType;
+  final Value<DateTime> createdAt;
+  const SourceSegmentsCompanion({
+    this.id = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.pageNumber = const Value.absent(),
+    this.content = const Value.absent(),
+    this.segmentType = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  SourceSegmentsCompanion.insert({
+    this.id = const Value.absent(),
+    required int sourceId,
+    required int pageNumber,
+    this.content = const Value.absent(),
+    this.segmentType = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : sourceId = Value(sourceId),
+       pageNumber = Value(pageNumber);
+  static Insertable<SourceSegment> custom({
+    Expression<int>? id,
+    Expression<int>? sourceId,
+    Expression<int>? pageNumber,
+    Expression<String>? content,
+    Expression<String>? segmentType,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceId != null) 'source_id': sourceId,
+      if (pageNumber != null) 'page_number': pageNumber,
+      if (content != null) 'content': content,
+      if (segmentType != null) 'segment_type': segmentType,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  SourceSegmentsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sourceId,
+    Value<int>? pageNumber,
+    Value<String>? content,
+    Value<String>? segmentType,
+    Value<DateTime>? createdAt,
+  }) {
+    return SourceSegmentsCompanion(
+      id: id ?? this.id,
+      sourceId: sourceId ?? this.sourceId,
+      pageNumber: pageNumber ?? this.pageNumber,
+      content: content ?? this.content,
+      segmentType: segmentType ?? this.segmentType,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<int>(sourceId.value);
+    }
+    if (pageNumber.present) {
+      map['page_number'] = Variable<int>(pageNumber.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (segmentType.present) {
+      map['segment_type'] = Variable<String>(segmentType.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SourceSegmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('pageNumber: $pageNumber, ')
+          ..write('content: $content, ')
+          ..write('segmentType: $segmentType, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExamUnitsTable extends ExamUnits
+    with TableInfo<$ExamUnitsTable, ExamUnit> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExamUnitsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitTypeMeta = const VerificationMeta(
+    'unitType',
+  );
+  @override
+  late final GeneratedColumn<String> unitType = GeneratedColumn<String>(
+    'unit_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('定義'),
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _confidenceLevelMeta = const VerificationMeta(
+    'confidenceLevel',
+  );
+  @override
+  late final GeneratedColumn<String> confidenceLevel = GeneratedColumn<String>(
+    'confidence_level',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('medium'),
+  );
+  static const VerificationMeta _auditStatusMeta = const VerificationMeta(
+    'auditStatus',
+  );
+  @override
+  late final GeneratedColumn<String> auditStatus = GeneratedColumn<String>(
+    'audit_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('uncovered'),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    unitType,
+    description,
+    confidenceLevel,
+    auditStatus,
+    sortOrder,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exam_units';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExamUnit> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('unit_type')) {
+      context.handle(
+        _unitTypeMeta,
+        unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('confidence_level')) {
+      context.handle(
+        _confidenceLevelMeta,
+        confidenceLevel.isAcceptableOrUnknown(
+          data['confidence_level']!,
+          _confidenceLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('audit_status')) {
+      context.handle(
+        _auditStatusMeta,
+        auditStatus.isAcceptableOrUnknown(
+          data['audit_status']!,
+          _auditStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExamUnit map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExamUnit(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      unitType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit_type'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      confidenceLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}confidence_level'],
+      )!,
+      auditStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}audit_status'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExamUnitsTable createAlias(String alias) {
+    return $ExamUnitsTable(attachedDatabase, alias);
+  }
+}
+
+class ExamUnit extends DataClass implements Insertable<ExamUnit> {
+  final int id;
+  final String title;
+  final String unitType;
+  final String? description;
+  final String confidenceLevel;
+  final String auditStatus;
+  final int sortOrder;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const ExamUnit({
+    required this.id,
+    required this.title,
+    required this.unitType,
+    this.description,
+    required this.confidenceLevel,
+    required this.auditStatus,
+    required this.sortOrder,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    map['unit_type'] = Variable<String>(unitType);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    map['confidence_level'] = Variable<String>(confidenceLevel);
+    map['audit_status'] = Variable<String>(auditStatus);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ExamUnitsCompanion toCompanion(bool nullToAbsent) {
+    return ExamUnitsCompanion(
+      id: Value(id),
+      title: Value(title),
+      unitType: Value(unitType),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      confidenceLevel: Value(confidenceLevel),
+      auditStatus: Value(auditStatus),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ExamUnit.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExamUnit(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      unitType: serializer.fromJson<String>(json['unitType']),
+      description: serializer.fromJson<String?>(json['description']),
+      confidenceLevel: serializer.fromJson<String>(json['confidenceLevel']),
+      auditStatus: serializer.fromJson<String>(json['auditStatus']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'unitType': serializer.toJson<String>(unitType),
+      'description': serializer.toJson<String?>(description),
+      'confidenceLevel': serializer.toJson<String>(confidenceLevel),
+      'auditStatus': serializer.toJson<String>(auditStatus),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ExamUnit copyWith({
+    int? id,
+    String? title,
+    String? unitType,
+    Value<String?> description = const Value.absent(),
+    String? confidenceLevel,
+    String? auditStatus,
+    int? sortOrder,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => ExamUnit(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    unitType: unitType ?? this.unitType,
+    description: description.present ? description.value : this.description,
+    confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+    auditStatus: auditStatus ?? this.auditStatus,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ExamUnit copyWithCompanion(ExamUnitsCompanion data) {
+    return ExamUnit(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      confidenceLevel: data.confidenceLevel.present
+          ? data.confidenceLevel.value
+          : this.confidenceLevel,
+      auditStatus: data.auditStatus.present
+          ? data.auditStatus.value
+          : this.auditStatus,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExamUnit(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('unitType: $unitType, ')
+          ..write('description: $description, ')
+          ..write('confidenceLevel: $confidenceLevel, ')
+          ..write('auditStatus: $auditStatus, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    unitType,
+    description,
+    confidenceLevel,
+    auditStatus,
+    sortOrder,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExamUnit &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.unitType == this.unitType &&
+          other.description == this.description &&
+          other.confidenceLevel == this.confidenceLevel &&
+          other.auditStatus == this.auditStatus &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ExamUnitsCompanion extends UpdateCompanion<ExamUnit> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<String> unitType;
+  final Value<String?> description;
+  final Value<String> confidenceLevel;
+  final Value<String> auditStatus;
+  final Value<int> sortOrder;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const ExamUnitsCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.unitType = const Value.absent(),
+    this.description = const Value.absent(),
+    this.confidenceLevel = const Value.absent(),
+    this.auditStatus = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ExamUnitsCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    this.unitType = const Value.absent(),
+    this.description = const Value.absent(),
+    this.confidenceLevel = const Value.absent(),
+    this.auditStatus = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : title = Value(title);
+  static Insertable<ExamUnit> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<String>? unitType,
+    Expression<String>? description,
+    Expression<String>? confidenceLevel,
+    Expression<String>? auditStatus,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (unitType != null) 'unit_type': unitType,
+      if (description != null) 'description': description,
+      if (confidenceLevel != null) 'confidence_level': confidenceLevel,
+      if (auditStatus != null) 'audit_status': auditStatus,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ExamUnitsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? title,
+    Value<String>? unitType,
+    Value<String?>? description,
+    Value<String>? confidenceLevel,
+    Value<String>? auditStatus,
+    Value<int>? sortOrder,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ExamUnitsCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      unitType: unitType ?? this.unitType,
+      description: description ?? this.description,
+      confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+      auditStatus: auditStatus ?? this.auditStatus,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (unitType.present) {
+      map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (confidenceLevel.present) {
+      map['confidence_level'] = Variable<String>(confidenceLevel.value);
+    }
+    if (auditStatus.present) {
+      map['audit_status'] = Variable<String>(auditStatus.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExamUnitsCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('unitType: $unitType, ')
+          ..write('description: $description, ')
+          ..write('confidenceLevel: $confidenceLevel, ')
+          ..write('auditStatus: $auditStatus, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ClaimsTable extends Claims with TableInfo<$ClaimsTable, Claim> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClaimsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _examUnitIdMeta = const VerificationMeta(
+    'examUnitId',
+  );
+  @override
+  late final GeneratedColumn<int> examUnitId = GeneratedColumn<int>(
+    'exam_unit_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES exam_units (id)',
+    ),
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confidenceLevelMeta = const VerificationMeta(
+    'confidenceLevel',
+  );
+  @override
+  late final GeneratedColumn<String> confidenceLevel = GeneratedColumn<String>(
+    'confidence_level',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('medium'),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('user'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    examUnitId,
+    content,
+    confidenceLevel,
+    createdBy,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'claims';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Claim> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('exam_unit_id')) {
+      context.handle(
+        _examUnitIdMeta,
+        examUnitId.isAcceptableOrUnknown(
+          data['exam_unit_id']!,
+          _examUnitIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_examUnitIdMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('confidence_level')) {
+      context.handle(
+        _confidenceLevelMeta,
+        confidenceLevel.isAcceptableOrUnknown(
+          data['confidence_level']!,
+          _confidenceLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Claim map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Claim(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      examUnitId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exam_unit_id'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      confidenceLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}confidence_level'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ClaimsTable createAlias(String alias) {
+    return $ClaimsTable(attachedDatabase, alias);
+  }
+}
+
+class Claim extends DataClass implements Insertable<Claim> {
+  final int id;
+  final int examUnitId;
+  final String content;
+  final String confidenceLevel;
+  final String createdBy;
+  final DateTime createdAt;
+  const Claim({
+    required this.id,
+    required this.examUnitId,
+    required this.content,
+    required this.confidenceLevel,
+    required this.createdBy,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['exam_unit_id'] = Variable<int>(examUnitId);
+    map['content'] = Variable<String>(content);
+    map['confidence_level'] = Variable<String>(confidenceLevel);
+    map['created_by'] = Variable<String>(createdBy);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ClaimsCompanion toCompanion(bool nullToAbsent) {
+    return ClaimsCompanion(
+      id: Value(id),
+      examUnitId: Value(examUnitId),
+      content: Value(content),
+      confidenceLevel: Value(confidenceLevel),
+      createdBy: Value(createdBy),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Claim.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Claim(
+      id: serializer.fromJson<int>(json['id']),
+      examUnitId: serializer.fromJson<int>(json['examUnitId']),
+      content: serializer.fromJson<String>(json['content']),
+      confidenceLevel: serializer.fromJson<String>(json['confidenceLevel']),
+      createdBy: serializer.fromJson<String>(json['createdBy']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'examUnitId': serializer.toJson<int>(examUnitId),
+      'content': serializer.toJson<String>(content),
+      'confidenceLevel': serializer.toJson<String>(confidenceLevel),
+      'createdBy': serializer.toJson<String>(createdBy),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Claim copyWith({
+    int? id,
+    int? examUnitId,
+    String? content,
+    String? confidenceLevel,
+    String? createdBy,
+    DateTime? createdAt,
+  }) => Claim(
+    id: id ?? this.id,
+    examUnitId: examUnitId ?? this.examUnitId,
+    content: content ?? this.content,
+    confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+    createdBy: createdBy ?? this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Claim copyWithCompanion(ClaimsCompanion data) {
+    return Claim(
+      id: data.id.present ? data.id.value : this.id,
+      examUnitId: data.examUnitId.present
+          ? data.examUnitId.value
+          : this.examUnitId,
+      content: data.content.present ? data.content.value : this.content,
+      confidenceLevel: data.confidenceLevel.present
+          ? data.confidenceLevel.value
+          : this.confidenceLevel,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Claim(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('content: $content, ')
+          ..write('confidenceLevel: $confidenceLevel, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    examUnitId,
+    content,
+    confidenceLevel,
+    createdBy,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Claim &&
+          other.id == this.id &&
+          other.examUnitId == this.examUnitId &&
+          other.content == this.content &&
+          other.confidenceLevel == this.confidenceLevel &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt);
+}
+
+class ClaimsCompanion extends UpdateCompanion<Claim> {
+  final Value<int> id;
+  final Value<int> examUnitId;
+  final Value<String> content;
+  final Value<String> confidenceLevel;
+  final Value<String> createdBy;
+  final Value<DateTime> createdAt;
+  const ClaimsCompanion({
+    this.id = const Value.absent(),
+    this.examUnitId = const Value.absent(),
+    this.content = const Value.absent(),
+    this.confidenceLevel = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  ClaimsCompanion.insert({
+    this.id = const Value.absent(),
+    required int examUnitId,
+    required String content,
+    this.confidenceLevel = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : examUnitId = Value(examUnitId),
+       content = Value(content);
+  static Insertable<Claim> custom({
+    Expression<int>? id,
+    Expression<int>? examUnitId,
+    Expression<String>? content,
+    Expression<String>? confidenceLevel,
+    Expression<String>? createdBy,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (examUnitId != null) 'exam_unit_id': examUnitId,
+      if (content != null) 'content': content,
+      if (confidenceLevel != null) 'confidence_level': confidenceLevel,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  ClaimsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? examUnitId,
+    Value<String>? content,
+    Value<String>? confidenceLevel,
+    Value<String>? createdBy,
+    Value<DateTime>? createdAt,
+  }) {
+    return ClaimsCompanion(
+      id: id ?? this.id,
+      examUnitId: examUnitId ?? this.examUnitId,
+      content: content ?? this.content,
+      confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (examUnitId.present) {
+      map['exam_unit_id'] = Variable<int>(examUnitId.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (confidenceLevel.present) {
+      map['confidence_level'] = Variable<String>(confidenceLevel.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClaimsCompanion(')
+          ..write('id: $id, ')
+          ..write('examUnitId: $examUnitId, ')
+          ..write('content: $content, ')
+          ..write('confidenceLevel: $confidenceLevel, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EvidenceLinksTable extends EvidenceLinks
+    with TableInfo<$EvidenceLinksTable, EvidenceLink> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EvidenceLinksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _claimIdMeta = const VerificationMeta(
+    'claimId',
+  );
+  @override
+  late final GeneratedColumn<int> claimId = GeneratedColumn<int>(
+    'claim_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES claims (id)',
+    ),
+  );
+  static const VerificationMeta _sourceSegmentIdMeta = const VerificationMeta(
+    'sourceSegmentId',
+  );
+  @override
+  late final GeneratedColumn<int> sourceSegmentId = GeneratedColumn<int>(
+    'source_segment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES source_segments (id)',
+    ),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    claimId,
+    sourceSegmentId,
+    note,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'evidence_links';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EvidenceLink> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('claim_id')) {
+      context.handle(
+        _claimIdMeta,
+        claimId.isAcceptableOrUnknown(data['claim_id']!, _claimIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claimIdMeta);
+    }
+    if (data.containsKey('source_segment_id')) {
+      context.handle(
+        _sourceSegmentIdMeta,
+        sourceSegmentId.isAcceptableOrUnknown(
+          data['source_segment_id']!,
+          _sourceSegmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceSegmentIdMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EvidenceLink map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EvidenceLink(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      claimId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}claim_id'],
+      )!,
+      sourceSegmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_segment_id'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EvidenceLinksTable createAlias(String alias) {
+    return $EvidenceLinksTable(attachedDatabase, alias);
+  }
+}
+
+class EvidenceLink extends DataClass implements Insertable<EvidenceLink> {
+  final int id;
+  final int claimId;
+  final int sourceSegmentId;
+  final String? note;
+  final DateTime createdAt;
+  const EvidenceLink({
+    required this.id,
+    required this.claimId,
+    required this.sourceSegmentId,
+    this.note,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['claim_id'] = Variable<int>(claimId);
+    map['source_segment_id'] = Variable<int>(sourceSegmentId);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  EvidenceLinksCompanion toCompanion(bool nullToAbsent) {
+    return EvidenceLinksCompanion(
+      id: Value(id),
+      claimId: Value(claimId),
+      sourceSegmentId: Value(sourceSegmentId),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory EvidenceLink.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EvidenceLink(
+      id: serializer.fromJson<int>(json['id']),
+      claimId: serializer.fromJson<int>(json['claimId']),
+      sourceSegmentId: serializer.fromJson<int>(json['sourceSegmentId']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'claimId': serializer.toJson<int>(claimId),
+      'sourceSegmentId': serializer.toJson<int>(sourceSegmentId),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  EvidenceLink copyWith({
+    int? id,
+    int? claimId,
+    int? sourceSegmentId,
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+  }) => EvidenceLink(
+    id: id ?? this.id,
+    claimId: claimId ?? this.claimId,
+    sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  EvidenceLink copyWithCompanion(EvidenceLinksCompanion data) {
+    return EvidenceLink(
+      id: data.id.present ? data.id.value : this.id,
+      claimId: data.claimId.present ? data.claimId.value : this.claimId,
+      sourceSegmentId: data.sourceSegmentId.present
+          ? data.sourceSegmentId.value
+          : this.sourceSegmentId,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EvidenceLink(')
+          ..write('id: $id, ')
+          ..write('claimId: $claimId, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, claimId, sourceSegmentId, note, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EvidenceLink &&
+          other.id == this.id &&
+          other.claimId == this.claimId &&
+          other.sourceSegmentId == this.sourceSegmentId &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt);
+}
+
+class EvidenceLinksCompanion extends UpdateCompanion<EvidenceLink> {
+  final Value<int> id;
+  final Value<int> claimId;
+  final Value<int> sourceSegmentId;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  const EvidenceLinksCompanion({
+    this.id = const Value.absent(),
+    this.claimId = const Value.absent(),
+    this.sourceSegmentId = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  EvidenceLinksCompanion.insert({
+    this.id = const Value.absent(),
+    required int claimId,
+    required int sourceSegmentId,
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : claimId = Value(claimId),
+       sourceSegmentId = Value(sourceSegmentId);
+  static Insertable<EvidenceLink> custom({
+    Expression<int>? id,
+    Expression<int>? claimId,
+    Expression<int>? sourceSegmentId,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (claimId != null) 'claim_id': claimId,
+      if (sourceSegmentId != null) 'source_segment_id': sourceSegmentId,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  EvidenceLinksCompanion copyWith({
+    Value<int>? id,
+    Value<int>? claimId,
+    Value<int>? sourceSegmentId,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+  }) {
+    return EvidenceLinksCompanion(
+      id: id ?? this.id,
+      claimId: claimId ?? this.claimId,
+      sourceSegmentId: sourceSegmentId ?? this.sourceSegmentId,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (claimId.present) {
+      map['claim_id'] = Variable<int>(claimId.value);
+    }
+    if (sourceSegmentId.present) {
+      map['source_segment_id'] = Variable<int>(sourceSegmentId.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EvidenceLinksCompanion(')
+          ..write('id: $id, ')
+          ..write('claimId: $claimId, ')
+          ..write('sourceSegmentId: $sourceSegmentId, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $StudyMethodsTable extends StudyMethods
+    with TableInfo<$StudyMethodsTable, StudyMethod> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StudyMethodsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _unitTypeMeta = const VerificationMeta(
+    'unitType',
+  );
+  @override
+  late final GeneratedColumn<String> unitType = GeneratedColumn<String>(
+    'unit_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _problemFormatMeta = const VerificationMeta(
+    'problemFormat',
+  );
+  @override
+  late final GeneratedColumn<String> problemFormat = GeneratedColumn<String>(
+    'problem_format',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _methodNameMeta = const VerificationMeta(
+    'methodName',
+  );
+  @override
+  late final GeneratedColumn<String> methodName = GeneratedColumn<String>(
+    'method_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _estimatedMinutesMeta = const VerificationMeta(
+    'estimatedMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> estimatedMinutes = GeneratedColumn<int>(
+    'estimated_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    unitType,
+    problemFormat,
+    methodName,
+    description,
+    estimatedMinutes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'study_methods';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StudyMethod> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('unit_type')) {
+      context.handle(
+        _unitTypeMeta,
+        unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitTypeMeta);
+    }
+    if (data.containsKey('problem_format')) {
+      context.handle(
+        _problemFormatMeta,
+        problemFormat.isAcceptableOrUnknown(
+          data['problem_format']!,
+          _problemFormatMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_problemFormatMeta);
+    }
+    if (data.containsKey('method_name')) {
+      context.handle(
+        _methodNameMeta,
+        methodName.isAcceptableOrUnknown(data['method_name']!, _methodNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_methodNameMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('estimated_minutes')) {
+      context.handle(
+        _estimatedMinutesMeta,
+        estimatedMinutes.isAcceptableOrUnknown(
+          data['estimated_minutes']!,
+          _estimatedMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_estimatedMinutesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StudyMethod map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StudyMethod(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      unitType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit_type'],
+      )!,
+      problemFormat: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}problem_format'],
+      )!,
+      methodName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}method_name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      )!,
+      estimatedMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}estimated_minutes'],
+      )!,
+    );
+  }
+
+  @override
+  $StudyMethodsTable createAlias(String alias) {
+    return $StudyMethodsTable(attachedDatabase, alias);
+  }
+}
+
+class StudyMethod extends DataClass implements Insertable<StudyMethod> {
+  final int id;
+  final String unitType;
+  final String problemFormat;
+  final String methodName;
+  final String description;
+  final int estimatedMinutes;
+  const StudyMethod({
+    required this.id,
+    required this.unitType,
+    required this.problemFormat,
+    required this.methodName,
+    required this.description,
+    required this.estimatedMinutes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['unit_type'] = Variable<String>(unitType);
+    map['problem_format'] = Variable<String>(problemFormat);
+    map['method_name'] = Variable<String>(methodName);
+    map['description'] = Variable<String>(description);
+    map['estimated_minutes'] = Variable<int>(estimatedMinutes);
+    return map;
+  }
+
+  StudyMethodsCompanion toCompanion(bool nullToAbsent) {
+    return StudyMethodsCompanion(
+      id: Value(id),
+      unitType: Value(unitType),
+      problemFormat: Value(problemFormat),
+      methodName: Value(methodName),
+      description: Value(description),
+      estimatedMinutes: Value(estimatedMinutes),
+    );
+  }
+
+  factory StudyMethod.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StudyMethod(
+      id: serializer.fromJson<int>(json['id']),
+      unitType: serializer.fromJson<String>(json['unitType']),
+      problemFormat: serializer.fromJson<String>(json['problemFormat']),
+      methodName: serializer.fromJson<String>(json['methodName']),
+      description: serializer.fromJson<String>(json['description']),
+      estimatedMinutes: serializer.fromJson<int>(json['estimatedMinutes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'unitType': serializer.toJson<String>(unitType),
+      'problemFormat': serializer.toJson<String>(problemFormat),
+      'methodName': serializer.toJson<String>(methodName),
+      'description': serializer.toJson<String>(description),
+      'estimatedMinutes': serializer.toJson<int>(estimatedMinutes),
+    };
+  }
+
+  StudyMethod copyWith({
+    int? id,
+    String? unitType,
+    String? problemFormat,
+    String? methodName,
+    String? description,
+    int? estimatedMinutes,
+  }) => StudyMethod(
+    id: id ?? this.id,
+    unitType: unitType ?? this.unitType,
+    problemFormat: problemFormat ?? this.problemFormat,
+    methodName: methodName ?? this.methodName,
+    description: description ?? this.description,
+    estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+  );
+  StudyMethod copyWithCompanion(StudyMethodsCompanion data) {
+    return StudyMethod(
+      id: data.id.present ? data.id.value : this.id,
+      unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      problemFormat: data.problemFormat.present
+          ? data.problemFormat.value
+          : this.problemFormat,
+      methodName: data.methodName.present
+          ? data.methodName.value
+          : this.methodName,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      estimatedMinutes: data.estimatedMinutes.present
+          ? data.estimatedMinutes.value
+          : this.estimatedMinutes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StudyMethod(')
+          ..write('id: $id, ')
+          ..write('unitType: $unitType, ')
+          ..write('problemFormat: $problemFormat, ')
+          ..write('methodName: $methodName, ')
+          ..write('description: $description, ')
+          ..write('estimatedMinutes: $estimatedMinutes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    unitType,
+    problemFormat,
+    methodName,
+    description,
+    estimatedMinutes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StudyMethod &&
+          other.id == this.id &&
+          other.unitType == this.unitType &&
+          other.problemFormat == this.problemFormat &&
+          other.methodName == this.methodName &&
+          other.description == this.description &&
+          other.estimatedMinutes == this.estimatedMinutes);
+}
+
+class StudyMethodsCompanion extends UpdateCompanion<StudyMethod> {
+  final Value<int> id;
+  final Value<String> unitType;
+  final Value<String> problemFormat;
+  final Value<String> methodName;
+  final Value<String> description;
+  final Value<int> estimatedMinutes;
+  const StudyMethodsCompanion({
+    this.id = const Value.absent(),
+    this.unitType = const Value.absent(),
+    this.problemFormat = const Value.absent(),
+    this.methodName = const Value.absent(),
+    this.description = const Value.absent(),
+    this.estimatedMinutes = const Value.absent(),
+  });
+  StudyMethodsCompanion.insert({
+    this.id = const Value.absent(),
+    required String unitType,
+    required String problemFormat,
+    required String methodName,
+    required String description,
+    required int estimatedMinutes,
+  }) : unitType = Value(unitType),
+       problemFormat = Value(problemFormat),
+       methodName = Value(methodName),
+       description = Value(description),
+       estimatedMinutes = Value(estimatedMinutes);
+  static Insertable<StudyMethod> custom({
+    Expression<int>? id,
+    Expression<String>? unitType,
+    Expression<String>? problemFormat,
+    Expression<String>? methodName,
+    Expression<String>? description,
+    Expression<int>? estimatedMinutes,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (unitType != null) 'unit_type': unitType,
+      if (problemFormat != null) 'problem_format': problemFormat,
+      if (methodName != null) 'method_name': methodName,
+      if (description != null) 'description': description,
+      if (estimatedMinutes != null) 'estimated_minutes': estimatedMinutes,
+    });
+  }
+
+  StudyMethodsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? unitType,
+    Value<String>? problemFormat,
+    Value<String>? methodName,
+    Value<String>? description,
+    Value<int>? estimatedMinutes,
+  }) {
+    return StudyMethodsCompanion(
+      id: id ?? this.id,
+      unitType: unitType ?? this.unitType,
+      problemFormat: problemFormat ?? this.problemFormat,
+      methodName: methodName ?? this.methodName,
+      description: description ?? this.description,
+      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (unitType.present) {
+      map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (problemFormat.present) {
+      map['problem_format'] = Variable<String>(problemFormat.value);
+    }
+    if (methodName.present) {
+      map['method_name'] = Variable<String>(methodName.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (estimatedMinutes.present) {
+      map['estimated_minutes'] = Variable<int>(estimatedMinutes.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StudyMethodsCompanion(')
+          ..write('id: $id, ')
+          ..write('unitType: $unitType, ')
+          ..write('problemFormat: $problemFormat, ')
+          ..write('methodName: $methodName, ')
+          ..write('description: $description, ')
+          ..write('estimatedMinutes: $estimatedMinutes')
+          ..write(')'))
+        .toString();
+  }
+}
+
+abstract class _$AppDatabase extends GeneratedDatabase {
+  _$AppDatabase(QueryExecutor e) : super(e);
+  $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $SourcesTable sources = $SourcesTable(this);
+  late final $SourceSegmentsTable sourceSegments = $SourceSegmentsTable(this);
+  late final $ExamUnitsTable examUnits = $ExamUnitsTable(this);
+  late final $ClaimsTable claims = $ClaimsTable(this);
+  late final $EvidenceLinksTable evidenceLinks = $EvidenceLinksTable(this);
+  late final $StudyMethodsTable studyMethods = $StudyMethodsTable(this);
+  late final SourcesDao sourcesDao = SourcesDao(this as AppDatabase);
+  late final ExamUnitsDao examUnitsDao = ExamUnitsDao(this as AppDatabase);
+  late final ClaimsDao claimsDao = ClaimsDao(this as AppDatabase);
+  late final AuditDao auditDao = AuditDao(this as AppDatabase);
+  late final DashboardDao dashboardDao = DashboardDao(this as AppDatabase);
+  late final SearchDao searchDao = SearchDao(this as AppDatabase);
+  late final StudyMethodsDao studyMethodsDao = StudyMethodsDao(
+    this as AppDatabase,
+  );
+  @override
+  Iterable<TableInfo<Table, Object?>> get allTables =>
+      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  @override
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    sources,
+    sourceSegments,
+    examUnits,
+    claims,
+    evidenceLinks,
+    studyMethods,
+  ];
+}
+
+typedef $$SourcesTableCreateCompanionBuilder =
+    SourcesCompanion Function({
+      Value<int> id,
+      required String fileName,
+      required String filePath,
+      Value<int?> fileSize,
+      Value<int?> pageCount,
+      Value<String?> title,
+      Value<DateTime> importedAt,
+    });
+typedef $$SourcesTableUpdateCompanionBuilder =
+    SourcesCompanion Function({
+      Value<int> id,
+      Value<String> fileName,
+      Value<String> filePath,
+      Value<int?> fileSize,
+      Value<int?> pageCount,
+      Value<String?> title,
+      Value<DateTime> importedAt,
+    });
+
+final class $$SourcesTableReferences
+    extends BaseReferences<_$AppDatabase, $SourcesTable, Source> {
+  $$SourcesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$SourceSegmentsTable, List<SourceSegment>>
+  _sourceSegmentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.sourceSegments,
+    aliasName: $_aliasNameGenerator(db.sources.id, db.sourceSegments.sourceId),
+  );
+
+  $$SourceSegmentsTableProcessedTableManager get sourceSegmentsRefs {
+    final manager = $$SourceSegmentsTableTableManager(
+      $_db,
+      $_db.sourceSegments,
+    ).filter((f) => f.sourceId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_sourceSegmentsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$SourcesTableFilterComposer
+    extends Composer<_$AppDatabase, $SourcesTable> {
+  $$SourcesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileSize => $composableBuilder(
+    column: $table.fileSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pageCount => $composableBuilder(
+    column: $table.pageCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> sourceSegmentsRefs(
+    Expression<bool> Function($$SourceSegmentsTableFilterComposer f) f,
+  ) {
+    final $$SourceSegmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SourcesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SourcesTable> {
+  $$SourcesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileSize => $composableBuilder(
+    column: $table.fileSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pageCount => $composableBuilder(
+    column: $table.pageCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SourcesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SourcesTable> {
+  $$SourcesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<int> get fileSize =>
+      $composableBuilder(column: $table.fileSize, builder: (column) => column);
+
+  GeneratedColumn<int> get pageCount =>
+      $composableBuilder(column: $table.pageCount, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => column,
+  );
+
+  Expression<T> sourceSegmentsRefs<T extends Object>(
+    Expression<T> Function($$SourceSegmentsTableAnnotationComposer a) f,
+  ) {
+    final $$SourceSegmentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SourcesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SourcesTable,
+          Source,
+          $$SourcesTableFilterComposer,
+          $$SourcesTableOrderingComposer,
+          $$SourcesTableAnnotationComposer,
+          $$SourcesTableCreateCompanionBuilder,
+          $$SourcesTableUpdateCompanionBuilder,
+          (Source, $$SourcesTableReferences),
+          Source,
+          PrefetchHooks Function({bool sourceSegmentsRefs})
+        > {
+  $$SourcesTableTableManager(_$AppDatabase db, $SourcesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SourcesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SourcesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SourcesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<String> filePath = const Value.absent(),
+                Value<int?> fileSize = const Value.absent(),
+                Value<int?> pageCount = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<DateTime> importedAt = const Value.absent(),
+              }) => SourcesCompanion(
+                id: id,
+                fileName: fileName,
+                filePath: filePath,
+                fileSize: fileSize,
+                pageCount: pageCount,
+                title: title,
+                importedAt: importedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String fileName,
+                required String filePath,
+                Value<int?> fileSize = const Value.absent(),
+                Value<int?> pageCount = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<DateTime> importedAt = const Value.absent(),
+              }) => SourcesCompanion.insert(
+                id: id,
+                fileName: fileName,
+                filePath: filePath,
+                fileSize: fileSize,
+                pageCount: pageCount,
+                title: title,
+                importedAt: importedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$SourcesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sourceSegmentsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (sourceSegmentsRefs) db.sourceSegments,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (sourceSegmentsRefs)
+                    await $_getPrefetchedData<
+                      Source,
+                      $SourcesTable,
+                      SourceSegment
+                    >(
+                      currentTable: table,
+                      referencedTable: $$SourcesTableReferences
+                          ._sourceSegmentsRefsTable(db),
+                      managerFromTypedResult: (p0) => $$SourcesTableReferences(
+                        db,
+                        table,
+                        p0,
+                      ).sourceSegmentsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.sourceId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SourcesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SourcesTable,
+      Source,
+      $$SourcesTableFilterComposer,
+      $$SourcesTableOrderingComposer,
+      $$SourcesTableAnnotationComposer,
+      $$SourcesTableCreateCompanionBuilder,
+      $$SourcesTableUpdateCompanionBuilder,
+      (Source, $$SourcesTableReferences),
+      Source,
+      PrefetchHooks Function({bool sourceSegmentsRefs})
+    >;
+typedef $$SourceSegmentsTableCreateCompanionBuilder =
+    SourceSegmentsCompanion Function({
+      Value<int> id,
+      required int sourceId,
+      required int pageNumber,
+      Value<String> content,
+      Value<String> segmentType,
+      Value<DateTime> createdAt,
+    });
+typedef $$SourceSegmentsTableUpdateCompanionBuilder =
+    SourceSegmentsCompanion Function({
+      Value<int> id,
+      Value<int> sourceId,
+      Value<int> pageNumber,
+      Value<String> content,
+      Value<String> segmentType,
+      Value<DateTime> createdAt,
+    });
+
+final class $$SourceSegmentsTableReferences
+    extends BaseReferences<_$AppDatabase, $SourceSegmentsTable, SourceSegment> {
+  $$SourceSegmentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SourcesTable _sourceIdTable(_$AppDatabase db) =>
+      db.sources.createAlias(
+        $_aliasNameGenerator(db.sourceSegments.sourceId, db.sources.id),
+      );
+
+  $$SourcesTableProcessedTableManager get sourceId {
+    final $_column = $_itemColumn<int>('source_id')!;
+
+    final manager = $$SourcesTableTableManager(
+      $_db,
+      $_db.sources,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$EvidenceLinksTable, List<EvidenceLink>>
+  _evidenceLinksRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.evidenceLinks,
+    aliasName: $_aliasNameGenerator(
+      db.sourceSegments.id,
+      db.evidenceLinks.sourceSegmentId,
+    ),
+  );
+
+  $$EvidenceLinksTableProcessedTableManager get evidenceLinksRefs {
+    final manager = $$EvidenceLinksTableTableManager(
+      $_db,
+      $_db.evidenceLinks,
+    ).filter((f) => f.sourceSegmentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_evidenceLinksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$SourceSegmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $SourceSegmentsTable> {
+  $$SourceSegmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pageNumber => $composableBuilder(
+    column: $table.pageNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get segmentType => $composableBuilder(
+    column: $table.segmentType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SourcesTableFilterComposer get sourceId {
+    final $$SourcesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.sources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourcesTableFilterComposer(
+            $db: $db,
+            $table: $db.sources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> evidenceLinksRefs(
+    Expression<bool> Function($$EvidenceLinksTableFilterComposer f) f,
+  ) {
+    final $$EvidenceLinksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidenceLinks,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidenceLinksTableFilterComposer(
+            $db: $db,
+            $table: $db.evidenceLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SourceSegmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SourceSegmentsTable> {
+  $$SourceSegmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pageNumber => $composableBuilder(
+    column: $table.pageNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get segmentType => $composableBuilder(
+    column: $table.segmentType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SourcesTableOrderingComposer get sourceId {
+    final $$SourcesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.sources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourcesTableOrderingComposer(
+            $db: $db,
+            $table: $db.sources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SourceSegmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SourceSegmentsTable> {
+  $$SourceSegmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get pageNumber => $composableBuilder(
+    column: $table.pageNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get segmentType => $composableBuilder(
+    column: $table.segmentType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$SourcesTableAnnotationComposer get sourceId {
+    final $$SourcesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.sources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourcesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> evidenceLinksRefs<T extends Object>(
+    Expression<T> Function($$EvidenceLinksTableAnnotationComposer a) f,
+  ) {
+    final $$EvidenceLinksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidenceLinks,
+      getReferencedColumn: (t) => t.sourceSegmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidenceLinksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.evidenceLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$SourceSegmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SourceSegmentsTable,
+          SourceSegment,
+          $$SourceSegmentsTableFilterComposer,
+          $$SourceSegmentsTableOrderingComposer,
+          $$SourceSegmentsTableAnnotationComposer,
+          $$SourceSegmentsTableCreateCompanionBuilder,
+          $$SourceSegmentsTableUpdateCompanionBuilder,
+          (SourceSegment, $$SourceSegmentsTableReferences),
+          SourceSegment,
+          PrefetchHooks Function({bool sourceId, bool evidenceLinksRefs})
+        > {
+  $$SourceSegmentsTableTableManager(
+    _$AppDatabase db,
+    $SourceSegmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SourceSegmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SourceSegmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SourceSegmentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sourceId = const Value.absent(),
+                Value<int> pageNumber = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> segmentType = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => SourceSegmentsCompanion(
+                id: id,
+                sourceId: sourceId,
+                pageNumber: pageNumber,
+                content: content,
+                segmentType: segmentType,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sourceId,
+                required int pageNumber,
+                Value<String> content = const Value.absent(),
+                Value<String> segmentType = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => SourceSegmentsCompanion.insert(
+                id: id,
+                sourceId: sourceId,
+                pageNumber: pageNumber,
+                content: content,
+                segmentType: segmentType,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$SourceSegmentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({sourceId = false, evidenceLinksRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (evidenceLinksRefs) db.evidenceLinks,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sourceId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sourceId,
+                                    referencedTable:
+                                        $$SourceSegmentsTableReferences
+                                            ._sourceIdTable(db),
+                                    referencedColumn:
+                                        $$SourceSegmentsTableReferences
+                                            ._sourceIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (evidenceLinksRefs)
+                        await $_getPrefetchedData<
+                          SourceSegment,
+                          $SourceSegmentsTable,
+                          EvidenceLink
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SourceSegmentsTableReferences
+                              ._evidenceLinksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SourceSegmentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).evidenceLinksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceSegmentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$SourceSegmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SourceSegmentsTable,
+      SourceSegment,
+      $$SourceSegmentsTableFilterComposer,
+      $$SourceSegmentsTableOrderingComposer,
+      $$SourceSegmentsTableAnnotationComposer,
+      $$SourceSegmentsTableCreateCompanionBuilder,
+      $$SourceSegmentsTableUpdateCompanionBuilder,
+      (SourceSegment, $$SourceSegmentsTableReferences),
+      SourceSegment,
+      PrefetchHooks Function({bool sourceId, bool evidenceLinksRefs})
+    >;
+typedef $$ExamUnitsTableCreateCompanionBuilder =
+    ExamUnitsCompanion Function({
+      Value<int> id,
+      required String title,
+      Value<String> unitType,
+      Value<String?> description,
+      Value<String> confidenceLevel,
+      Value<String> auditStatus,
+      Value<int> sortOrder,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+typedef $$ExamUnitsTableUpdateCompanionBuilder =
+    ExamUnitsCompanion Function({
+      Value<int> id,
+      Value<String> title,
+      Value<String> unitType,
+      Value<String?> description,
+      Value<String> confidenceLevel,
+      Value<String> auditStatus,
+      Value<int> sortOrder,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+final class $$ExamUnitsTableReferences
+    extends BaseReferences<_$AppDatabase, $ExamUnitsTable, ExamUnit> {
+  $$ExamUnitsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ClaimsTable, List<Claim>> _claimsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.claims,
+    aliasName: $_aliasNameGenerator(db.examUnits.id, db.claims.examUnitId),
+  );
+
+  $$ClaimsTableProcessedTableManager get claimsRefs {
+    final manager = $$ClaimsTableTableManager(
+      $_db,
+      $_db.claims,
+    ).filter((f) => f.examUnitId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_claimsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ExamUnitsTableFilterComposer
+    extends Composer<_$AppDatabase, $ExamUnitsTable> {
+  $$ExamUnitsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get confidenceLevel => $composableBuilder(
+    column: $table.confidenceLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get auditStatus => $composableBuilder(
+    column: $table.auditStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> claimsRefs(
+    Expression<bool> Function($$ClaimsTableFilterComposer f) f,
+  ) {
+    final $$ClaimsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableFilterComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ExamUnitsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExamUnitsTable> {
+  $$ExamUnitsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get confidenceLevel => $composableBuilder(
+    column: $table.confidenceLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get auditStatus => $composableBuilder(
+    column: $table.auditStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExamUnitsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExamUnitsTable> {
+  $$ExamUnitsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get unitType =>
+      $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get confidenceLevel => $composableBuilder(
+    column: $table.confidenceLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get auditStatus => $composableBuilder(
+    column: $table.auditStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  Expression<T> claimsRefs<T extends Object>(
+    Expression<T> Function($$ClaimsTableAnnotationComposer a) f,
+  ) {
+    final $$ClaimsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.examUnitId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ExamUnitsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExamUnitsTable,
+          ExamUnit,
+          $$ExamUnitsTableFilterComposer,
+          $$ExamUnitsTableOrderingComposer,
+          $$ExamUnitsTableAnnotationComposer,
+          $$ExamUnitsTableCreateCompanionBuilder,
+          $$ExamUnitsTableUpdateCompanionBuilder,
+          (ExamUnit, $$ExamUnitsTableReferences),
+          ExamUnit,
+          PrefetchHooks Function({bool claimsRefs})
+        > {
+  $$ExamUnitsTableTableManager(_$AppDatabase db, $ExamUnitsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExamUnitsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExamUnitsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExamUnitsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> unitType = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<String> confidenceLevel = const Value.absent(),
+                Value<String> auditStatus = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ExamUnitsCompanion(
+                id: id,
+                title: title,
+                unitType: unitType,
+                description: description,
+                confidenceLevel: confidenceLevel,
+                auditStatus: auditStatus,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String title,
+                Value<String> unitType = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<String> confidenceLevel = const Value.absent(),
+                Value<String> auditStatus = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ExamUnitsCompanion.insert(
+                id: id,
+                title: title,
+                unitType: unitType,
+                description: description,
+                confidenceLevel: confidenceLevel,
+                auditStatus: auditStatus,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ExamUnitsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({claimsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (claimsRefs) db.claims],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (claimsRefs)
+                    await $_getPrefetchedData<ExamUnit, $ExamUnitsTable, Claim>(
+                      currentTable: table,
+                      referencedTable: $$ExamUnitsTableReferences
+                          ._claimsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ExamUnitsTableReferences(db, table, p0).claimsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.examUnitId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ExamUnitsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExamUnitsTable,
+      ExamUnit,
+      $$ExamUnitsTableFilterComposer,
+      $$ExamUnitsTableOrderingComposer,
+      $$ExamUnitsTableAnnotationComposer,
+      $$ExamUnitsTableCreateCompanionBuilder,
+      $$ExamUnitsTableUpdateCompanionBuilder,
+      (ExamUnit, $$ExamUnitsTableReferences),
+      ExamUnit,
+      PrefetchHooks Function({bool claimsRefs})
+    >;
+typedef $$ClaimsTableCreateCompanionBuilder =
+    ClaimsCompanion Function({
+      Value<int> id,
+      required int examUnitId,
+      required String content,
+      Value<String> confidenceLevel,
+      Value<String> createdBy,
+      Value<DateTime> createdAt,
+    });
+typedef $$ClaimsTableUpdateCompanionBuilder =
+    ClaimsCompanion Function({
+      Value<int> id,
+      Value<int> examUnitId,
+      Value<String> content,
+      Value<String> confidenceLevel,
+      Value<String> createdBy,
+      Value<DateTime> createdAt,
+    });
+
+final class $$ClaimsTableReferences
+    extends BaseReferences<_$AppDatabase, $ClaimsTable, Claim> {
+  $$ClaimsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ExamUnitsTable _examUnitIdTable(_$AppDatabase db) => db.examUnits
+      .createAlias($_aliasNameGenerator(db.claims.examUnitId, db.examUnits.id));
+
+  $$ExamUnitsTableProcessedTableManager get examUnitId {
+    final $_column = $_itemColumn<int>('exam_unit_id')!;
+
+    final manager = $$ExamUnitsTableTableManager(
+      $_db,
+      $_db.examUnits,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_examUnitIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$EvidenceLinksTable, List<EvidenceLink>>
+  _evidenceLinksRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.evidenceLinks,
+    aliasName: $_aliasNameGenerator(db.claims.id, db.evidenceLinks.claimId),
+  );
+
+  $$EvidenceLinksTableProcessedTableManager get evidenceLinksRefs {
+    final manager = $$EvidenceLinksTableTableManager(
+      $_db,
+      $_db.evidenceLinks,
+    ).filter((f) => f.claimId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_evidenceLinksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ClaimsTableFilterComposer
+    extends Composer<_$AppDatabase, $ClaimsTable> {
+  $$ClaimsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get confidenceLevel => $composableBuilder(
+    column: $table.confidenceLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ExamUnitsTableFilterComposer get examUnitId {
+    final $$ExamUnitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableFilterComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> evidenceLinksRefs(
+    Expression<bool> Function($$EvidenceLinksTableFilterComposer f) f,
+  ) {
+    final $$EvidenceLinksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidenceLinks,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidenceLinksTableFilterComposer(
+            $db: $db,
+            $table: $db.evidenceLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ClaimsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ClaimsTable> {
+  $$ClaimsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get confidenceLevel => $composableBuilder(
+    column: $table.confidenceLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ExamUnitsTableOrderingComposer get examUnitId {
+    final $$ExamUnitsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableOrderingComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ClaimsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ClaimsTable> {
+  $$ClaimsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get confidenceLevel => $composableBuilder(
+    column: $table.confidenceLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$ExamUnitsTableAnnotationComposer get examUnitId {
+    final $$ExamUnitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.examUnitId,
+      referencedTable: $db.examUnits,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExamUnitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.examUnits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> evidenceLinksRefs<T extends Object>(
+    Expression<T> Function($$EvidenceLinksTableAnnotationComposer a) f,
+  ) {
+    final $$EvidenceLinksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.evidenceLinks,
+      getReferencedColumn: (t) => t.claimId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EvidenceLinksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.evidenceLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ClaimsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ClaimsTable,
+          Claim,
+          $$ClaimsTableFilterComposer,
+          $$ClaimsTableOrderingComposer,
+          $$ClaimsTableAnnotationComposer,
+          $$ClaimsTableCreateCompanionBuilder,
+          $$ClaimsTableUpdateCompanionBuilder,
+          (Claim, $$ClaimsTableReferences),
+          Claim,
+          PrefetchHooks Function({bool examUnitId, bool evidenceLinksRefs})
+        > {
+  $$ClaimsTableTableManager(_$AppDatabase db, $ClaimsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClaimsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ClaimsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ClaimsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> examUnitId = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> confidenceLevel = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ClaimsCompanion(
+                id: id,
+                examUnitId: examUnitId,
+                content: content,
+                confidenceLevel: confidenceLevel,
+                createdBy: createdBy,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int examUnitId,
+                required String content,
+                Value<String> confidenceLevel = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ClaimsCompanion.insert(
+                id: id,
+                examUnitId: examUnitId,
+                content: content,
+                confidenceLevel: confidenceLevel,
+                createdBy: createdBy,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable(table), $$ClaimsTableReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({examUnitId = false, evidenceLinksRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (evidenceLinksRefs) db.evidenceLinks,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (examUnitId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.examUnitId,
+                                    referencedTable: $$ClaimsTableReferences
+                                        ._examUnitIdTable(db),
+                                    referencedColumn: $$ClaimsTableReferences
+                                        ._examUnitIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (evidenceLinksRefs)
+                        await $_getPrefetchedData<
+                          Claim,
+                          $ClaimsTable,
+                          EvidenceLink
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ClaimsTableReferences
+                              ._evidenceLinksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ClaimsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).evidenceLinksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.claimId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$ClaimsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ClaimsTable,
+      Claim,
+      $$ClaimsTableFilterComposer,
+      $$ClaimsTableOrderingComposer,
+      $$ClaimsTableAnnotationComposer,
+      $$ClaimsTableCreateCompanionBuilder,
+      $$ClaimsTableUpdateCompanionBuilder,
+      (Claim, $$ClaimsTableReferences),
+      Claim,
+      PrefetchHooks Function({bool examUnitId, bool evidenceLinksRefs})
+    >;
+typedef $$EvidenceLinksTableCreateCompanionBuilder =
+    EvidenceLinksCompanion Function({
+      Value<int> id,
+      required int claimId,
+      required int sourceSegmentId,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+    });
+typedef $$EvidenceLinksTableUpdateCompanionBuilder =
+    EvidenceLinksCompanion Function({
+      Value<int> id,
+      Value<int> claimId,
+      Value<int> sourceSegmentId,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+    });
+
+final class $$EvidenceLinksTableReferences
+    extends BaseReferences<_$AppDatabase, $EvidenceLinksTable, EvidenceLink> {
+  $$EvidenceLinksTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ClaimsTable _claimIdTable(_$AppDatabase db) => db.claims.createAlias(
+    $_aliasNameGenerator(db.evidenceLinks.claimId, db.claims.id),
+  );
+
+  $$ClaimsTableProcessedTableManager get claimId {
+    final $_column = $_itemColumn<int>('claim_id')!;
+
+    final manager = $$ClaimsTableTableManager(
+      $_db,
+      $_db.claims,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_claimIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $SourceSegmentsTable _sourceSegmentIdTable(_$AppDatabase db) =>
+      db.sourceSegments.createAlias(
+        $_aliasNameGenerator(
+          db.evidenceLinks.sourceSegmentId,
+          db.sourceSegments.id,
+        ),
+      );
+
+  $$SourceSegmentsTableProcessedTableManager get sourceSegmentId {
+    final $_column = $_itemColumn<int>('source_segment_id')!;
+
+    final manager = $$SourceSegmentsTableTableManager(
+      $_db,
+      $_db.sourceSegments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceSegmentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$EvidenceLinksTableFilterComposer
+    extends Composer<_$AppDatabase, $EvidenceLinksTable> {
+  $$EvidenceLinksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ClaimsTableFilterComposer get claimId {
+    final $$ClaimsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableFilterComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SourceSegmentsTableFilterComposer get sourceSegmentId {
+    final $$SourceSegmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidenceLinksTableOrderingComposer
+    extends Composer<_$AppDatabase, $EvidenceLinksTable> {
+  $$EvidenceLinksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ClaimsTableOrderingComposer get claimId {
+    final $$ClaimsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableOrderingComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SourceSegmentsTableOrderingComposer get sourceSegmentId {
+    final $$SourceSegmentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidenceLinksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EvidenceLinksTable> {
+  $$EvidenceLinksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$ClaimsTableAnnotationComposer get claimId {
+    final $$ClaimsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.claimId,
+      referencedTable: $db.claims,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ClaimsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.claims,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SourceSegmentsTableAnnotationComposer get sourceSegmentId {
+    final $$SourceSegmentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceSegmentId,
+      referencedTable: $db.sourceSegments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SourceSegmentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sourceSegments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EvidenceLinksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EvidenceLinksTable,
+          EvidenceLink,
+          $$EvidenceLinksTableFilterComposer,
+          $$EvidenceLinksTableOrderingComposer,
+          $$EvidenceLinksTableAnnotationComposer,
+          $$EvidenceLinksTableCreateCompanionBuilder,
+          $$EvidenceLinksTableUpdateCompanionBuilder,
+          (EvidenceLink, $$EvidenceLinksTableReferences),
+          EvidenceLink,
+          PrefetchHooks Function({bool claimId, bool sourceSegmentId})
+        > {
+  $$EvidenceLinksTableTableManager(_$AppDatabase db, $EvidenceLinksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EvidenceLinksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EvidenceLinksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EvidenceLinksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> claimId = const Value.absent(),
+                Value<int> sourceSegmentId = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => EvidenceLinksCompanion(
+                id: id,
+                claimId: claimId,
+                sourceSegmentId: sourceSegmentId,
+                note: note,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int claimId,
+                required int sourceSegmentId,
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => EvidenceLinksCompanion.insert(
+                id: id,
+                claimId: claimId,
+                sourceSegmentId: sourceSegmentId,
+                note: note,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$EvidenceLinksTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({claimId = false, sourceSegmentId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (claimId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.claimId,
+                                referencedTable: $$EvidenceLinksTableReferences
+                                    ._claimIdTable(db),
+                                referencedColumn: $$EvidenceLinksTableReferences
+                                    ._claimIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (sourceSegmentId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sourceSegmentId,
+                                referencedTable: $$EvidenceLinksTableReferences
+                                    ._sourceSegmentIdTable(db),
+                                referencedColumn: $$EvidenceLinksTableReferences
+                                    ._sourceSegmentIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$EvidenceLinksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EvidenceLinksTable,
+      EvidenceLink,
+      $$EvidenceLinksTableFilterComposer,
+      $$EvidenceLinksTableOrderingComposer,
+      $$EvidenceLinksTableAnnotationComposer,
+      $$EvidenceLinksTableCreateCompanionBuilder,
+      $$EvidenceLinksTableUpdateCompanionBuilder,
+      (EvidenceLink, $$EvidenceLinksTableReferences),
+      EvidenceLink,
+      PrefetchHooks Function({bool claimId, bool sourceSegmentId})
+    >;
+typedef $$StudyMethodsTableCreateCompanionBuilder =
+    StudyMethodsCompanion Function({
+      Value<int> id,
+      required String unitType,
+      required String problemFormat,
+      required String methodName,
+      required String description,
+      required int estimatedMinutes,
+    });
+typedef $$StudyMethodsTableUpdateCompanionBuilder =
+    StudyMethodsCompanion Function({
+      Value<int> id,
+      Value<String> unitType,
+      Value<String> problemFormat,
+      Value<String> methodName,
+      Value<String> description,
+      Value<int> estimatedMinutes,
+    });
+
+class $$StudyMethodsTableFilterComposer
+    extends Composer<_$AppDatabase, $StudyMethodsTable> {
+  $$StudyMethodsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get problemFormat => $composableBuilder(
+    column: $table.problemFormat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get methodName => $composableBuilder(
+    column: $table.methodName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get estimatedMinutes => $composableBuilder(
+    column: $table.estimatedMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StudyMethodsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StudyMethodsTable> {
+  $$StudyMethodsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get problemFormat => $composableBuilder(
+    column: $table.problemFormat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get methodName => $composableBuilder(
+    column: $table.methodName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get estimatedMinutes => $composableBuilder(
+    column: $table.estimatedMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StudyMethodsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StudyMethodsTable> {
+  $$StudyMethodsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get unitType =>
+      $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<String> get problemFormat => $composableBuilder(
+    column: $table.problemFormat,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get methodName => $composableBuilder(
+    column: $table.methodName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get estimatedMinutes => $composableBuilder(
+    column: $table.estimatedMinutes,
+    builder: (column) => column,
+  );
+}
+
+class $$StudyMethodsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StudyMethodsTable,
+          StudyMethod,
+          $$StudyMethodsTableFilterComposer,
+          $$StudyMethodsTableOrderingComposer,
+          $$StudyMethodsTableAnnotationComposer,
+          $$StudyMethodsTableCreateCompanionBuilder,
+          $$StudyMethodsTableUpdateCompanionBuilder,
+          (
+            StudyMethod,
+            BaseReferences<_$AppDatabase, $StudyMethodsTable, StudyMethod>,
+          ),
+          StudyMethod,
+          PrefetchHooks Function()
+        > {
+  $$StudyMethodsTableTableManager(_$AppDatabase db, $StudyMethodsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StudyMethodsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StudyMethodsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StudyMethodsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> unitType = const Value.absent(),
+                Value<String> problemFormat = const Value.absent(),
+                Value<String> methodName = const Value.absent(),
+                Value<String> description = const Value.absent(),
+                Value<int> estimatedMinutes = const Value.absent(),
+              }) => StudyMethodsCompanion(
+                id: id,
+                unitType: unitType,
+                problemFormat: problemFormat,
+                methodName: methodName,
+                description: description,
+                estimatedMinutes: estimatedMinutes,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String unitType,
+                required String problemFormat,
+                required String methodName,
+                required String description,
+                required int estimatedMinutes,
+              }) => StudyMethodsCompanion.insert(
+                id: id,
+                unitType: unitType,
+                problemFormat: problemFormat,
+                methodName: methodName,
+                description: description,
+                estimatedMinutes: estimatedMinutes,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StudyMethodsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StudyMethodsTable,
+      StudyMethod,
+      $$StudyMethodsTableFilterComposer,
+      $$StudyMethodsTableOrderingComposer,
+      $$StudyMethodsTableAnnotationComposer,
+      $$StudyMethodsTableCreateCompanionBuilder,
+      $$StudyMethodsTableUpdateCompanionBuilder,
+      (
+        StudyMethod,
+        BaseReferences<_$AppDatabase, $StudyMethodsTable, StudyMethod>,
+      ),
+      StudyMethod,
+      PrefetchHooks Function()
+    >;
+
+class $AppDatabaseManager {
+  final _$AppDatabase _db;
+  $AppDatabaseManager(this._db);
+  $$SourcesTableTableManager get sources =>
+      $$SourcesTableTableManager(_db, _db.sources);
+  $$SourceSegmentsTableTableManager get sourceSegments =>
+      $$SourceSegmentsTableTableManager(_db, _db.sourceSegments);
+  $$ExamUnitsTableTableManager get examUnits =>
+      $$ExamUnitsTableTableManager(_db, _db.examUnits);
+  $$ClaimsTableTableManager get claims =>
+      $$ClaimsTableTableManager(_db, _db.claims);
+  $$EvidenceLinksTableTableManager get evidenceLinks =>
+      $$EvidenceLinksTableTableManager(_db, _db.evidenceLinks);
+  $$StudyMethodsTableTableManager get studyMethods =>
+      $$StudyMethodsTableTableManager(_db, _db.studyMethods);
+}
