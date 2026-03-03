@@ -53,7 +53,16 @@ part 'database.g.dart';
     EvidencePacks,
     EvidencePackItems,
   ],
-  daos: [SourcesDao, ExamUnitsDao, ClaimsDao, AuditDao, DashboardDao, SearchDao, StudyMethodsDao, EvidencePacksDao],
+  daos: [
+    SourcesDao,
+    ExamUnitsDao,
+    ClaimsDao,
+    AuditDao,
+    DashboardDao,
+    SearchDao,
+    StudyMethodsDao,
+    EvidencePacksDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -62,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -91,12 +100,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(conflicts);
         await m.createTable(unitStats);
       }
-if (from < 6) {
-  await m.createTable(evidencePacks);
-  await m.createTable(evidencePackItems);
+      if (from < 6) {
+        await m.createTable(evidencePacks);
+        await m.createTable(evidencePackItems);
 
-  // Backfill: 1 claim = 1 evidence_pack
-  await m.database.customStatement('''
+        // Backfill: 1 claim = 1 evidence_pack
+        await m.database.customStatement('''
     INSERT INTO evidence_packs (claim_id, created_at, updated_at, summary, content_confidence, exam_confidence)
     SELECT DISTINCT
       el.claim_id,
@@ -108,7 +117,7 @@ if (from < 6) {
     FROM evidence_links el
   ''');
 
-  await m.database.customStatement('''
+        await m.database.customStatement('''
     INSERT OR IGNORE INTO evidence_pack_items
       (evidence_pack_id, source_segment_id, page_number, snippet, weight, created_at)
     SELECT
@@ -122,7 +131,11 @@ if (from < 6) {
     JOIN evidence_packs ep
       ON ep.claim_id = el.claim_id
   ''');
-}
+      }
+      if (from < 7) {
+        await m.addColumn(unitStats, unitStats.pointWeight);
+        await m.addColumn(unitStats, unitStats.frequency);
+      }
     },
   );
 

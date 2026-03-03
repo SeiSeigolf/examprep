@@ -4081,6 +4081,30 @@ class $UnitStatsTable extends UnitStats
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _pointWeightMeta = const VerificationMeta(
+    'pointWeight',
+  );
+  @override
+  late final GeneratedColumn<int> pointWeight = GeneratedColumn<int>(
+    'point_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _frequencyMeta = const VerificationMeta(
+    'frequency',
+  );
+  @override
+  late final GeneratedColumn<int> frequency = GeneratedColumn<int>(
+    'frequency',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _lastAuditedAtMeta = const VerificationMeta(
     'lastAuditedAt',
   );
@@ -4114,6 +4138,8 @@ class $UnitStatsTable extends UnitStats
     claimCount,
     evidenceCount,
     conflictCount,
+    pointWeight,
+    frequency,
     lastAuditedAt,
     updatedAt,
   ];
@@ -4185,6 +4211,21 @@ class $UnitStatsTable extends UnitStats
         ),
       );
     }
+    if (data.containsKey('point_weight')) {
+      context.handle(
+        _pointWeightMeta,
+        pointWeight.isAcceptableOrUnknown(
+          data['point_weight']!,
+          _pointWeightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('frequency')) {
+      context.handle(
+        _frequencyMeta,
+        frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
+      );
+    }
     if (data.containsKey('last_audited_at')) {
       context.handle(
         _lastAuditedAtMeta,
@@ -4241,6 +4282,14 @@ class $UnitStatsTable extends UnitStats
         DriftSqlType.int,
         data['${effectivePrefix}conflict_count'],
       )!,
+      pointWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}point_weight'],
+      )!,
+      frequency: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}frequency'],
+      )!,
       lastAuditedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_audited_at'],
@@ -4266,6 +4315,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
   final int claimCount;
   final int evidenceCount;
   final int conflictCount;
+  final int pointWeight;
+  final int frequency;
   final DateTime? lastAuditedAt;
   final DateTime updatedAt;
   const UnitStat({
@@ -4276,6 +4327,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     required this.claimCount,
     required this.evidenceCount,
     required this.conflictCount,
+    required this.pointWeight,
+    required this.frequency,
     this.lastAuditedAt,
     required this.updatedAt,
   });
@@ -4289,6 +4342,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     map['claim_count'] = Variable<int>(claimCount);
     map['evidence_count'] = Variable<int>(evidenceCount);
     map['conflict_count'] = Variable<int>(conflictCount);
+    map['point_weight'] = Variable<int>(pointWeight);
+    map['frequency'] = Variable<int>(frequency);
     if (!nullToAbsent || lastAuditedAt != null) {
       map['last_audited_at'] = Variable<DateTime>(lastAuditedAt);
     }
@@ -4305,6 +4360,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       claimCount: Value(claimCount),
       evidenceCount: Value(evidenceCount),
       conflictCount: Value(conflictCount),
+      pointWeight: Value(pointWeight),
+      frequency: Value(frequency),
       lastAuditedAt: lastAuditedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastAuditedAt),
@@ -4325,6 +4382,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       claimCount: serializer.fromJson<int>(json['claimCount']),
       evidenceCount: serializer.fromJson<int>(json['evidenceCount']),
       conflictCount: serializer.fromJson<int>(json['conflictCount']),
+      pointWeight: serializer.fromJson<int>(json['pointWeight']),
+      frequency: serializer.fromJson<int>(json['frequency']),
       lastAuditedAt: serializer.fromJson<DateTime?>(json['lastAuditedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -4340,6 +4399,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       'claimCount': serializer.toJson<int>(claimCount),
       'evidenceCount': serializer.toJson<int>(evidenceCount),
       'conflictCount': serializer.toJson<int>(conflictCount),
+      'pointWeight': serializer.toJson<int>(pointWeight),
+      'frequency': serializer.toJson<int>(frequency),
       'lastAuditedAt': serializer.toJson<DateTime?>(lastAuditedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -4353,6 +4414,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     int? claimCount,
     int? evidenceCount,
     int? conflictCount,
+    int? pointWeight,
+    int? frequency,
     Value<DateTime?> lastAuditedAt = const Value.absent(),
     DateTime? updatedAt,
   }) => UnitStat(
@@ -4363,6 +4426,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     claimCount: claimCount ?? this.claimCount,
     evidenceCount: evidenceCount ?? this.evidenceCount,
     conflictCount: conflictCount ?? this.conflictCount,
+    pointWeight: pointWeight ?? this.pointWeight,
+    frequency: frequency ?? this.frequency,
     lastAuditedAt: lastAuditedAt.present
         ? lastAuditedAt.value
         : this.lastAuditedAt,
@@ -4389,6 +4454,10 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
       conflictCount: data.conflictCount.present
           ? data.conflictCount.value
           : this.conflictCount,
+      pointWeight: data.pointWeight.present
+          ? data.pointWeight.value
+          : this.pointWeight,
+      frequency: data.frequency.present ? data.frequency.value : this.frequency,
       lastAuditedAt: data.lastAuditedAt.present
           ? data.lastAuditedAt.value
           : this.lastAuditedAt,
@@ -4406,6 +4475,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
           ..write('claimCount: $claimCount, ')
           ..write('evidenceCount: $evidenceCount, ')
           ..write('conflictCount: $conflictCount, ')
+          ..write('pointWeight: $pointWeight, ')
+          ..write('frequency: $frequency, ')
           ..write('lastAuditedAt: $lastAuditedAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -4421,6 +4492,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
     claimCount,
     evidenceCount,
     conflictCount,
+    pointWeight,
+    frequency,
     lastAuditedAt,
     updatedAt,
   );
@@ -4435,6 +4508,8 @@ class UnitStat extends DataClass implements Insertable<UnitStat> {
           other.claimCount == this.claimCount &&
           other.evidenceCount == this.evidenceCount &&
           other.conflictCount == this.conflictCount &&
+          other.pointWeight == this.pointWeight &&
+          other.frequency == this.frequency &&
           other.lastAuditedAt == this.lastAuditedAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -4447,6 +4522,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
   final Value<int> claimCount;
   final Value<int> evidenceCount;
   final Value<int> conflictCount;
+  final Value<int> pointWeight;
+  final Value<int> frequency;
   final Value<DateTime?> lastAuditedAt;
   final Value<DateTime> updatedAt;
   const UnitStatsCompanion({
@@ -4457,6 +4534,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     this.claimCount = const Value.absent(),
     this.evidenceCount = const Value.absent(),
     this.conflictCount = const Value.absent(),
+    this.pointWeight = const Value.absent(),
+    this.frequency = const Value.absent(),
     this.lastAuditedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -4468,6 +4547,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     this.claimCount = const Value.absent(),
     this.evidenceCount = const Value.absent(),
     this.conflictCount = const Value.absent(),
+    this.pointWeight = const Value.absent(),
+    this.frequency = const Value.absent(),
     this.lastAuditedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : examUnitId = Value(examUnitId);
@@ -4479,6 +4560,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     Expression<int>? claimCount,
     Expression<int>? evidenceCount,
     Expression<int>? conflictCount,
+    Expression<int>? pointWeight,
+    Expression<int>? frequency,
     Expression<DateTime>? lastAuditedAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -4490,6 +4573,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
       if (claimCount != null) 'claim_count': claimCount,
       if (evidenceCount != null) 'evidence_count': evidenceCount,
       if (conflictCount != null) 'conflict_count': conflictCount,
+      if (pointWeight != null) 'point_weight': pointWeight,
+      if (frequency != null) 'frequency': frequency,
       if (lastAuditedAt != null) 'last_audited_at': lastAuditedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -4503,6 +4588,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     Value<int>? claimCount,
     Value<int>? evidenceCount,
     Value<int>? conflictCount,
+    Value<int>? pointWeight,
+    Value<int>? frequency,
     Value<DateTime?>? lastAuditedAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -4514,6 +4601,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
       claimCount: claimCount ?? this.claimCount,
       evidenceCount: evidenceCount ?? this.evidenceCount,
       conflictCount: conflictCount ?? this.conflictCount,
+      pointWeight: pointWeight ?? this.pointWeight,
+      frequency: frequency ?? this.frequency,
       lastAuditedAt: lastAuditedAt ?? this.lastAuditedAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -4543,6 +4632,12 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
     if (conflictCount.present) {
       map['conflict_count'] = Variable<int>(conflictCount.value);
     }
+    if (pointWeight.present) {
+      map['point_weight'] = Variable<int>(pointWeight.value);
+    }
+    if (frequency.present) {
+      map['frequency'] = Variable<int>(frequency.value);
+    }
     if (lastAuditedAt.present) {
       map['last_audited_at'] = Variable<DateTime>(lastAuditedAt.value);
     }
@@ -4562,6 +4657,8 @@ class UnitStatsCompanion extends UpdateCompanion<UnitStat> {
           ..write('claimCount: $claimCount, ')
           ..write('evidenceCount: $evidenceCount, ')
           ..write('conflictCount: $conflictCount, ')
+          ..write('pointWeight: $pointWeight, ')
+          ..write('frequency: $frequency, ')
           ..write('lastAuditedAt: $lastAuditedAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -9994,6 +10091,8 @@ typedef $$UnitStatsTableCreateCompanionBuilder =
       Value<int> claimCount,
       Value<int> evidenceCount,
       Value<int> conflictCount,
+      Value<int> pointWeight,
+      Value<int> frequency,
       Value<DateTime?> lastAuditedAt,
       Value<DateTime> updatedAt,
     });
@@ -10006,6 +10105,8 @@ typedef $$UnitStatsTableUpdateCompanionBuilder =
       Value<int> claimCount,
       Value<int> evidenceCount,
       Value<int> conflictCount,
+      Value<int> pointWeight,
+      Value<int> frequency,
       Value<DateTime?> lastAuditedAt,
       Value<DateTime> updatedAt,
     });
@@ -10070,6 +10171,16 @@ class $$UnitStatsTableFilterComposer
 
   ColumnFilters<int> get conflictCount => $composableBuilder(
     column: $table.conflictCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pointWeight => $composableBuilder(
+    column: $table.pointWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get frequency => $composableBuilder(
+    column: $table.frequency,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10146,6 +10257,16 @@ class $$UnitStatsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get pointWeight => $composableBuilder(
+    column: $table.pointWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastAuditedAt => $composableBuilder(
     column: $table.lastAuditedAt,
     builder: (column) => ColumnOrderings(column),
@@ -10217,6 +10338,14 @@ class $$UnitStatsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get pointWeight => $composableBuilder(
+    column: $table.pointWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get frequency =>
+      $composableBuilder(column: $table.frequency, builder: (column) => column);
+
   GeneratedColumn<DateTime> get lastAuditedAt => $composableBuilder(
     column: $table.lastAuditedAt,
     builder: (column) => column,
@@ -10284,6 +10413,8 @@ class $$UnitStatsTableTableManager
                 Value<int> claimCount = const Value.absent(),
                 Value<int> evidenceCount = const Value.absent(),
                 Value<int> conflictCount = const Value.absent(),
+                Value<int> pointWeight = const Value.absent(),
+                Value<int> frequency = const Value.absent(),
                 Value<DateTime?> lastAuditedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UnitStatsCompanion(
@@ -10294,6 +10425,8 @@ class $$UnitStatsTableTableManager
                 claimCount: claimCount,
                 evidenceCount: evidenceCount,
                 conflictCount: conflictCount,
+                pointWeight: pointWeight,
+                frequency: frequency,
                 lastAuditedAt: lastAuditedAt,
                 updatedAt: updatedAt,
               ),
@@ -10306,6 +10439,8 @@ class $$UnitStatsTableTableManager
                 Value<int> claimCount = const Value.absent(),
                 Value<int> evidenceCount = const Value.absent(),
                 Value<int> conflictCount = const Value.absent(),
+                Value<int> pointWeight = const Value.absent(),
+                Value<int> frequency = const Value.absent(),
                 Value<DateTime?> lastAuditedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => UnitStatsCompanion.insert(
@@ -10316,6 +10451,8 @@ class $$UnitStatsTableTableManager
                 claimCount: claimCount,
                 evidenceCount: evidenceCount,
                 conflictCount: conflictCount,
+                pointWeight: pointWeight,
+                frequency: frequency,
                 lastAuditedAt: lastAuditedAt,
                 updatedAt: updatedAt,
               ),

@@ -11,6 +11,7 @@ import '../../features/exam_units/presentation/exam_units_page.dart';
 import '../../features/exam_units/providers/exam_units.provider.dart';
 import '../../features/exam_units/providers/claims.provider.dart';
 import '../../features/audit/presentation/audit_page.dart';
+import '../../features/review_queue/presentation/review_queue_page.dart';
 import '../../features/study_plan/presentation/study_plan_page.dart';
 
 class AppShell extends ConsumerWidget {
@@ -23,9 +24,12 @@ class AppShell extends ConsumerWidget {
     return Scaffold(
       body: Row(
         children: [
-          _Sidebar(selected: selected, onSelect: (d) {
-            ref.read(selectedDestinationProvider.notifier).state = d;
-          }),
+          _Sidebar(
+            selected: selected,
+            onSelect: (d) {
+              ref.read(selectedDestinationProvider.notifier).state = d;
+            },
+          ),
           const VerticalDivider(width: 1),
           Expanded(child: _body(selected)),
         ],
@@ -34,12 +38,13 @@ class AppShell extends ConsumerWidget {
   }
 
   Widget _body(AppDestination dest) => switch (dest) {
-        AppDestination.dashboard => const DashboardPage(),
-        AppDestination.sources => const SourcesPage(),
-        AppDestination.examUnits => const ExamUnitsPage(),
-        AppDestination.coverageAudit => const AuditPage(),
-        AppDestination.studyPlan => const StudyPlanPage(),
-      };
+    AppDestination.dashboard => const DashboardPage(),
+    AppDestination.sources => const SourcesPage(),
+    AppDestination.examUnits => const ExamUnitsPage(),
+    AppDestination.reviewQueue => const ReviewQueuePage(),
+    AppDestination.coverageAudit => const AuditPage(),
+    AppDestination.studyPlan => const StudyPlanPage(),
+  };
 }
 
 // ============================================================
@@ -92,8 +97,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         ref.read(selectedDestinationProvider.notifier).state =
             AppDestination.sources;
         if (result.parentId != null) {
-          ref.read(selectedSourceIdProvider.notifier).state =
-              result.parentId!;
+          ref.read(selectedSourceIdProvider.notifier).state = result.parentId!;
         }
     }
   }
@@ -125,14 +129,22 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                   decoration: InputDecoration(
                     hintText: '検索...',
                     hintStyle: const TextStyle(
-                        color: Colors.white38, fontSize: 12),
-                    prefixIcon: const Icon(Icons.search,
-                        size: 15, color: Colors.white38),
+                      color: Colors.white38,
+                      fontSize: 12,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 15,
+                      color: Colors.white38,
+                    ),
                     suffixIcon: isSearching
                         ? GestureDetector(
                             onTap: _clearSearch,
-                            child: const Icon(Icons.close,
-                                size: 14, color: Colors.white38),
+                            child: const Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white38,
+                            ),
                           )
                         : null,
                     filled: true,
@@ -142,10 +154,14 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIconConstraints:
-                        const BoxConstraints(minWidth: 30, minHeight: 0),
-                    suffixIconConstraints:
-                        const BoxConstraints(minWidth: 28, minHeight: 0),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 30,
+                      minHeight: 0,
+                    ),
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 0,
+                    ),
                   ),
                   onChanged: (v) {
                     _debounceTimer?.cancel();
@@ -212,6 +228,13 @@ class _NavList extends StatelessWidget {
           icon: Icons.rule_outlined,
           label: 'Coverage Audit',
           dest: AppDestination.coverageAudit,
+          selected: selected,
+          onTap: onSelect,
+        ),
+        _NavItem(
+          icon: Icons.playlist_add_check_circle_outlined,
+          label: 'Review Queue',
+          dest: AppDestination.reviewQueue,
           selected: selected,
           onTap: onSelect,
         ),
@@ -301,16 +324,14 @@ class _SearchResultTile extends StatelessWidget {
                 children: [
                   Text(
                     result.title,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 11),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     result.subtitle,
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 10),
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -345,9 +366,9 @@ class _AppLogo extends StatelessWidget {
           Text(
             'ExamOS',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -377,8 +398,9 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = dest == selected;
-    final color =
-        isSelected ? Theme.of(context).colorScheme.primary : Colors.white54;
+    final color = isSelected
+        ? Theme.of(context).colorScheme.primary
+        : Colors.white54;
 
     return InkWell(
       onTap: () => onTap(dest),
@@ -396,8 +418,7 @@ class _NavItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   color: color,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
             ),

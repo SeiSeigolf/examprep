@@ -4,9 +4,11 @@ enum AppDestination {
   dashboard,
   sources,
   examUnits,
+  reviewQueue,
   coverageAudit,
   studyPlan,
 }
 
-final selectedDestinationProvider =
-    StateProvider<AppDestination>((ref) => AppDestination.dashboard);
+final selectedDestinationProvider = StateProvider<AppDestination>(
+  (ref) => AppDestination.dashboard,
+);
