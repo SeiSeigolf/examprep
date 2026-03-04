@@ -18,6 +18,9 @@ import 'tables/evidence_pack_items.dart';
 import 'tables/unit_merge_history.dart';
 import 'tables/quiz_attempts.dart';
 import 'tables/claim_review_schedules.dart';
+import 'tables/exams.dart';
+import 'tables/exam_sections.dart';
+import 'tables/exam_pools.dart';
 import 'daos/sources_dao.dart';
 import 'daos/exam_units_dao.dart';
 import 'daos/claims_dao.dart';
@@ -27,6 +30,7 @@ import 'daos/search_dao.dart';
 import 'daos/study_methods_dao.dart';
 import 'daos/evidence_packs_dao.dart';
 import 'daos/quiz_attempts_dao.dart';
+import 'daos/exams_dao.dart';
 
 export 'tables/sources.dart';
 export 'tables/source_segments.dart';
@@ -42,8 +46,12 @@ export 'tables/evidence_pack_items.dart';
 export 'tables/unit_merge_history.dart';
 export 'tables/quiz_attempts.dart';
 export 'tables/claim_review_schedules.dart';
+export 'tables/exams.dart';
+export 'tables/exam_sections.dart';
+export 'tables/exam_pools.dart';
 export 'daos/evidence_packs_dao.dart';
 export 'daos/quiz_attempts_dao.dart';
+export 'daos/exams_dao.dart';
 
 part 'database.g.dart';
 
@@ -63,6 +71,9 @@ part 'database.g.dart';
     UnitMergeHistory,
     QuizAttempts,
     ClaimReviewSchedules,
+    Exams,
+    ExamSections,
+    ExamPools,
   ],
   daos: [
     SourcesDao,
@@ -74,6 +85,7 @@ part 'database.g.dart';
     StudyMethodsDao,
     EvidencePacksDao,
     QuizAttemptsDao,
+    ExamsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -83,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -181,6 +193,38 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 12) {
         await m.createTable(claimReviewSchedules);
+      }
+      if (from < 13) {
+        await m.createTable(exams);
+        await m.createTable(examSections);
+        await m.createTable(examPools);
+      }
+      if (from < 14) {
+        await m.addColumn(examUnits, examUnits.sectionId);
+        // sources の CHECK 制約を更新（新 source_type 値を追加）
+        // SQLite は CHECK 制約の変更をサポートしないため手動でテーブルを再作成する
+        await customStatement('''
+          CREATE TABLE sources_new (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            file_name TEXT NOT NULL,
+            file_path TEXT NOT NULL UNIQUE,
+            source_type TEXT NOT NULL DEFAULT 'lecture'
+              CHECK(source_type IN (
+                'lecture','past_exam','assignment','notes',
+                'professor_notes','voice_memo','other'
+              )),
+            file_size INTEGER,
+            page_count INTEGER,
+            title TEXT,
+            imported_at INTEGER NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP))
+          )
+        ''');
+        await customStatement(
+          'INSERT INTO sources_new SELECT id,file_name,file_path,source_type,'
+          'file_size,page_count,title,imported_at FROM sources',
+        );
+        await customStatement('DROP TABLE sources');
+        await customStatement('ALTER TABLE sources_new RENAME TO sources');
       }
     },
   );

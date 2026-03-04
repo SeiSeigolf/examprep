@@ -87,6 +87,12 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
         SourcesCompanion(pageCount: Value(pageCount)),
       );
 
+  /// source_type を変更する
+  Future<void> updateSourceType(int sourceId, String newType) =>
+      (update(sources)..where((s) => s.id.equals(sourceId))).write(
+        SourcesCompanion(sourceType: Value(newType)),
+      );
+
   /// past_exam に紐づく証拠量から unit_stats.frequency を再計算する。
   /// 手動上書き済み（frequencyManualOverride=true）の unit は更新しない。
   Future<void> recalculatePastExamFrequency() async {

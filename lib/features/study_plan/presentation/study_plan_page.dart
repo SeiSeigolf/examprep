@@ -224,9 +224,9 @@ class _DailyGoalSlider extends ConsumerWidget {
           Expanded(
             child: Slider(
               value: goal.toDouble(),
-              min: 30,
-              max: 480,
-              divisions: 15, // 30分刻み
+              min: 0,
+              max: 840,
+              divisions: 28, // 30分刻み
               activeColor: const Color(0xFF4A90D9),
               inactiveColor: const Color(0xFF2D3440),
               onChanged: (v) {
@@ -259,6 +259,7 @@ class _RecommendedList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final unitsAsync = ref.watch(recommendedUnitsProvider);
     final methodsByKey = ref.watch(studyMethodsByKeyProvider);
+    final methodsByUnitType = ref.watch(studyMethodsByUnitTypeProvider);
     final goal = ref.watch(dailyGoalMinutesProvider);
 
     return unitsAsync.when(
@@ -286,13 +287,13 @@ class _RecommendedList extends ConsumerWidget {
           );
         }
 
-        // 目標時間内に収まるユニット数を計算
+        // 目標時間内に収まるユニット数を計算（代表メソッドの推定時間を使用）
         int accumulated = 0;
         final withinBudget = <int>{};
         for (final unit in units) {
           final method = resolveRecommendedMethod(methodsByKey, unit);
           final mins = method?.estimatedMinutes ?? 30;
-          if (accumulated + mins <= goal) {
+          if (goal == 0 || accumulated + mins <= goal) {
             withinBudget.add(unit.id);
             accumulated += mins;
           } else {
@@ -306,11 +307,11 @@ class _RecommendedList extends ConsumerWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final unit = units[i];
-            final method = resolveRecommendedMethod(methodsByKey, unit);
+            final methods = methodsByUnitType[unit.unitType] ?? [];
             final inBudget = withinBudget.contains(unit.id);
             return _UnitPlanTile(
               unit: unit,
-              method: method,
+              methods: methods,
               inBudget: inBudget,
             );
           },
@@ -325,32 +326,15 @@ class _RecommendedList extends ConsumerWidget {
 class _UnitPlanTile extends ConsumerWidget {
   const _UnitPlanTile({
     required this.unit,
-    required this.method,
+    required this.methods,
     required this.inBudget,
   });
   final ExamUnit unit;
-  final StudyMethod? method;
+  final List<StudyMethod> methods;
   final bool inBudget;
-
-  static const _confidenceColors = {
-    'low': Color(0xFFEF5350),
-    'medium': Color(0xFFFF9800),
-    'high': Color(0xFF4CAF50),
-  };
-
-  static const _confidenceLabels = {
-    'low': 'Low',
-    'medium': 'Medium',
-    'high': 'High',
-  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final confColor =
-        _confidenceColors[unit.confidenceLevel] ?? const Color(0xFF607D8B);
-    final confLabel =
-        _confidenceLabels[unit.confidenceLevel] ?? unit.confidenceLevel;
-
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1E2530),
@@ -390,36 +374,16 @@ class _UnitPlanTile extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 信頼度バッジ
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: confColor.withAlpha(30),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: confColor.withAlpha(80)),
-                  ),
-                  child: Text(
-                    confLabel,
-                    style: TextStyle(
-                      color: confColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // 信頼度アップグレードボタン
-                if (unit.confidenceLevel != 'high') _UpgradeButton(unit: unit),
+                // 信頼度バッジ（タップで3択ダイアログ）
+                _ConfidenceBadge(unit: unit),
               ],
             ),
 
-            // ---- 下段: タイプ + 推奨学習法 ----
-            if (method != null) ...[
+            // ---- 下段: タイプ + 全推奨学習法 ----
+            if (methods.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -439,20 +403,36 @@ class _UnitPlanTile extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
-                    Icons.lightbulb_outline,
-                    size: 12,
-                    color: Color(0xFFFFD54F),
-                  ),
-                  const SizedBox(width: 4),
                   Expanded(
-                    child: Text(
-                      '${method!.methodName}（${method!.estimatedMinutes}分）',
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 11,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: methods
+                          .map(
+                            (m) => Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.lightbulb_outline,
+                                    size: 11,
+                                    color: Color(0xFFFFD54F),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      '${m.methodName}（${m.estimatedMinutes}分）— ${m.problemFormat}',
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 11,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ),
                 ],
@@ -465,55 +445,108 @@ class _UnitPlanTile extends ConsumerWidget {
   }
 }
 
-// ---- 信頼度アップグレードボタン ----
+// ---- 信頼度バッジ（タップで3択ダイアログ） ----
 
-class _UpgradeButton extends ConsumerWidget {
-  const _UpgradeButton({required this.unit});
+class _ConfidenceBadge extends ConsumerWidget {
+  const _ConfidenceBadge({required this.unit});
   final ExamUnit unit;
 
-  String get _nextLevel => unit.confidenceLevel == 'low' ? 'medium' : 'high';
+  static const _confidenceColors = {
+    'low': Color(0xFFEF5350),
+    'medium': Color(0xFFFF9800),
+    'high': Color(0xFF4CAF50),
+  };
 
-  String get _nextLabel => unit.confidenceLevel == 'low' ? 'Medium' : 'High';
+  static const _confidenceLabels = {
+    'low': 'Low',
+    'medium': 'Medium',
+    'high': 'High',
+  };
+
+  static const _levels = ['high', 'medium', 'low'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final confColor =
+        _confidenceColors[unit.confidenceLevel] ?? const Color(0xFF607D8B);
+    final confLabel =
+        _confidenceLabels[unit.confidenceLevel] ?? unit.confidenceLevel;
+
     return Tooltip(
-      message: '信頼度を $_nextLabel に上げる',
+      message: '信頼度を変更',
       child: InkWell(
         borderRadius: BorderRadius.circular(4),
-        onTap: () => _showUpgradeDialog(context, ref),
-        child: const Padding(
-          padding: EdgeInsets.all(2),
-          child: Icon(
-            Icons.arrow_upward_rounded,
-            size: 14,
-            color: Colors.white38,
+        onTap: () => _showDialog(context, ref),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          decoration: BoxDecoration(
+            color: confColor.withAlpha(30),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: confColor.withAlpha(80)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                confLabel,
+                style: TextStyle(
+                  color: confColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(Icons.arrow_drop_down, size: 12, color: confColor),
+            ],
           ),
         ),
       ),
     );
   }
 
-  void _showUpgradeDialog(BuildContext context, WidgetRef ref) {
+  void _showDialog(BuildContext context, WidgetRef ref) {
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('信頼度を更新'),
-        content: Text('「${unit.title}」の信頼度を $_nextLabel に上げますか？'),
+        title: const Text('信頼度を設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _levels.map((level) {
+            final color =
+                _confidenceColors[level] ?? const Color(0xFF607D8B);
+            final label = _confidenceLabels[level] ?? level;
+            final isCurrent = unit.confidenceLevel == level;
+            return ListTile(
+              dense: true,
+              leading: Icon(
+                isCurrent ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: isCurrent ? color : Colors.white38,
+                size: 20,
+              ),
+              title: Text(
+                label,
+                style: TextStyle(
+                  color: isCurrent ? color : null,
+                  fontWeight:
+                      isCurrent ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              onTap: isCurrent
+                  ? null
+                  : () async {
+                      Navigator.of(context).pop();
+                      await ref
+                          .read(databaseProvider)
+                          .examUnitsDao
+                          .updateConfidenceLevel(unit.id, level);
+                    },
+            );
+          }).toList(),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await ref
-                  .read(databaseProvider)
-                  .examUnitsDao
-                  .updateConfidenceLevel(unit.id, _nextLevel);
-            },
-            child: Text('$_nextLabel に上げる'),
           ),
         ],
       ),

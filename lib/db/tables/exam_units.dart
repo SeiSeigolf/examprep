@@ -29,6 +29,8 @@ class ExamUnits extends Table {
         ]),
       )();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  // セクション紐づけ（nullable = 未割り当て）
+  IntColumn get sectionId => integer().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

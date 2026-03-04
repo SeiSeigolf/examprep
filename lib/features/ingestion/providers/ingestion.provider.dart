@@ -115,11 +115,23 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         fileName.contains('過去問')) {
       return 'past_exam';
     }
-    if (lower.contains('assignment') || fileName.contains('課題')) {
-      return 'assignment';
+    if (lower.contains('prof') ||
+        lower.contains('teacher') ||
+        fileName.contains('教授') ||
+        fileName.contains('先生')) {
+      return 'professor_notes';
+    }
+    if (lower.contains('voice') ||
+        lower.contains('audio') ||
+        lower.contains('録音') ||
+        fileName.contains('音声')) {
+      return 'voice_memo';
     }
     if (lower.contains('note') || fileName.contains('ノート')) {
       return 'notes';
+    }
+    if (lower.contains('assignment') || fileName.contains('課題')) {
+      return 'assignment';
     }
     return 'lecture';
   }

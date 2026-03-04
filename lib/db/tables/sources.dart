@@ -8,7 +8,15 @@ class Sources extends Table {
   TextColumn get sourceType => text()
       .withDefault(const Constant('lecture'))
       .check(
-        sourceType.isIn(const ['lecture', 'past_exam', 'assignment', 'notes']),
+        sourceType.isIn(const [
+          'lecture',
+          'past_exam',
+          'assignment',
+          'notes',
+          'professor_notes',
+          'voice_memo',
+          'other',
+        ]),
       )();
   IntColumn get fileSize => integer().nullable()();
   IntColumn get pageCount => integer().nullable()();

@@ -30,6 +30,17 @@ final studyMethodsByKeyProvider = Provider<Map<String, StudyMethod>>((ref) {
   return map;
 });
 
+/// unitType → その unit_type の全 StudyMethod リスト
+final studyMethodsByUnitTypeProvider =
+    Provider<Map<String, List<StudyMethod>>>((ref) {
+      final methods = ref.watch(studyMethodsProvider).valueOrNull ?? [];
+      final map = <String, List<StudyMethod>>{};
+      for (final m in methods) {
+        map.putIfAbsent(m.unitType, () => []).add(m);
+      }
+      return map;
+    });
+
 StudyMethod? resolveRecommendedMethod(
   Map<String, StudyMethod> methodsByKey,
   ExamUnit unit,

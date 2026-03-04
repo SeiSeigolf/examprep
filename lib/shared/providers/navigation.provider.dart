@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum AppDestination {
+  examSetup,
   dashboard,
   sources,
   examUnits,

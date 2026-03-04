@@ -13,6 +13,8 @@ import '../../features/exam_units/providers/claims.provider.dart';
 import '../../features/audit/presentation/audit_page.dart';
 import '../../features/review_queue/presentation/review_queue_page.dart';
 import '../../features/study_plan/presentation/study_plan_page.dart';
+import '../../features/exam_setup/presentation/exam_setup_page.dart';
+import '../../features/exam_setup/providers/exams.provider.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
@@ -20,6 +22,7 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(selectedDestinationProvider);
+    final hasExams = ref.watch(hasAnyExamProvider);
 
     return Scaffold(
       body: Row(
@@ -31,20 +34,27 @@ class AppShell extends ConsumerWidget {
             },
           ),
           const VerticalDivider(width: 1),
-          Expanded(child: _body(selected)),
+          Expanded(child: _body(selected, hasExams)),
         ],
       ),
     );
   }
 
-  Widget _body(AppDestination dest) => switch (dest) {
-    AppDestination.dashboard => const DashboardPage(),
-    AppDestination.sources => const SourcesPage(),
-    AppDestination.examUnits => const ExamUnitsPage(),
-    AppDestination.reviewQueue => const ReviewQueuePage(),
-    AppDestination.coverageAudit => const AuditPage(),
-    AppDestination.studyPlan => const StudyPlanPage(),
-  };
+  Widget _body(AppDestination dest, bool hasExams) {
+    // 試験未登録の場合、ダッシュボードの代わりに試験設定ウィザードを表示
+    if (!hasExams && dest == AppDestination.dashboard) {
+      return const ExamSetupPage();
+    }
+    return switch (dest) {
+      AppDestination.examSetup => const ExamSetupPage(),
+      AppDestination.dashboard => const DashboardPage(),
+      AppDestination.sources => const SourcesPage(),
+      AppDestination.examUnits => const ExamUnitsPage(),
+      AppDestination.reviewQueue => const ReviewQueuePage(),
+      AppDestination.coverageAudit => const AuditPage(),
+      AppDestination.studyPlan => const StudyPlanPage(),
+    };
+  }
 }
 
 // ============================================================
@@ -203,6 +213,13 @@ class _NavList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 4),
       children: [
+        _NavItem(
+          icon: Icons.school_outlined,
+          label: '試験設定',
+          dest: AppDestination.examSetup,
+          selected: selected,
+          onTap: onSelect,
+        ),
         _NavItem(
           icon: Icons.dashboard_outlined,
           label: 'ダッシュボード',
