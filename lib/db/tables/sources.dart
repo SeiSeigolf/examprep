@@ -21,5 +21,8 @@ class Sources extends Table {
   IntColumn get fileSize => integer().nullable()();
   IntColumn get pageCount => integer().nullable()();
   TextColumn get title => text().nullable()();
+  TextColumn get lastExtractionMethod => text().nullable()();
+  RealColumn get lastQualityScore => real().nullable()();
+  DateTimeColumn get extractionUpdatedAt => dateTime().nullable()();
   DateTimeColumn get importedAt => dateTime().withDefault(currentDateAndTime)();
 }

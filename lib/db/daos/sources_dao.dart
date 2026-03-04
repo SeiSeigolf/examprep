@@ -63,6 +63,9 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
   Future<int> insertSource(SourcesCompanion entry) =>
       into(sources).insert(entry);
 
+  Future<Source?> getSourceById(int id) =>
+      (select(sources)..where((s) => s.id.equals(id))).getSingleOrNull();
+
   /// ソース削除
   Future<int> deleteSource(int id) async {
     final count = await (delete(sources)..where((t) => t.id.equals(id))).go();
@@ -73,6 +76,36 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
   /// ソースに対してページ分のセグメントを一括挿入
   Future<void> insertSegments(List<SourceSegmentsCompanion> entries) =>
       batch((b) => b.insertAll(sourceSegments, entries));
+
+  Future<void> replaceSegmentsForSource(
+    int sourceId,
+    List<SourceSegmentsCompanion> entries,
+  ) async {
+    await transaction(() async {
+      await (delete(
+        sourceSegments,
+      )..where((s) => s.sourceId.equals(sourceId))).go();
+      if (entries.isNotEmpty) {
+        await batch((b) => b.insertAll(sourceSegments, entries));
+      }
+    });
+  }
+
+  Future<void> updateSourceExtractionMeta({
+    required int sourceId,
+    required String method,
+    required double qualityScore,
+    required int pageCount,
+  }) {
+    return (update(sources)..where((s) => s.id.equals(sourceId))).write(
+      SourcesCompanion(
+        lastExtractionMethod: Value(method),
+        lastQualityScore: Value(qualityScore),
+        extractionUpdatedAt: Value(DateTime.now()),
+        pageCount: Value(pageCount),
+      ),
+    );
+  }
 
   /// 指定ソースのセグメント一覧をページ順で監視
   Stream<List<SourceSegment>> watchSegmentsForSource(int sourceId) =>

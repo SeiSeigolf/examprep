@@ -14,5 +14,8 @@ class SourceSegments extends Table {
   TextColumn get contentConfidence => text()
       .withDefault(const Constant('M'))
       .check(contentConfidence.isIn(const ['H', 'M', 'L']))();
+  TextColumn get extractionMethod => text().nullable()();
+  RealColumn get qualityScore => real().nullable()();
+  RealColumn get ocrConfidence => real().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

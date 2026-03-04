@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:drift/drift.dart' hide Column;
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../db/database.dart';
 import '../../../db/database.provider.dart';
-import '../services/pdf_extractor.dart';
+import '../services/text_extraction/syncfusion_extractor.dart';
+import '../services/text_extraction/poppler_extractor.dart';
+import '../services/text_extraction/text_extraction_pipeline.dart';
+import '../services/text_extraction/vision_ocr_extractor.dart';
+import '../services/text_extraction/models.dart';
 
 enum IngestionStatus { idle, picking, extracting, inserting, done, error }
 
@@ -35,6 +38,11 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
   IngestionNotifier(this._db) : super(const IngestionState());
 
   final AppDatabase _db;
+  late final TextExtractionPipeline _pipeline = TextExtractionPipeline(
+    syncfusion: SyncfusionExtractor(),
+    poppler: PopplerExtractor(),
+    ocr: const VisionOcrExtractor(),
+  );
 
   Future<void> pickAndImport() async {
     state = state.copyWith(status: IngestionStatus.picking);
@@ -61,7 +69,8 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
           currentFile: file.name,
         );
 
-        final pages = await compute(PdfExtractor.extractPages, path);
+        final extraction = await _pipeline.extract(path);
+        final pages = extraction.pages;
 
         // ---- DB 保存 ----
         state = state.copyWith(status: IngestionStatus.inserting);
@@ -76,6 +85,9 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
             sourceType: Value(sourceType),
             fileSize: Value(fileSize),
             pageCount: Value(pages.length),
+            lastExtractionMethod: Value(extraction.method),
+            lastQualityScore: Value(extraction.qualityScore),
+            extractionUpdatedAt: Value(DateTime.now()),
           ),
         );
 
@@ -87,6 +99,9 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
                   sourceId: sourceId,
                   pageNumber: p.pageNumber,
                   content: Value(p.text),
+                  extractionMethod: Value(extraction.method),
+                  qualityScore: Value(p.qualityScore),
+                  ocrConfidence: Value(p.ocrConfidence),
                 ),
               )
               .toList(),
@@ -98,6 +113,58 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
 
       state = state.copyWith(status: IngestionStatus.done, currentFile: null);
       await Future.delayed(const Duration(seconds: 1));
+      state = state.copyWith(status: IngestionStatus.idle);
+    } catch (e) {
+      state = state.copyWith(
+        status: IngestionStatus.error,
+        errorMessage: e.toString(),
+        currentFile: null,
+      );
+    }
+  }
+
+  Future<void> reextractSource({
+    required int sourceId,
+    ExtractionForceMode mode = ExtractionForceMode.auto,
+  }) async {
+    try {
+      final source = await _db.sourcesDao.getSourceById(sourceId);
+      if (source == null) return;
+
+      state = state.copyWith(
+        status: IngestionStatus.extracting,
+        currentFile: source.fileName,
+      );
+
+      final extraction = await _pipeline.extract(source.filePath, mode: mode);
+      state = state.copyWith(status: IngestionStatus.inserting);
+
+      await _db.sourcesDao.replaceSegmentsForSource(
+        sourceId,
+        extraction.pages
+            .map(
+              (p) => SourceSegmentsCompanion.insert(
+                sourceId: sourceId,
+                pageNumber: p.pageNumber,
+                content: Value(p.text),
+                extractionMethod: Value(extraction.method),
+                qualityScore: Value(p.qualityScore),
+                ocrConfidence: Value(p.ocrConfidence),
+              ),
+            )
+            .toList(),
+      );
+      await _db.sourcesDao.updateSourceExtractionMeta(
+        sourceId: sourceId,
+        method: extraction.method,
+        qualityScore: extraction.qualityScore,
+        pageCount: extraction.pages.length,
+      );
+
+      await _db.sourcesDao.recalculatePastExamFrequency();
+      await _db.auditDao.refreshCoverageAudits();
+      state = state.copyWith(status: IngestionStatus.done, currentFile: null);
+      await Future.delayed(const Duration(milliseconds: 700));
       state = state.copyWith(status: IngestionStatus.idle);
     } catch (e) {
       state = state.copyWith(

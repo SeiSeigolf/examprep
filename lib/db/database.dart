@@ -95,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -225,6 +225,14 @@ class AppDatabase extends _$AppDatabase {
         );
         await customStatement('DROP TABLE sources');
         await customStatement('ALTER TABLE sources_new RENAME TO sources');
+      }
+      if (from < 15) {
+        await m.addColumn(sources, sources.lastExtractionMethod);
+        await m.addColumn(sources, sources.lastQualityScore);
+        await m.addColumn(sources, sources.extractionUpdatedAt);
+        await m.addColumn(sourceSegments, sourceSegments.extractionMethod);
+        await m.addColumn(sourceSegments, sourceSegments.qualityScore);
+        await m.addColumn(sourceSegments, sourceSegments.ocrConfidence);
       }
     },
   );

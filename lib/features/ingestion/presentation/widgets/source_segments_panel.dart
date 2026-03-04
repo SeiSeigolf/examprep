@@ -6,8 +6,11 @@ import '../../../../db/daos/sources_dao.dart';
 import '../../../../db/daos/exam_units_dao.dart';
 import '../../../../shared/providers/navigation.provider.dart';
 import '../../../exam_units/providers/exam_units.provider.dart';
+import '../../providers/ingestion.provider.dart';
 import '../../providers/selected_source.provider.dart';
 import '../../providers/sources_list.provider.dart';
+import '../../services/text_extraction/models.dart';
+import '../../services/text_extraction/quality_score.dart';
 
 /// 選択中ソースのページ一覧 + テキストプレビューパネル
 class SourceSegmentsPanel extends ConsumerWidget {
@@ -37,6 +40,7 @@ class SourceSegmentsPanel extends ConsumerWidget {
     final source = sourcesAsync.whenData(
       (list) => list.where((s) => s.id == selectedId).firstOrNull,
     );
+    final ingestion = ref.watch(ingestionProvider);
 
     final segmentsAsync = ref.watch(segmentsForSourceProvider(selectedId));
 
@@ -74,6 +78,18 @@ class SourceSegmentsPanel extends ConsumerWidget {
                 error: (_, __) => const SizedBox.shrink(),
                 data: (segs) => Row(
                   children: [
+                    if (source.value != null) ...[
+                      _MiniQualityBadge(score: source.value!.lastQualityScore),
+                      const SizedBox(width: 6),
+                      Text(
+                        source.value!.lastExtractionMethod ?? 'unknown',
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Text(
                       '${segs.length} ページ',
                       style: const TextStyle(
@@ -82,6 +98,72 @@ class SourceSegmentsPanel extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed:
+                          ingestion.status == IngestionStatus.extracting ||
+                              ingestion.status == IngestionStatus.inserting
+                          ? null
+                          : () => ref
+                                .read(ingestionProvider.notifier)
+                                .reextractSource(
+                                  sourceId: selectedId,
+                                  mode: ExtractionForceMode.auto,
+                                ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        '再抽出(自動)',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    OutlinedButton(
+                      onPressed:
+                          ingestion.status == IngestionStatus.extracting ||
+                              ingestion.status == IngestionStatus.inserting
+                          ? null
+                          : () => ref
+                                .read(ingestionProvider.notifier)
+                                .reextractSource(
+                                  sourceId: selectedId,
+                                  mode: ExtractionForceMode.poppler,
+                                ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        '再抽出(Poppler)',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    OutlinedButton(
+                      onPressed:
+                          ingestion.status == IngestionStatus.extracting ||
+                              ingestion.status == IngestionStatus.inserting
+                          ? null
+                          : () => ref
+                                .read(ingestionProvider.notifier)
+                                .reextractSource(
+                                  sourceId: selectedId,
+                                  mode: ExtractionForceMode.ocr,
+                                ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        '再抽出(OCR)',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     OutlinedButton(
                       onPressed: segs.isEmpty
                           ? null
@@ -123,12 +205,36 @@ class SourceSegmentsPanel extends ConsumerWidget {
                   ),
                 );
               }
-              return ListView.separated(
+              final preview = _sourcePreview(segments);
+              return ListView(
                 padding: const EdgeInsets.all(12),
-                itemCount: segments.length,
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: Color(0xFF2E3340)),
-                itemBuilder: (context, i) => _SegmentTile(segment: segments[i]),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(6),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Text(
+                      'テキストプレビュー: $preview',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  ...List.generate(segments.length, (i) {
+                    return Column(
+                      children: [
+                        _SegmentTile(segment: segments[i]),
+                        if (i != segments.length - 1)
+                          const Divider(height: 1, color: Color(0xFF2E3340)),
+                      ],
+                    );
+                  }),
+                ],
               );
             },
           ),
@@ -136,6 +242,44 @@ class SourceSegmentsPanel extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _MiniQualityBadge extends StatelessWidget {
+  const _MiniQualityBadge({required this.score});
+  final double? score;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = score ?? 0;
+    final label = qualityLabel(s);
+    final color = label == 'Good'
+        ? const Color(0xFF2E7D32)
+        : label == 'OK'
+        ? const Color(0xFFEF6C00)
+        : const Color(0xFFC62828);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withAlpha(60),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        '$label ${s.toStringAsFixed(2)}',
+        style: const TextStyle(color: Colors.white, fontSize: 10),
+      ),
+    );
+  }
+}
+
+String _sourcePreview(List<SourceSegment> segments) {
+  for (final s in segments) {
+    final t = s.content.trim();
+    if (t.isNotEmpty) {
+      return t.length <= 300 ? t : '${t.substring(0, 300)}...';
+    }
+  }
+  return '(テキストなし)';
 }
 
 class _AutoGenerateUnitsDialog extends ConsumerStatefulWidget {

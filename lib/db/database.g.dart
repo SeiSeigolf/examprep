@@ -96,6 +96,39 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _lastExtractionMethodMeta =
+      const VerificationMeta('lastExtractionMethod');
+  @override
+  late final GeneratedColumn<String> lastExtractionMethod =
+      GeneratedColumn<String>(
+        'last_extraction_method',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastQualityScoreMeta = const VerificationMeta(
+    'lastQualityScore',
+  );
+  @override
+  late final GeneratedColumn<double> lastQualityScore = GeneratedColumn<double>(
+    'last_quality_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _extractionUpdatedAtMeta =
+      const VerificationMeta('extractionUpdatedAt');
+  @override
+  late final GeneratedColumn<DateTime> extractionUpdatedAt =
+      GeneratedColumn<DateTime>(
+        'extraction_updated_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _importedAtMeta = const VerificationMeta(
     'importedAt',
   );
@@ -117,6 +150,9 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     fileSize,
     pageCount,
     title,
+    lastExtractionMethod,
+    lastQualityScore,
+    extractionUpdatedAt,
     importedAt,
   ];
   @override
@@ -174,6 +210,33 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
         title.isAcceptableOrUnknown(data['title']!, _titleMeta),
       );
     }
+    if (data.containsKey('last_extraction_method')) {
+      context.handle(
+        _lastExtractionMethodMeta,
+        lastExtractionMethod.isAcceptableOrUnknown(
+          data['last_extraction_method']!,
+          _lastExtractionMethodMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_quality_score')) {
+      context.handle(
+        _lastQualityScoreMeta,
+        lastQualityScore.isAcceptableOrUnknown(
+          data['last_quality_score']!,
+          _lastQualityScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('extraction_updated_at')) {
+      context.handle(
+        _extractionUpdatedAtMeta,
+        extractionUpdatedAt.isAcceptableOrUnknown(
+          data['extraction_updated_at']!,
+          _extractionUpdatedAtMeta,
+        ),
+      );
+    }
     if (data.containsKey('imported_at')) {
       context.handle(
         _importedAtMeta,
@@ -217,6 +280,18 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       ),
+      lastExtractionMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_extraction_method'],
+      ),
+      lastQualityScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}last_quality_score'],
+      ),
+      extractionUpdatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}extraction_updated_at'],
+      ),
       importedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}imported_at'],
@@ -238,6 +313,9 @@ class Source extends DataClass implements Insertable<Source> {
   final int? fileSize;
   final int? pageCount;
   final String? title;
+  final String? lastExtractionMethod;
+  final double? lastQualityScore;
+  final DateTime? extractionUpdatedAt;
   final DateTime importedAt;
   const Source({
     required this.id,
@@ -247,6 +325,9 @@ class Source extends DataClass implements Insertable<Source> {
     this.fileSize,
     this.pageCount,
     this.title,
+    this.lastExtractionMethod,
+    this.lastQualityScore,
+    this.extractionUpdatedAt,
     required this.importedAt,
   });
   @override
@@ -264,6 +345,15 @@ class Source extends DataClass implements Insertable<Source> {
     }
     if (!nullToAbsent || title != null) {
       map['title'] = Variable<String>(title);
+    }
+    if (!nullToAbsent || lastExtractionMethod != null) {
+      map['last_extraction_method'] = Variable<String>(lastExtractionMethod);
+    }
+    if (!nullToAbsent || lastQualityScore != null) {
+      map['last_quality_score'] = Variable<double>(lastQualityScore);
+    }
+    if (!nullToAbsent || extractionUpdatedAt != null) {
+      map['extraction_updated_at'] = Variable<DateTime>(extractionUpdatedAt);
     }
     map['imported_at'] = Variable<DateTime>(importedAt);
     return map;
@@ -284,6 +374,15 @@ class Source extends DataClass implements Insertable<Source> {
       title: title == null && nullToAbsent
           ? const Value.absent()
           : Value(title),
+      lastExtractionMethod: lastExtractionMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastExtractionMethod),
+      lastQualityScore: lastQualityScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastQualityScore),
+      extractionUpdatedAt: extractionUpdatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(extractionUpdatedAt),
       importedAt: Value(importedAt),
     );
   }
@@ -301,6 +400,13 @@ class Source extends DataClass implements Insertable<Source> {
       fileSize: serializer.fromJson<int?>(json['fileSize']),
       pageCount: serializer.fromJson<int?>(json['pageCount']),
       title: serializer.fromJson<String?>(json['title']),
+      lastExtractionMethod: serializer.fromJson<String?>(
+        json['lastExtractionMethod'],
+      ),
+      lastQualityScore: serializer.fromJson<double?>(json['lastQualityScore']),
+      extractionUpdatedAt: serializer.fromJson<DateTime?>(
+        json['extractionUpdatedAt'],
+      ),
       importedAt: serializer.fromJson<DateTime>(json['importedAt']),
     );
   }
@@ -315,6 +421,9 @@ class Source extends DataClass implements Insertable<Source> {
       'fileSize': serializer.toJson<int?>(fileSize),
       'pageCount': serializer.toJson<int?>(pageCount),
       'title': serializer.toJson<String?>(title),
+      'lastExtractionMethod': serializer.toJson<String?>(lastExtractionMethod),
+      'lastQualityScore': serializer.toJson<double?>(lastQualityScore),
+      'extractionUpdatedAt': serializer.toJson<DateTime?>(extractionUpdatedAt),
       'importedAt': serializer.toJson<DateTime>(importedAt),
     };
   }
@@ -327,6 +436,9 @@ class Source extends DataClass implements Insertable<Source> {
     Value<int?> fileSize = const Value.absent(),
     Value<int?> pageCount = const Value.absent(),
     Value<String?> title = const Value.absent(),
+    Value<String?> lastExtractionMethod = const Value.absent(),
+    Value<double?> lastQualityScore = const Value.absent(),
+    Value<DateTime?> extractionUpdatedAt = const Value.absent(),
     DateTime? importedAt,
   }) => Source(
     id: id ?? this.id,
@@ -336,6 +448,15 @@ class Source extends DataClass implements Insertable<Source> {
     fileSize: fileSize.present ? fileSize.value : this.fileSize,
     pageCount: pageCount.present ? pageCount.value : this.pageCount,
     title: title.present ? title.value : this.title,
+    lastExtractionMethod: lastExtractionMethod.present
+        ? lastExtractionMethod.value
+        : this.lastExtractionMethod,
+    lastQualityScore: lastQualityScore.present
+        ? lastQualityScore.value
+        : this.lastQualityScore,
+    extractionUpdatedAt: extractionUpdatedAt.present
+        ? extractionUpdatedAt.value
+        : this.extractionUpdatedAt,
     importedAt: importedAt ?? this.importedAt,
   );
   Source copyWithCompanion(SourcesCompanion data) {
@@ -349,6 +470,15 @@ class Source extends DataClass implements Insertable<Source> {
       fileSize: data.fileSize.present ? data.fileSize.value : this.fileSize,
       pageCount: data.pageCount.present ? data.pageCount.value : this.pageCount,
       title: data.title.present ? data.title.value : this.title,
+      lastExtractionMethod: data.lastExtractionMethod.present
+          ? data.lastExtractionMethod.value
+          : this.lastExtractionMethod,
+      lastQualityScore: data.lastQualityScore.present
+          ? data.lastQualityScore.value
+          : this.lastQualityScore,
+      extractionUpdatedAt: data.extractionUpdatedAt.present
+          ? data.extractionUpdatedAt.value
+          : this.extractionUpdatedAt,
       importedAt: data.importedAt.present
           ? data.importedAt.value
           : this.importedAt,
@@ -365,6 +495,9 @@ class Source extends DataClass implements Insertable<Source> {
           ..write('fileSize: $fileSize, ')
           ..write('pageCount: $pageCount, ')
           ..write('title: $title, ')
+          ..write('lastExtractionMethod: $lastExtractionMethod, ')
+          ..write('lastQualityScore: $lastQualityScore, ')
+          ..write('extractionUpdatedAt: $extractionUpdatedAt, ')
           ..write('importedAt: $importedAt')
           ..write(')'))
         .toString();
@@ -379,6 +512,9 @@ class Source extends DataClass implements Insertable<Source> {
     fileSize,
     pageCount,
     title,
+    lastExtractionMethod,
+    lastQualityScore,
+    extractionUpdatedAt,
     importedAt,
   );
   @override
@@ -392,6 +528,9 @@ class Source extends DataClass implements Insertable<Source> {
           other.fileSize == this.fileSize &&
           other.pageCount == this.pageCount &&
           other.title == this.title &&
+          other.lastExtractionMethod == this.lastExtractionMethod &&
+          other.lastQualityScore == this.lastQualityScore &&
+          other.extractionUpdatedAt == this.extractionUpdatedAt &&
           other.importedAt == this.importedAt);
 }
 
@@ -403,6 +542,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
   final Value<int?> fileSize;
   final Value<int?> pageCount;
   final Value<String?> title;
+  final Value<String?> lastExtractionMethod;
+  final Value<double?> lastQualityScore;
+  final Value<DateTime?> extractionUpdatedAt;
   final Value<DateTime> importedAt;
   const SourcesCompanion({
     this.id = const Value.absent(),
@@ -412,6 +554,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     this.fileSize = const Value.absent(),
     this.pageCount = const Value.absent(),
     this.title = const Value.absent(),
+    this.lastExtractionMethod = const Value.absent(),
+    this.lastQualityScore = const Value.absent(),
+    this.extractionUpdatedAt = const Value.absent(),
     this.importedAt = const Value.absent(),
   });
   SourcesCompanion.insert({
@@ -422,6 +567,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     this.fileSize = const Value.absent(),
     this.pageCount = const Value.absent(),
     this.title = const Value.absent(),
+    this.lastExtractionMethod = const Value.absent(),
+    this.lastQualityScore = const Value.absent(),
+    this.extractionUpdatedAt = const Value.absent(),
     this.importedAt = const Value.absent(),
   }) : fileName = Value(fileName),
        filePath = Value(filePath);
@@ -433,6 +581,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     Expression<int>? fileSize,
     Expression<int>? pageCount,
     Expression<String>? title,
+    Expression<String>? lastExtractionMethod,
+    Expression<double>? lastQualityScore,
+    Expression<DateTime>? extractionUpdatedAt,
     Expression<DateTime>? importedAt,
   }) {
     return RawValuesInsertable({
@@ -443,6 +594,11 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       if (fileSize != null) 'file_size': fileSize,
       if (pageCount != null) 'page_count': pageCount,
       if (title != null) 'title': title,
+      if (lastExtractionMethod != null)
+        'last_extraction_method': lastExtractionMethod,
+      if (lastQualityScore != null) 'last_quality_score': lastQualityScore,
+      if (extractionUpdatedAt != null)
+        'extraction_updated_at': extractionUpdatedAt,
       if (importedAt != null) 'imported_at': importedAt,
     });
   }
@@ -455,6 +611,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     Value<int?>? fileSize,
     Value<int?>? pageCount,
     Value<String?>? title,
+    Value<String?>? lastExtractionMethod,
+    Value<double?>? lastQualityScore,
+    Value<DateTime?>? extractionUpdatedAt,
     Value<DateTime>? importedAt,
   }) {
     return SourcesCompanion(
@@ -465,6 +624,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       fileSize: fileSize ?? this.fileSize,
       pageCount: pageCount ?? this.pageCount,
       title: title ?? this.title,
+      lastExtractionMethod: lastExtractionMethod ?? this.lastExtractionMethod,
+      lastQualityScore: lastQualityScore ?? this.lastQualityScore,
+      extractionUpdatedAt: extractionUpdatedAt ?? this.extractionUpdatedAt,
       importedAt: importedAt ?? this.importedAt,
     );
   }
@@ -493,6 +655,19 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
+    if (lastExtractionMethod.present) {
+      map['last_extraction_method'] = Variable<String>(
+        lastExtractionMethod.value,
+      );
+    }
+    if (lastQualityScore.present) {
+      map['last_quality_score'] = Variable<double>(lastQualityScore.value);
+    }
+    if (extractionUpdatedAt.present) {
+      map['extraction_updated_at'] = Variable<DateTime>(
+        extractionUpdatedAt.value,
+      );
+    }
     if (importedAt.present) {
       map['imported_at'] = Variable<DateTime>(importedAt.value);
     }
@@ -509,6 +684,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
           ..write('fileSize: $fileSize, ')
           ..write('pageCount: $pageCount, ')
           ..write('title: $title, ')
+          ..write('lastExtractionMethod: $lastExtractionMethod, ')
+          ..write('lastQualityScore: $lastQualityScore, ')
+          ..write('extractionUpdatedAt: $extractionUpdatedAt, ')
           ..write('importedAt: $importedAt')
           ..write(')'))
         .toString();
@@ -597,6 +775,39 @@ class $SourceSegmentsTable extends SourceSegments
         requiredDuringInsert: false,
         defaultValue: const Constant('M'),
       );
+  static const VerificationMeta _extractionMethodMeta = const VerificationMeta(
+    'extractionMethod',
+  );
+  @override
+  late final GeneratedColumn<String> extractionMethod = GeneratedColumn<String>(
+    'extraction_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _qualityScoreMeta = const VerificationMeta(
+    'qualityScore',
+  );
+  @override
+  late final GeneratedColumn<double> qualityScore = GeneratedColumn<double>(
+    'quality_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ocrConfidenceMeta = const VerificationMeta(
+    'ocrConfidence',
+  );
+  @override
+  late final GeneratedColumn<double> ocrConfidence = GeneratedColumn<double>(
+    'ocr_confidence',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -617,6 +828,9 @@ class $SourceSegmentsTable extends SourceSegments
     content,
     segmentType,
     contentConfidence,
+    extractionMethod,
+    qualityScore,
+    ocrConfidence,
     createdAt,
   ];
   @override
@@ -674,6 +888,33 @@ class $SourceSegmentsTable extends SourceSegments
         ),
       );
     }
+    if (data.containsKey('extraction_method')) {
+      context.handle(
+        _extractionMethodMeta,
+        extractionMethod.isAcceptableOrUnknown(
+          data['extraction_method']!,
+          _extractionMethodMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quality_score')) {
+      context.handle(
+        _qualityScoreMeta,
+        qualityScore.isAcceptableOrUnknown(
+          data['quality_score']!,
+          _qualityScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('ocr_confidence')) {
+      context.handle(
+        _ocrConfidenceMeta,
+        ocrConfidence.isAcceptableOrUnknown(
+          data['ocr_confidence']!,
+          _ocrConfidenceMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -713,6 +954,18 @@ class $SourceSegmentsTable extends SourceSegments
         DriftSqlType.string,
         data['${effectivePrefix}content_confidence'],
       )!,
+      extractionMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}extraction_method'],
+      ),
+      qualityScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}quality_score'],
+      ),
+      ocrConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}ocr_confidence'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -733,6 +986,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
   final String content;
   final String segmentType;
   final String contentConfidence;
+  final String? extractionMethod;
+  final double? qualityScore;
+  final double? ocrConfidence;
   final DateTime createdAt;
   const SourceSegment({
     required this.id,
@@ -741,6 +997,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     required this.content,
     required this.segmentType,
     required this.contentConfidence,
+    this.extractionMethod,
+    this.qualityScore,
+    this.ocrConfidence,
     required this.createdAt,
   });
   @override
@@ -752,6 +1011,15 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     map['content'] = Variable<String>(content);
     map['segment_type'] = Variable<String>(segmentType);
     map['content_confidence'] = Variable<String>(contentConfidence);
+    if (!nullToAbsent || extractionMethod != null) {
+      map['extraction_method'] = Variable<String>(extractionMethod);
+    }
+    if (!nullToAbsent || qualityScore != null) {
+      map['quality_score'] = Variable<double>(qualityScore);
+    }
+    if (!nullToAbsent || ocrConfidence != null) {
+      map['ocr_confidence'] = Variable<double>(ocrConfidence);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -764,6 +1032,15 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       content: Value(content),
       segmentType: Value(segmentType),
       contentConfidence: Value(contentConfidence),
+      extractionMethod: extractionMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(extractionMethod),
+      qualityScore: qualityScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(qualityScore),
+      ocrConfidence: ocrConfidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ocrConfidence),
       createdAt: Value(createdAt),
     );
   }
@@ -780,6 +1057,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       content: serializer.fromJson<String>(json['content']),
       segmentType: serializer.fromJson<String>(json['segmentType']),
       contentConfidence: serializer.fromJson<String>(json['contentConfidence']),
+      extractionMethod: serializer.fromJson<String?>(json['extractionMethod']),
+      qualityScore: serializer.fromJson<double?>(json['qualityScore']),
+      ocrConfidence: serializer.fromJson<double?>(json['ocrConfidence']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -793,6 +1073,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       'content': serializer.toJson<String>(content),
       'segmentType': serializer.toJson<String>(segmentType),
       'contentConfidence': serializer.toJson<String>(contentConfidence),
+      'extractionMethod': serializer.toJson<String?>(extractionMethod),
+      'qualityScore': serializer.toJson<double?>(qualityScore),
+      'ocrConfidence': serializer.toJson<double?>(ocrConfidence),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -804,6 +1087,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     String? content,
     String? segmentType,
     String? contentConfidence,
+    Value<String?> extractionMethod = const Value.absent(),
+    Value<double?> qualityScore = const Value.absent(),
+    Value<double?> ocrConfidence = const Value.absent(),
     DateTime? createdAt,
   }) => SourceSegment(
     id: id ?? this.id,
@@ -812,6 +1098,13 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     content: content ?? this.content,
     segmentType: segmentType ?? this.segmentType,
     contentConfidence: contentConfidence ?? this.contentConfidence,
+    extractionMethod: extractionMethod.present
+        ? extractionMethod.value
+        : this.extractionMethod,
+    qualityScore: qualityScore.present ? qualityScore.value : this.qualityScore,
+    ocrConfidence: ocrConfidence.present
+        ? ocrConfidence.value
+        : this.ocrConfidence,
     createdAt: createdAt ?? this.createdAt,
   );
   SourceSegment copyWithCompanion(SourceSegmentsCompanion data) {
@@ -828,6 +1121,15 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       contentConfidence: data.contentConfidence.present
           ? data.contentConfidence.value
           : this.contentConfidence,
+      extractionMethod: data.extractionMethod.present
+          ? data.extractionMethod.value
+          : this.extractionMethod,
+      qualityScore: data.qualityScore.present
+          ? data.qualityScore.value
+          : this.qualityScore,
+      ocrConfidence: data.ocrConfidence.present
+          ? data.ocrConfidence.value
+          : this.ocrConfidence,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -841,6 +1143,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
           ..write('content: $content, ')
           ..write('segmentType: $segmentType, ')
           ..write('contentConfidence: $contentConfidence, ')
+          ..write('extractionMethod: $extractionMethod, ')
+          ..write('qualityScore: $qualityScore, ')
+          ..write('ocrConfidence: $ocrConfidence, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -854,6 +1159,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     content,
     segmentType,
     contentConfidence,
+    extractionMethod,
+    qualityScore,
+    ocrConfidence,
     createdAt,
   );
   @override
@@ -866,6 +1174,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
           other.content == this.content &&
           other.segmentType == this.segmentType &&
           other.contentConfidence == this.contentConfidence &&
+          other.extractionMethod == this.extractionMethod &&
+          other.qualityScore == this.qualityScore &&
+          other.ocrConfidence == this.ocrConfidence &&
           other.createdAt == this.createdAt);
 }
 
@@ -876,6 +1187,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
   final Value<String> content;
   final Value<String> segmentType;
   final Value<String> contentConfidence;
+  final Value<String?> extractionMethod;
+  final Value<double?> qualityScore;
+  final Value<double?> ocrConfidence;
   final Value<DateTime> createdAt;
   const SourceSegmentsCompanion({
     this.id = const Value.absent(),
@@ -884,6 +1198,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     this.content = const Value.absent(),
     this.segmentType = const Value.absent(),
     this.contentConfidence = const Value.absent(),
+    this.extractionMethod = const Value.absent(),
+    this.qualityScore = const Value.absent(),
+    this.ocrConfidence = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   SourceSegmentsCompanion.insert({
@@ -893,6 +1210,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     this.content = const Value.absent(),
     this.segmentType = const Value.absent(),
     this.contentConfidence = const Value.absent(),
+    this.extractionMethod = const Value.absent(),
+    this.qualityScore = const Value.absent(),
+    this.ocrConfidence = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : sourceId = Value(sourceId),
        pageNumber = Value(pageNumber);
@@ -903,6 +1223,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     Expression<String>? content,
     Expression<String>? segmentType,
     Expression<String>? contentConfidence,
+    Expression<String>? extractionMethod,
+    Expression<double>? qualityScore,
+    Expression<double>? ocrConfidence,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -912,6 +1235,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
       if (content != null) 'content': content,
       if (segmentType != null) 'segment_type': segmentType,
       if (contentConfidence != null) 'content_confidence': contentConfidence,
+      if (extractionMethod != null) 'extraction_method': extractionMethod,
+      if (qualityScore != null) 'quality_score': qualityScore,
+      if (ocrConfidence != null) 'ocr_confidence': ocrConfidence,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -923,6 +1249,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     Value<String>? content,
     Value<String>? segmentType,
     Value<String>? contentConfidence,
+    Value<String?>? extractionMethod,
+    Value<double?>? qualityScore,
+    Value<double?>? ocrConfidence,
     Value<DateTime>? createdAt,
   }) {
     return SourceSegmentsCompanion(
@@ -932,6 +1261,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
       content: content ?? this.content,
       segmentType: segmentType ?? this.segmentType,
       contentConfidence: contentConfidence ?? this.contentConfidence,
+      extractionMethod: extractionMethod ?? this.extractionMethod,
+      qualityScore: qualityScore ?? this.qualityScore,
+      ocrConfidence: ocrConfidence ?? this.ocrConfidence,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -957,6 +1289,15 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     if (contentConfidence.present) {
       map['content_confidence'] = Variable<String>(contentConfidence.value);
     }
+    if (extractionMethod.present) {
+      map['extraction_method'] = Variable<String>(extractionMethod.value);
+    }
+    if (qualityScore.present) {
+      map['quality_score'] = Variable<double>(qualityScore.value);
+    }
+    if (ocrConfidence.present) {
+      map['ocr_confidence'] = Variable<double>(ocrConfidence.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -972,6 +1313,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
           ..write('content: $content, ')
           ..write('segmentType: $segmentType, ')
           ..write('contentConfidence: $contentConfidence, ')
+          ..write('extractionMethod: $extractionMethod, ')
+          ..write('qualityScore: $qualityScore, ')
+          ..write('ocrConfidence: $ocrConfidence, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -9029,6 +9373,9 @@ typedef $$SourcesTableCreateCompanionBuilder =
       Value<int?> fileSize,
       Value<int?> pageCount,
       Value<String?> title,
+      Value<String?> lastExtractionMethod,
+      Value<double?> lastQualityScore,
+      Value<DateTime?> extractionUpdatedAt,
       Value<DateTime> importedAt,
     });
 typedef $$SourcesTableUpdateCompanionBuilder =
@@ -9040,6 +9387,9 @@ typedef $$SourcesTableUpdateCompanionBuilder =
       Value<int?> fileSize,
       Value<int?> pageCount,
       Value<String?> title,
+      Value<String?> lastExtractionMethod,
+      Value<double?> lastQualityScore,
+      Value<DateTime?> extractionUpdatedAt,
       Value<DateTime> importedAt,
     });
 
@@ -9125,6 +9475,21 @@ class $$SourcesTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastExtractionMethod => $composableBuilder(
+    column: $table.lastExtractionMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lastQualityScore => $composableBuilder(
+    column: $table.lastQualityScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get extractionUpdatedAt => $composableBuilder(
+    column: $table.extractionUpdatedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9228,6 +9593,21 @@ class $$SourcesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get lastExtractionMethod => $composableBuilder(
+    column: $table.lastExtractionMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lastQualityScore => $composableBuilder(
+    column: $table.lastQualityScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get extractionUpdatedAt => $composableBuilder(
+    column: $table.extractionUpdatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get importedAt => $composableBuilder(
     column: $table.importedAt,
     builder: (column) => ColumnOrderings(column),
@@ -9265,6 +9645,21 @@ class $$SourcesTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get lastExtractionMethod => $composableBuilder(
+    column: $table.lastExtractionMethod,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get lastQualityScore => $composableBuilder(
+    column: $table.lastQualityScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get extractionUpdatedAt => $composableBuilder(
+    column: $table.extractionUpdatedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get importedAt => $composableBuilder(
     column: $table.importedAt,
@@ -9357,6 +9752,9 @@ class $$SourcesTableTableManager
                 Value<int?> fileSize = const Value.absent(),
                 Value<int?> pageCount = const Value.absent(),
                 Value<String?> title = const Value.absent(),
+                Value<String?> lastExtractionMethod = const Value.absent(),
+                Value<double?> lastQualityScore = const Value.absent(),
+                Value<DateTime?> extractionUpdatedAt = const Value.absent(),
                 Value<DateTime> importedAt = const Value.absent(),
               }) => SourcesCompanion(
                 id: id,
@@ -9366,6 +9764,9 @@ class $$SourcesTableTableManager
                 fileSize: fileSize,
                 pageCount: pageCount,
                 title: title,
+                lastExtractionMethod: lastExtractionMethod,
+                lastQualityScore: lastQualityScore,
+                extractionUpdatedAt: extractionUpdatedAt,
                 importedAt: importedAt,
               ),
           createCompanionCallback:
@@ -9377,6 +9778,9 @@ class $$SourcesTableTableManager
                 Value<int?> fileSize = const Value.absent(),
                 Value<int?> pageCount = const Value.absent(),
                 Value<String?> title = const Value.absent(),
+                Value<String?> lastExtractionMethod = const Value.absent(),
+                Value<double?> lastQualityScore = const Value.absent(),
+                Value<DateTime?> extractionUpdatedAt = const Value.absent(),
                 Value<DateTime> importedAt = const Value.absent(),
               }) => SourcesCompanion.insert(
                 id: id,
@@ -9386,6 +9790,9 @@ class $$SourcesTableTableManager
                 fileSize: fileSize,
                 pageCount: pageCount,
                 title: title,
+                lastExtractionMethod: lastExtractionMethod,
+                lastQualityScore: lastQualityScore,
+                extractionUpdatedAt: extractionUpdatedAt,
                 importedAt: importedAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -9479,6 +9886,9 @@ typedef $$SourceSegmentsTableCreateCompanionBuilder =
       Value<String> content,
       Value<String> segmentType,
       Value<String> contentConfidence,
+      Value<String?> extractionMethod,
+      Value<double?> qualityScore,
+      Value<double?> ocrConfidence,
       Value<DateTime> createdAt,
     });
 typedef $$SourceSegmentsTableUpdateCompanionBuilder =
@@ -9489,6 +9899,9 @@ typedef $$SourceSegmentsTableUpdateCompanionBuilder =
       Value<String> content,
       Value<String> segmentType,
       Value<String> contentConfidence,
+      Value<String?> extractionMethod,
+      Value<double?> qualityScore,
+      Value<double?> ocrConfidence,
       Value<DateTime> createdAt,
     });
 
@@ -9639,6 +10052,21 @@ class $$SourceSegmentsTableFilterComposer
 
   ColumnFilters<String> get contentConfidence => $composableBuilder(
     column: $table.contentConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get extractionMethod => $composableBuilder(
+    column: $table.extractionMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get qualityScore => $composableBuilder(
+    column: $table.qualityScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get ocrConfidence => $composableBuilder(
+    column: $table.ocrConfidence,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9805,6 +10233,21 @@ class $$SourceSegmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get extractionMethod => $composableBuilder(
+    column: $table.extractionMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get qualityScore => $composableBuilder(
+    column: $table.qualityScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get ocrConfidence => $composableBuilder(
+    column: $table.ocrConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -9861,6 +10304,21 @@ class $$SourceSegmentsTableAnnotationComposer
 
   GeneratedColumn<String> get contentConfidence => $composableBuilder(
     column: $table.contentConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get extractionMethod => $composableBuilder(
+    column: $table.extractionMethod,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get qualityScore => $composableBuilder(
+    column: $table.qualityScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get ocrConfidence => $composableBuilder(
+    column: $table.ocrConfidence,
     builder: (column) => column,
   );
 
@@ -10034,6 +10492,9 @@ class $$SourceSegmentsTableTableManager
                 Value<String> content = const Value.absent(),
                 Value<String> segmentType = const Value.absent(),
                 Value<String> contentConfidence = const Value.absent(),
+                Value<String?> extractionMethod = const Value.absent(),
+                Value<double?> qualityScore = const Value.absent(),
+                Value<double?> ocrConfidence = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SourceSegmentsCompanion(
                 id: id,
@@ -10042,6 +10503,9 @@ class $$SourceSegmentsTableTableManager
                 content: content,
                 segmentType: segmentType,
                 contentConfidence: contentConfidence,
+                extractionMethod: extractionMethod,
+                qualityScore: qualityScore,
+                ocrConfidence: ocrConfidence,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -10052,6 +10516,9 @@ class $$SourceSegmentsTableTableManager
                 Value<String> content = const Value.absent(),
                 Value<String> segmentType = const Value.absent(),
                 Value<String> contentConfidence = const Value.absent(),
+                Value<String?> extractionMethod = const Value.absent(),
+                Value<double?> qualityScore = const Value.absent(),
+                Value<double?> ocrConfidence = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SourceSegmentsCompanion.insert(
                 id: id,
@@ -10060,6 +10527,9 @@ class $$SourceSegmentsTableTableManager
                 content: content,
                 segmentType: segmentType,
                 contentConfidence: contentConfidence,
+                extractionMethod: extractionMethod,
+                qualityScore: qualityScore,
+                ocrConfidence: ocrConfidence,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
