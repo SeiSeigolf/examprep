@@ -17,20 +17,40 @@ class IngestionState {
     this.status = IngestionStatus.idle,
     this.currentFile,
     this.errorMessage,
+    this.extractingMethod,
+    this.ocrCurrentPage,
+    this.ocrTotalPages,
+    this.qualityImproved = false,
+    this.infoMessage,
   });
 
   final IngestionStatus status;
   final String? currentFile; // 処理中のファイル名
   final String? errorMessage;
+  final String? extractingMethod;
+  final int? ocrCurrentPage;
+  final int? ocrTotalPages;
+  final bool qualityImproved;
+  final String? infoMessage;
 
   IngestionState copyWith({
     IngestionStatus? status,
     String? currentFile,
     String? errorMessage,
+    String? extractingMethod,
+    int? ocrCurrentPage,
+    int? ocrTotalPages,
+    bool? qualityImproved,
+    String? infoMessage,
   }) => IngestionState(
     status: status ?? this.status,
     currentFile: currentFile ?? this.currentFile,
     errorMessage: errorMessage ?? this.errorMessage,
+    extractingMethod: extractingMethod ?? this.extractingMethod,
+    ocrCurrentPage: ocrCurrentPage ?? this.ocrCurrentPage,
+    ocrTotalPages: ocrTotalPages ?? this.ocrTotalPages,
+    qualityImproved: qualityImproved ?? this.qualityImproved,
+    infoMessage: infoMessage ?? this.infoMessage,
   );
 }
 
@@ -41,7 +61,15 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
   late final TextExtractionPipeline _pipeline = TextExtractionPipeline(
     syncfusion: SyncfusionExtractor(),
     poppler: PopplerExtractor(),
-    ocr: const VisionOcrExtractor(),
+    ocr: VisionOcrExtractor(
+      onProgress: (current, total) {
+        state = state.copyWith(
+          extractingMethod: 'ocr',
+          ocrCurrentPage: current,
+          ocrTotalPages: total,
+        );
+      },
+    ),
   );
 
   Future<void> pickAndImport() async {
@@ -67,8 +95,14 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         state = state.copyWith(
           status: IngestionStatus.extracting,
           currentFile: file.name,
+          extractingMethod: 'auto',
+          ocrCurrentPage: null,
+          ocrTotalPages: null,
+          qualityImproved: false,
+          infoMessage: null,
         );
 
+        const oldQuality = 0.0;
         final extraction = await _pipeline.extract(path);
         final pages = extraction.pages;
 
@@ -109,16 +143,39 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
 
         await _db.sourcesDao.recalculatePastExamFrequency();
         await _db.auditDao.refreshCoverageAudits();
+
+        final improved =
+            extraction.method == 'ocr' &&
+            extraction.qualityScore > oldQuality + 0.1;
+        state = state.copyWith(
+          qualityImproved: improved,
+          infoMessage: improved
+              ? 'OCRで品質が改善しました (${extraction.qualityScore.toStringAsFixed(2)})'
+              : null,
+        );
       }
 
-      state = state.copyWith(status: IngestionStatus.done, currentFile: null);
+      state = state.copyWith(
+        status: IngestionStatus.done,
+        currentFile: null,
+        extractingMethod: null,
+        ocrCurrentPage: null,
+        ocrTotalPages: null,
+      );
       await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(status: IngestionStatus.idle);
+      state = state.copyWith(
+        status: IngestionStatus.idle,
+        qualityImproved: false,
+        infoMessage: null,
+      );
     } catch (e) {
       state = state.copyWith(
         status: IngestionStatus.error,
         errorMessage: e.toString(),
         currentFile: null,
+        extractingMethod: null,
+        ocrCurrentPage: null,
+        ocrTotalPages: null,
       );
     }
   }
@@ -134,8 +191,14 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
       state = state.copyWith(
         status: IngestionStatus.extracting,
         currentFile: source.fileName,
+        extractingMethod: mode.name,
+        ocrCurrentPage: null,
+        ocrTotalPages: null,
+        qualityImproved: false,
+        infoMessage: null,
       );
 
+      final oldQuality = source.lastQualityScore ?? 0;
       final extraction = await _pipeline.extract(source.filePath, mode: mode);
       state = state.copyWith(status: IngestionStatus.inserting);
 
@@ -163,14 +226,34 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
 
       await _db.sourcesDao.recalculatePastExamFrequency();
       await _db.auditDao.refreshCoverageAudits();
-      state = state.copyWith(status: IngestionStatus.done, currentFile: null);
+      final improved =
+          extraction.method == 'ocr' &&
+          extraction.qualityScore > oldQuality + 0.05;
+      state = state.copyWith(
+        status: IngestionStatus.done,
+        currentFile: null,
+        extractingMethod: null,
+        ocrCurrentPage: null,
+        ocrTotalPages: null,
+        qualityImproved: improved,
+        infoMessage: improved
+            ? 'OCRで品質が改善しました (${oldQuality.toStringAsFixed(2)} → ${extraction.qualityScore.toStringAsFixed(2)})'
+            : null,
+      );
       await Future.delayed(const Duration(milliseconds: 700));
-      state = state.copyWith(status: IngestionStatus.idle);
+      state = state.copyWith(
+        status: IngestionStatus.idle,
+        qualityImproved: false,
+        infoMessage: null,
+      );
     } catch (e) {
       state = state.copyWith(
         status: IngestionStatus.error,
         errorMessage: e.toString(),
         currentFile: null,
+        extractingMethod: null,
+        ocrCurrentPage: null,
+        ocrTotalPages: null,
       );
     }
   }

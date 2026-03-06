@@ -42,7 +42,7 @@ class MainFlutterWindow: NSWindow {
       }
 
       do {
-        let output = try Self.ocrPdf(path: pdfPath)
+        let output = try Self.ocrPdf(path: pdfPath, channel: channel)
         result(output)
       } catch {
         result(
@@ -56,7 +56,7 @@ class MainFlutterWindow: NSWindow {
     }
   }
 
-  private static func ocrPdf(path: String) throws -> [String: Any] {
+  private static func ocrPdf(path: String, channel: FlutterMethodChannel) throws -> [String: Any] {
     let url = URL(fileURLWithPath: path)
     guard let doc = CGPDFDocument(url as CFURL) else {
       throw NSError(domain: "OCR", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot open PDF"])
@@ -67,6 +67,12 @@ class MainFlutterWindow: NSWindow {
 
     let pageCount = doc.numberOfPages
     for index in 1...pageCount {
+      DispatchQueue.main.async {
+        channel.invokeMethod("ocrProgress", arguments: [
+          "current": index,
+          "total": pageCount
+        ])
+      }
       guard let page = doc.page(at: index) else {
         pageTexts.append("")
         confidences.append(0)

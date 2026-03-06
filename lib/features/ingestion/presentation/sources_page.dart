@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/ingestion.provider.dart';
 import '../providers/poppler_status.provider.dart';
 import '../providers/sources_list.provider.dart';
 import '../providers/selected_source.provider.dart';
+import '../services/text_extraction/models.dart';
 import '../services/text_extraction/quality_score.dart';
 import '../../../db/database.dart';
 import '../../../db/database.provider.dart';
@@ -37,11 +39,23 @@ class _SourceListPanel extends ConsumerWidget {
     final sourcesAsync = ref.watch(sourcesListProvider);
     final selectedId = ref.watch(selectedSourceIdProvider);
     final popplerAvailableAsync = ref.watch(popplerAvailableProvider);
+    final popplerAvailable = popplerAvailableAsync.valueOrNull ?? false;
 
     final isLoading =
         ingestion.status == IngestionStatus.picking ||
         ingestion.status == IngestionStatus.extracting ||
         ingestion.status == IngestionStatus.inserting;
+
+    ref.listen<IngestionState>(ingestionProvider, (prev, next) {
+      if (next.status == IngestionStatus.done &&
+          next.qualityImproved &&
+          next.infoMessage != null &&
+          context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.infoMessage!)));
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,6 +134,36 @@ class _SourceListPanel extends ConsumerWidget {
                   ),
                 ),
         ),
+        if (ingestion.status == IngestionStatus.extracting &&
+            ingestion.extractingMethod == 'ocr')
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E3A56),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF1C5A81)),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    ingestion.ocrCurrentPage != null &&
+                            ingestion.ocrTotalPages != null
+                        ? 'OCR実行中: ページ${ingestion.ocrCurrentPage}/${ingestion.ocrTotalPages}'
+                        : 'OCR実行中...',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
         // ---- ソース一覧 ----
         Expanded(
@@ -164,9 +208,25 @@ class _SourceListPanel extends ConsumerWidget {
                   return _SourceListItem(
                     source: source,
                     isSelected: isSelected,
+                    isLoading: isLoading,
                     onTap: () {
                       ref.read(selectedSourceIdProvider.notifier).state =
                           source.id;
+                    },
+                    onFix: () {
+                      final isBad =
+                          qualityLabel(source.lastQualityScore ?? 0) == 'Bad';
+                      if (!isBad) return;
+                      if (!popplerAvailable) {
+                        _showPopplerInstallDialog(context, ref, source.id);
+                        return;
+                      }
+                      ref
+                          .read(ingestionProvider.notifier)
+                          .reextractSource(
+                            sourceId: source.id,
+                            mode: ExtractionForceMode.auto,
+                          );
                     },
                     onDelete: () => _confirmDelete(context, ref, source.id),
                   );
@@ -181,7 +241,12 @@ class _SourceListPanel extends ConsumerWidget {
 
   String _statusLabel(IngestionState s) => switch (s.status) {
     IngestionStatus.picking => 'ファイルを選択中...',
-    IngestionStatus.extracting => 'テキスト抽出中: ${s.currentFile ?? ''}',
+    IngestionStatus.extracting =>
+      s.extractingMethod == 'ocr' &&
+              s.ocrCurrentPage != null &&
+              s.ocrTotalPages != null
+          ? 'OCR実行中: ページ${s.ocrCurrentPage}/${s.ocrTotalPages}'
+          : 'テキスト抽出中: ${s.currentFile ?? ''}',
     IngestionStatus.inserting => 'DB 保存中...',
     _ => 'PDF を追加',
   };
@@ -215,6 +280,63 @@ class _SourceListPanel extends ConsumerWidget {
       ),
     );
   }
+
+  void _showPopplerInstallDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int sourceId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Poppler未導入'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('以下コマンドを実行してください:'),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(40),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const SelectableText(
+                'brew install poppler',
+                style: TextStyle(fontFamily: 'monospace'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Clipboard.setData(
+              const ClipboardData(text: 'brew install poppler'),
+            ),
+            child: const Text('コマンドをコピー'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('閉じる'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ref
+                  .read(ingestionProvider.notifier)
+                  .reextractSource(
+                    sourceId: sourceId,
+                    mode: ExtractionForceMode.auto,
+                  );
+            },
+            child: const Text('インストール後に再抽出'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ---- ソースリストアイテム ----
@@ -223,13 +345,17 @@ class _SourceListItem extends StatelessWidget {
   const _SourceListItem({
     required this.source,
     required this.isSelected,
+    required this.isLoading,
     required this.onTap,
+    required this.onFix,
     required this.onDelete,
   });
 
   final Source source;
   final bool isSelected;
+  final bool isLoading;
   final VoidCallback onTap;
+  final VoidCallback onFix;
   final VoidCallback onDelete;
 
   String _formatBytes(int? bytes) {
@@ -324,6 +450,11 @@ class _SourceListItem extends StatelessWidget {
                   ],
                 ),
               ),
+              if (qualityLabel(source.lastQualityScore ?? 0) == 'Bad')
+                TextButton(
+                  onPressed: isLoading ? null : onFix,
+                  child: const Text('Fix'),
+                ),
               IconButton(
                 icon: const Icon(
                   Icons.delete_outline,
