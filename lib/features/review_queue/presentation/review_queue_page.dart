@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers/navigation.provider.dart';
+import '../../../shared/widgets/active_exam_profile_badge.dart';
 import '../../exam_units/providers/claims.provider.dart';
 import '../../exam_units/providers/exam_units.provider.dart';
 import '../providers/review_queue.provider.dart';
@@ -34,6 +35,8 @@ class ReviewQueuePage extends ConsumerWidget {
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
               ),
+              const SizedBox(height: 8),
+              const ActiveExamProfileBadge(),
             ],
           ),
         ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/navigation.provider.dart';
+import '../providers/exam_profile.provider.dart';
 import '../providers/search.provider.dart';
 import '../../db/daos/search_dao.dart';
 import '../../features/dashboard/presentation/dashboard_page.dart';
@@ -15,6 +16,8 @@ import '../../features/review_queue/presentation/review_queue_page.dart';
 import '../../features/study_plan/presentation/study_plan_page.dart';
 import '../../features/exam_setup/presentation/exam_setup_page.dart';
 import '../../features/exam_setup/providers/exams.provider.dart';
+import 'active_exam_profile_badge.dart';
+import 'active_exam_profile_badge.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
@@ -126,6 +129,12 @@ class _SidebarState extends ConsumerState<_Sidebar> {
           children: [
             // ---- ロゴ ----
             const _AppLogo(),
+            const Divider(height: 1),
+            const _ExamProfileSelector(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: ActiveExamProfileBadge(),
+            ),
             const Divider(height: 1),
 
             // ---- 検索バー ----
@@ -264,6 +273,65 @@ class _NavList extends StatelessWidget {
           onTap: onSelect,
         ),
       ],
+    );
+  }
+}
+
+class _ExamProfileSelector extends ConsumerWidget {
+  const _ExamProfileSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeId = ref.watch(activeExamProfileIdProvider);
+    final profilesAsync = ref.watch(recentExamProfilesProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      child: profilesAsync.when(
+        loading: () => const SizedBox(
+          height: 28,
+          child: Center(
+            child: SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        error: (_, __) => const SizedBox.shrink(),
+        data: (profiles) {
+          final hasActive =
+              activeId == null || profiles.any((p) => p.id == activeId);
+          return DropdownButtonFormField<int?>(
+            value: hasActive ? activeId : null,
+            isDense: true,
+            decoration: const InputDecoration(
+              labelText: '試験スコープ',
+              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            ),
+            dropdownColor: const Color(0xFF1A1D23),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('全体', style: TextStyle(fontSize: 12)),
+              ),
+              ...profiles.map(
+                (p) => DropdownMenuItem<int?>(
+                  value: p.id,
+                  child: Text(
+                    '${p.examName} (${p.createdAt.toLocal().toString().substring(0, 10)})',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+            onChanged: (v) {
+              ref.read(activeExamProfileIdProvider.notifier).state = v;
+            },
+          );
+        },
+      ),
     );
   }
 }

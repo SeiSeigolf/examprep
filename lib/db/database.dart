@@ -95,12 +95,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+      await _createExamProfileTables();
       await _seedStudyMethods();
     },
     onUpgrade: (m, from, to) async {
@@ -238,8 +239,39 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(examSections, examSections.description);
         await m.addColumn(examPools, examPools.note);
       }
+      if (from < 17) {
+        await _createExamProfileTables();
+      }
     },
   );
+
+  Future<void> _createExamProfileTables() async {
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS exam_profiles (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        exam_name TEXT NOT NULL,
+        exam_date TEXT,
+        subject TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS exam_profile_sources (
+        exam_profile_id INTEGER NOT NULL,
+        source_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (exam_profile_id, source_id)
+      )
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS exam_profile_units (
+        exam_profile_id INTEGER NOT NULL,
+        exam_unit_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (exam_profile_id, exam_unit_id)
+      )
+    ''');
+  }
 
   // ---- 5×5 = 25通りのシードデータ ----
   Future<void> _seedStudyMethods() async {

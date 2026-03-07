@@ -4,6 +4,8 @@ import '../../../db/daos/audit_dao.dart';
 import '../../../db/database.provider.dart';
 import '../providers/audit.provider.dart';
 import '../../../shared/providers/navigation.provider.dart';
+import '../../../shared/widgets/active_exam_profile_badge.dart';
+import '../../../shared/providers/exam_profile.provider.dart';
 import '../../exam_units/providers/exam_units.provider.dart';
 import '../../exam_units/providers/claims.provider.dart';
 import 'widgets/coverage_summary_bar.dart';
@@ -40,6 +42,8 @@ class AuditPage extends ConsumerWidget {
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
               ),
+              const SizedBox(height: 8),
+              const ActiveExamProfileBadge(),
             ],
           ),
         ),
@@ -276,10 +280,14 @@ class _UncoveredAssistSheetState extends ConsumerState<_UncoveredAssistSheet> {
   Future<void> _link(int unitId) async {
     setState(() => _linking = true);
     try {
-      await ref
+        await ref
           .read(databaseProvider)
           .auditDao
-          .linkSegmentToUnit(segmentId: widget.segment.segId, unitId: unitId);
+          .linkSegmentToUnit(
+            segmentId: widget.segment.segId,
+            unitId: unitId,
+            note: 'coverage_assist',
+          );
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(
@@ -300,7 +308,10 @@ class _UncoveredAssistSheetState extends ConsumerState<_UncoveredAssistSheet> {
           future: ref
               .read(databaseProvider)
               .auditDao
-              .suggestExamUnitsForSegment(widget.segment.segId),
+              .suggestExamUnitsForSegment(
+                widget.segment.segId,
+                examProfileId: ref.read(activeExamProfileIdProvider),
+              ),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return const SizedBox(

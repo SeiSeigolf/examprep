@@ -5,6 +5,8 @@ import '../../../db/daos/exam_units_dao.dart';
 import '../providers/exam_units.provider.dart';
 import '../providers/claims.provider.dart';
 import '../../../db/database.provider.dart';
+import '../../../shared/providers/exam_profile.provider.dart';
+import '../../../shared/widgets/active_exam_profile_badge.dart';
 import '../services/exam_exporter.dart';
 import 'exam_unit_detail_page.dart';
 import 'widgets/exam_unit_list_tile.dart';
@@ -127,6 +129,8 @@ class _ExamUnitListViewState extends ConsumerState<_ExamUnitListView> {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          const ActiveExamProfileBadge(),
           const SizedBox(height: 24),
 
           // ---- 一覧 ----
@@ -259,7 +263,10 @@ class _DuplicateCandidatesDialogState
 
   Future<List<_PairViewData>> _load() async {
     final db = ref.read(databaseProvider);
-    final pairs = await db.examUnitsDao.findDuplicateCandidates(limit: 20);
+    final pairs = await db.examUnitsDao.findDuplicateCandidates(
+      limit: 20,
+      examProfileId: ref.read(activeExamProfileIdProvider),
+    );
     final result = <_PairViewData>[];
     for (final pair in pairs) {
       final left = await db.examUnitsDao.getUnitMergeSummary(pair.left.id);

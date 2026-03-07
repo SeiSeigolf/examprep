@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../db/daos/dashboard_dao.dart';
 import '../../../db/database.dart';
 import '../../audit/providers/audit.provider.dart';
+import '../../quick_generate/presentation/quick_generate_card.dart';
 import '../providers/dashboard.provider.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -19,19 +20,22 @@ class DashboardPage extends StatelessWidget {
           Text(
             'ダッシュボード',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             'ExamOS — 医学部期末テスト最適化システム',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.white38),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
           ),
           const SizedBox(height: 24),
+
+          // ---- Quick Generate ----
+          const QuickGenerateCard(),
+          const SizedBox(height: 20),
 
           // ---- 統計カード ----
           const _StatsRow(),
@@ -69,7 +73,8 @@ class _StatsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
 
-    final stats = statsAsync.valueOrNull ??
+    final stats =
+        statsAsync.valueOrNull ??
         const DashboardStats(
           sourceCount: 0,
           totalPages: 0,
@@ -152,9 +157,9 @@ class _StatCard extends StatelessWidget {
             Text(
               value,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -200,12 +205,15 @@ class _CoverageSummaryCard extends ConsumerWidget {
           }
 
           final total = results.length;
-          final covered =
-              results.where((r) => r.auditStatus == 'covered').length;
-          final uncovered =
-              results.where((r) => r.auditStatus == 'uncovered').length;
-          final conflict =
-              results.where((r) => r.auditStatus == 'conflict').length;
+          final covered = results
+              .where((r) => r.auditStatus == 'covered')
+              .length;
+          final uncovered = results
+              .where((r) => r.auditStatus == 'uncovered')
+              .length;
+          final conflict = results
+              .where((r) => r.auditStatus == 'conflict')
+              .length;
           final pct = total > 0 ? covered / total : 0.0;
 
           return Column(
@@ -216,9 +224,9 @@ class _CoverageSummaryCard extends ConsumerWidget {
                   Text(
                     '${(pct * 100).toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -262,8 +270,7 @@ class _CoverageSummaryCard extends ConsumerWidget {
                   const Spacer(),
                   Text(
                     '全 $total セグメント',
-                    style:
-                        const TextStyle(color: Colors.white38, fontSize: 12),
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
                   ),
                 ],
               ),
@@ -295,10 +302,7 @@ class _CoverageStat extends StatelessWidget {
       children: [
         Icon(icon, color: color, size: 14),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(color: color, fontSize: 12),
-        ),
+        Text(label, style: TextStyle(color: color, fontSize: 12)),
         const SizedBox(width: 6),
         Text(
           '$count',
@@ -457,8 +461,10 @@ class _ConfidenceDistributionCard extends ConsumerWidget {
         error: (_, __) => const SizedBox.shrink(),
         data: (dist) {
           int countFor(String level) => dist
-              .firstWhere((c) => c.level == level,
-                  orElse: () => ConfidenceCount(level: level, count: 0))
+              .firstWhere(
+                (c) => c.level == level,
+                orElse: () => ConfidenceCount(level: level, count: 0),
+              )
               .count;
 
           final high = countFor('high');
@@ -498,8 +504,7 @@ class _ConfidenceDistributionCard extends ConsumerWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   '合計 $total',
-                  style:
-                      const TextStyle(color: Colors.white38, fontSize: 11),
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ),
             ],
@@ -591,9 +596,11 @@ class _SectionCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon,
-                    size: 15,
-                    color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  icon,
+                  size: 15,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   title,
@@ -657,9 +664,7 @@ class _LoadingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SizedBox(
       height: 32,
-      child: Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
     );
   }
 }

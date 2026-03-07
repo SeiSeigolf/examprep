@@ -72,18 +72,45 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
   /// - evidence_count = 0          → Uncovered
   /// - evidence_count > 0, units=1  → Covered
   /// - units > 1                   → Conflict（複数 Exam Unit が参照）
-  Stream<List<SegmentCoverageResult>> watchCoverage() {
+  Stream<List<SegmentCoverageResult>> watchCoverage({int? examProfileId}) {
+    final scopedId = examProfileId ?? -1;
     return customSelect(
       '''
-      WITH linked AS (
+      WITH scoped_segments AS (
+        SELECT ss.id, ss.source_id, ss.page_number, ss.content
+        FROM source_segments ss
+        WHERE ?1 = -1
+           OR EXISTS (
+             SELECT 1
+             FROM exam_profile_sources eps
+             WHERE eps.exam_profile_id = ?1
+               AND eps.source_id = ss.source_id
+           )
+      ),
+      scoped_units AS (
+        SELECT eu.id
+        FROM exam_units eu
+        WHERE ?1 = -1
+           OR EXISTS (
+             SELECT 1
+             FROM exam_profile_units epu
+             WHERE epu.exam_profile_id = ?1
+               AND epu.exam_unit_id = eu.id
+           )
+      ),
+      linked AS (
         SELECT el.source_segment_id AS source_segment_id, c.exam_unit_id AS exam_unit_id
         FROM evidence_links el
         JOIN claims c ON c.id = el.claim_id
+        JOIN scoped_units su ON su.id = c.exam_unit_id
+        JOIN scoped_segments ss ON ss.id = el.source_segment_id
         UNION ALL
         SELECT epi.source_segment_id AS source_segment_id, c.exam_unit_id AS exam_unit_id
         FROM evidence_pack_items epi
         JOIN evidence_packs ep ON ep.id = epi.evidence_pack_id
         JOIN claims c ON c.id = ep.claim_id
+        JOIN scoped_units su ON su.id = c.exam_unit_id
+        JOIN scoped_segments ss ON ss.id = epi.source_segment_id
       )
       SELECT
         ss.id              AS seg_id,
@@ -94,7 +121,7 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
         COUNT(linked.exam_unit_id)              AS evidence_count,
         COUNT(DISTINCT linked.exam_unit_id)     AS unit_count,
         GROUP_CONCAT(DISTINCT linked.exam_unit_id) AS unit_ids
-      FROM source_segments ss
+      FROM scoped_segments ss
       LEFT JOIN sources s
         ON s.id = ss.source_id
       LEFT JOIN linked
@@ -102,6 +129,7 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
       GROUP BY ss.id
       ORDER BY s.file_name, ss.page_number
       ''',
+      variables: [Variable.withInt(scopedId)],
       readsFrom: {
         sourceSegments,
         sources,
@@ -134,7 +162,15 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
 
   /// EvidenceLinks / EvidencePackItems から audits を再計算して upsert する。
   /// 優先順位: Conflict(open) > LowConfidence > Partial > Covered
-  Future<void> refreshCoverageAudits() async {
+  Future<void> refreshCoverageAudits({int? examProfileId}) async {
+    if (examProfileId == null) {
+      await _refreshCoverageAuditsAll();
+      return;
+    }
+    await _refreshCoverageAuditsScoped(examProfileId);
+  }
+
+  Future<void> _refreshCoverageAuditsAll() async {
     await transaction(() async {
       await customStatement('''
         WITH linked AS (
@@ -254,15 +290,193 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
     });
   }
 
+  Future<void> _refreshCoverageAuditsScoped(int examProfileId) async {
+    await transaction(() async {
+      await customStatement(
+        '''
+        WITH scoped_units AS (
+          SELECT exam_unit_id AS id
+          FROM exam_profile_units
+          WHERE exam_profile_id = ?
+        ),
+        scoped_segments AS (
+          SELECT ss.id
+          FROM source_segments ss
+          JOIN exam_profile_sources eps
+            ON eps.source_id = ss.source_id
+          WHERE eps.exam_profile_id = ?
+        ),
+        linked AS (
+          SELECT c.id AS claim_id, c.exam_unit_id AS exam_unit_id, el.source_segment_id AS source_segment_id, c.content_confidence AS content_confidence
+          FROM claims c
+          JOIN evidence_links el
+            ON el.claim_id = c.id
+          WHERE c.exam_unit_id IN (SELECT id FROM scoped_units)
+            AND el.source_segment_id IN (SELECT id FROM scoped_segments)
+          UNION ALL
+          SELECT c.id AS claim_id, c.exam_unit_id AS exam_unit_id, epi.source_segment_id AS source_segment_id, c.content_confidence AS content_confidence
+          FROM claims c
+          JOIN evidence_packs ep
+            ON ep.claim_id = c.id
+          JOIN evidence_pack_items epi
+            ON epi.evidence_pack_id = ep.id
+          WHERE c.exam_unit_id IN (SELECT id FROM scoped_units)
+            AND epi.source_segment_id IN (SELECT id FROM scoped_segments)
+        ),
+        agg AS (
+          SELECT
+            exam_unit_id,
+            source_segment_id,
+            COUNT(*) AS evidence_count,
+            MAX(CASE WHEN content_confidence = 'L' THEN 1 ELSE 0 END) AS has_low_confidence,
+            CASE
+              WHEN MAX(CASE WHEN content_confidence = 'L' THEN 1 ELSE 0 END) = 1 THEN 'L'
+              WHEN MAX(CASE WHEN content_confidence = 'M' THEN 1 ELSE 0 END) = 1 THEN 'M'
+              ELSE 'H'
+            END AS merged_content_confidence
+          FROM linked
+          GROUP BY exam_unit_id, source_segment_id
+        )
+        INSERT INTO audits (
+          source_segment_id,
+          exam_unit_id,
+          status,
+          content_confidence,
+          exam_confidence,
+          created_at,
+          updated_at
+        )
+        SELECT
+          agg.source_segment_id,
+          agg.exam_unit_id,
+          CASE
+            WHEN EXISTS (
+              SELECT 1
+              FROM conflicts cf
+              WHERE cf.source_segment_id = agg.source_segment_id
+                AND cf.exam_unit_id = agg.exam_unit_id
+                AND cf.status = 'open'
+            ) THEN 'Conflict'
+            WHEN agg.has_low_confidence = 1 THEN 'LowConfidence'
+            WHEN agg.evidence_count = 1 THEN 'Partial'
+            ELSE 'Covered'
+          END AS status,
+          agg.merged_content_confidence,
+          eu.exam_confidence,
+          CAST(strftime('%s','now') AS INTEGER),
+          CAST(strftime('%s','now') AS INTEGER)
+        FROM agg
+        JOIN exam_units eu
+          ON eu.id = agg.exam_unit_id
+        ON CONFLICT(source_segment_id, exam_unit_id) DO UPDATE SET
+          status = excluded.status,
+          content_confidence = excluded.content_confidence,
+          exam_confidence = excluded.exam_confidence,
+          updated_at = CAST(strftime('%s','now') AS INTEGER)
+        ''',
+        [examProfileId, examProfileId],
+      );
+
+      await customStatement(
+        '''
+        UPDATE audits
+        SET
+          status = 'Uncovered',
+          updated_at = CAST(strftime('%s','now') AS INTEGER)
+        WHERE exam_unit_id IN (
+          SELECT exam_unit_id
+          FROM exam_profile_units
+          WHERE exam_profile_id = ?
+        )
+          AND source_segment_id IN (
+            SELECT ss.id
+            FROM source_segments ss
+            JOIN exam_profile_sources eps ON eps.source_id = ss.source_id
+            WHERE eps.exam_profile_id = ?
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM claims c
+            LEFT JOIN evidence_links el
+              ON el.claim_id = c.id
+              AND el.source_segment_id = audits.source_segment_id
+            LEFT JOIN evidence_packs ep
+              ON ep.claim_id = c.id
+            LEFT JOIN evidence_pack_items epi
+              ON epi.evidence_pack_id = ep.id
+              AND epi.source_segment_id = audits.source_segment_id
+            WHERE c.exam_unit_id = audits.exam_unit_id
+              AND (el.id IS NOT NULL OR epi.id IS NOT NULL)
+          )
+        ''',
+        [examProfileId, examProfileId],
+      );
+
+      await customStatement(
+        '''
+        UPDATE exam_units
+        SET
+          audit_status = CASE
+            WHEN EXISTS (
+              SELECT 1 FROM conflicts cf
+              WHERE cf.exam_unit_id = exam_units.id
+                AND cf.status = 'open'
+            ) THEN 'Conflict'
+            WHEN EXISTS (
+              SELECT 1 FROM audits a
+              WHERE a.exam_unit_id = exam_units.id
+                AND a.status = 'LowConfidence'
+            ) THEN 'LowConfidence'
+            WHEN EXISTS (
+              SELECT 1 FROM audits a
+              WHERE a.exam_unit_id = exam_units.id
+                AND a.status = 'Partial'
+            ) THEN 'Partial'
+            WHEN EXISTS (
+              SELECT 1 FROM audits a
+              WHERE a.exam_unit_id = exam_units.id
+                AND a.status = 'Covered'
+            ) THEN 'Covered'
+            ELSE 'Uncovered'
+          END,
+          updated_at = CAST(strftime('%s','now') AS INTEGER)
+        WHERE exam_units.id IN (
+          SELECT exam_unit_id
+          FROM exam_profile_units
+          WHERE exam_profile_id = ?
+        )
+        ''',
+        [examProfileId],
+      );
+    });
+  }
+
   Future<List<AuditUnitSuggestion>> suggestExamUnitsForSegment(
-    int segmentId,
-  ) async {
+    int segmentId, {
+    int? examProfileId,
+  }) async {
     final segment =
         await (select(sourceSegments)
               ..where((s) => s.id.equals(segmentId))
               ..limit(1))
             .getSingleOrNull();
     if (segment == null) return const [];
+    if (examProfileId != null) {
+      final inScope = await customSelect(
+        '''
+        SELECT 1
+        FROM exam_profile_sources eps
+        WHERE eps.exam_profile_id = ?1
+          AND eps.source_id = ?2
+        LIMIT 1
+        ''',
+        variables: [
+          Variable.withInt(examProfileId),
+          Variable.withInt(segment.sourceId),
+        ],
+      ).getSingleOrNull();
+      if (inScope == null) return const [];
+    }
 
     final text = segment.content.toLowerCase();
     final rawTokens = text
@@ -278,14 +492,23 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
     }
     if (tokens.isEmpty) return const [];
 
+    final scopedId = examProfileId ?? -1;
     final units = await customSelect(
       '''
       SELECT eu.id AS unit_id, eu.title AS unit_title, COALESCE(GROUP_CONCAT(c.content, ' '), '') AS claims_text, COALESCE(MAX(c.content), '') AS claim_preview
       FROM exam_units eu
       LEFT JOIN claims c
         ON c.exam_unit_id = eu.id
+      WHERE ?1 = -1
+         OR EXISTS (
+           SELECT 1
+           FROM exam_profile_units epu
+           WHERE epu.exam_profile_id = ?1
+             AND epu.exam_unit_id = eu.id
+         )
       GROUP BY eu.id, eu.title
       ''',
+      variables: [Variable.withInt(scopedId)],
       readsFrom: {examUnits, claims},
     ).get();
 
@@ -314,9 +537,59 @@ class AuditDao extends DatabaseAccessor<AppDatabase> with _$AuditDaoMixin {
     return suggestions.take(5).toList();
   }
 
+  Future<List<int>> fetchTopUncoveredSegments({
+    required int examProfileId,
+    int limit = 30,
+  }) async {
+    final rows = await customSelect(
+      '''
+      SELECT ss.id AS segment_id
+      FROM source_segments ss
+      JOIN exam_profile_sources eps
+        ON eps.source_id = ss.source_id
+      LEFT JOIN audits a
+        ON a.source_segment_id = ss.id
+      WHERE (a.status = 'Uncovered' OR a.id IS NULL)
+        AND eps.exam_profile_id = ?
+      ORDER BY COALESCE(a.updated_at, 0) DESC
+      LIMIT ?
+      ''',
+      variables: [
+        Variable.withInt(examProfileId),
+        Variable.withInt(limit),
+      ],
+      readsFrom: {audits, sourceSegments},
+    ).get();
+    return rows.map((r) => r.read<int>('segment_id')).toList();
+  }
+
+  Future<int> autoLinkUncoveredSegments({
+    required int examProfileId,
+    int limit = 30,
+  }) async {
+    final segmentIds =
+        await fetchTopUncoveredSegments(examProfileId: examProfileId, limit: limit);
+    var linked = 0;
+    for (final segmentId in segmentIds) {
+      final suggestions = await suggestExamUnitsForSegment(
+        segmentId,
+        examProfileId: examProfileId,
+      );
+      if (suggestions.isEmpty) continue;
+      await linkSegmentToUnit(
+        segmentId: segmentId,
+        unitId: suggestions.first.unitId,
+        note: 'auto_link',
+      );
+      linked++;
+    }
+    return linked;
+  }
+
   Future<void> linkSegmentToUnit({
     required int segmentId,
     required int unitId,
+    String? note,
   }) async {
     await transaction(() async {
       final segment =

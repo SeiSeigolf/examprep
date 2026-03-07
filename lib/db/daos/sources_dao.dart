@@ -174,7 +174,7 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
 
   Future<List<SegmentUnitDraft>> suggestExamUnitDraftsFromSource(
     int sourceId, {
-    int limit = 40,
+    int limit = 80,
   }) async {
     final segments =
         await (select(sourceSegments)
@@ -337,13 +337,24 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
 
   int _headingScore(String line) {
     var score = 0;
-    if (line.length <= 28) score += 2;
+    if (line.length <= 32) score += 2;
     if (line.contains(':') || line.contains('：')) score += 2;
-    if (RegExp(r'^\s*【[^】]{1,40}】\s*$').hasMatch(line)) {
-      score += 5;
-    }
-    if (RegExp(r'^\s*(\d+[\.\)]|[（(]\d+[）)]|【[^】]{1,40}】)').hasMatch(line)) {
+    // 【見出し】 パターン
+    if (RegExp(r'^\s*【[^】]{1,40}】\s*$').hasMatch(line)) score += 5;
+    // ■▶●◆ 見出しマーカー
+    if (RegExp(r'^[■▶●◆▼★☆□△○]').hasMatch(line)) score += 4;
+    // 番号付き見出し
+    if (RegExp(
+      r'^\s*(\d+[\.\)]|[（(]\d+[）)]|【[^】]{1,40}】|[①-⑳])',
+    ).hasMatch(line)) {
       score += 2;
+    }
+    // 医学用語キーワードで始まる短い行
+    if (line.length <= 20 &&
+        RegExp(
+          r'(定義|機序|鑑別|治療|分類|症状|所見|検査|画像|診断|疾患|病態)',
+        ).hasMatch(line)) {
+      score += 3;
     }
     final letters = RegExp(r'[A-Za-z]').allMatches(line).length;
     if (letters > 2) {
@@ -404,18 +415,35 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
   String _inferUnitType(String text) {
     final t = text.toLowerCase();
     if (RegExp(
-      r'(ct|mri|x線|xray|レントゲン|エコー|ultrasound|us|画像|所見|陰影)',
+      r'(ct|mri|x線|xray|レントゲン|エコー|ultrasound|us|画像|所見|陰影|病理|染色|顕微鏡)',
     ).hasMatch(t)) {
       return '画像所見';
     }
-    if (RegExp(r'(鑑別|除外|見分け|比較|違い)').hasMatch(t)) {
+    if (RegExp(r'(鑑別|除外|見分け|比較|違い|との差|類似疾患)').hasMatch(t)) {
       return '鑑別';
     }
-    if (RegExp(r'(機序|病態|メカニズム|原因|過程|作用)').hasMatch(t)) {
+    if (RegExp(
+      r'(機序|病態|メカニズム|原因|過程|作用|経路|パスウェイ|pathway|発症)',
+    ).hasMatch(t)) {
       return '機序';
     }
-    if (RegExp(r'(定義|とは|をいう|意味)').hasMatch(t)) {
+    if (RegExp(r'(定義|とは|をいう|意味|概念)').hasMatch(t)) {
       return '定義';
+    }
+    if (RegExp(
+      r'(治療|薬|投与|処方|手術|手技|アルゴリズム|プロトコル|ガイドライン)',
+    ).hasMatch(t)) {
+      return '治療';
+    }
+    if (RegExp(
+      r'(分類|分けると|種類|型|グレード|ステージ|stage|grade|分類される)',
+    ).hasMatch(t)) {
+      return '分類';
+    }
+    if (RegExp(
+      r'(基準値|正常値|閾値|カットオフ|cut.?off|\d+\s*mg|\d+\s*mmhg|\d+\s*%|数値|値)',
+    ).hasMatch(t)) {
+      return '数値';
     }
     return 'その他';
   }
@@ -426,18 +454,22 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
       return '計算';
     }
     if (RegExp(
-      r'(ct|mri|x線|xray|レントゲン|エコー|ultrasound|us|画像|写真|図)',
+      r'(ct|mri|x線|xray|レントゲン|エコー|ultrasound|us|画像|写真|図|病理)',
     ).hasMatch(t)) {
       return '画像問題';
     }
     if (RegExp(r'(穴埋め|空欄|____|＿|（\s*）|\(\s*\))').hasMatch(t)) {
       return '穴埋め';
     }
-    if (RegExp(r'(次のうち|正しいもの|誤っている|選べ|選択肢|①|②|a\.|b\.)').hasMatch(t)) {
-      return '選択肢';
-    }
-    if (RegExp(r'(述べよ|説明せよ|記載せよ|理由を)').hasMatch(t)) {
+    if (RegExp(
+      r'(述べよ|説明せよ|記載せよ|理由を|論述|記述せよ|まとめよ)',
+    ).hasMatch(t)) {
       return '記述';
+    }
+    if (RegExp(
+      r'(次のうち|正しいもの|誤っている|選べ|選択肢|①|②|a\.|b\.)',
+    ).hasMatch(t)) {
+      return '選択肢';
     }
     return '選択肢';
   }

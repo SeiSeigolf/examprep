@@ -139,8 +139,26 @@ class ExamUnitsDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<UnitDuplicateCandidate>> findDuplicateCandidates({
     int limit = 20,
+    int? examProfileId,
+    List<int>? scopeUnitIds,
   }) async {
-    final units = await getAllUnits();
+    var units = await getAllUnits();
+    if (examProfileId != null) {
+      final rows = await customSelect(
+        '''
+        SELECT exam_unit_id
+        FROM exam_profile_units
+        WHERE exam_profile_id = ?
+        ''',
+        variables: [Variable.withInt(examProfileId)],
+      ).get();
+      final scopedIds = rows.map((r) => r.read<int>('exam_unit_id')).toSet();
+      units = units.where((u) => scopedIds.contains(u.id)).toList();
+    }
+    if (scopeUnitIds != null && scopeUnitIds.isNotEmpty) {
+      final set = scopeUnitIds.toSet();
+      units = units.where((u) => set.contains(u.id)).toList();
+    }
     if (units.length < 2) return const [];
 
     final claimRows = await customSelect(
@@ -539,6 +557,17 @@ class ExamUnitsDao extends DatabaseAccessor<AppDatabase>
   String _worseConfidence(String a, String b) {
     const rank = <String, int>{'L': 3, 'M': 2, 'H': 1};
     return (rank[a] ?? 0) >= (rank[b] ?? 0) ? a : b;
+  }
+
+  Future<List<ExamUnit>> getUnitsByIds(List<int> ids) async {
+    if (ids.isEmpty) return const [];
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final rows = await customSelect(
+      'SELECT * FROM exam_units WHERE id IN ($placeholders)',
+      variables: ids.map(Variable.withInt).toList(),
+      readsFrom: {examUnits},
+    ).get();
+    return rows.map((r) => examUnits.map(r.data)).toList();
   }
 
   String _inClause(int count) {

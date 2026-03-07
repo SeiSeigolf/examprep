@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../db/database.provider.dart';
+import '../../../db/database.dart';
+import '../../../shared/providers/exam_profile.provider.dart';
 
 class ReviewQueueItem {
   const ReviewQueueItem({
@@ -58,9 +60,18 @@ String buildReviewReason(ReviewQueueItem item) {
   return reasons.join(' / ');
 }
 
-final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
-  final db = ref.watch(databaseProvider);
+Stream<List<ReviewQueueItem>> watchReviewQueue(
+  AppDatabase db, {
+  int? examProfileId,
+}) {
   const limit = 50;
+  final scopedWhere = examProfileId == null
+      ? ''
+      : '''
+        JOIN exam_profile_units epu
+          ON epu.exam_unit_id = u.id
+         AND epu.exam_profile_id = $examProfileId
+      ''';
 
   return db
       .customSelect(
@@ -102,6 +113,7 @@ final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
         FROM claims c
         JOIN exam_units u
           ON u.id = c.exam_unit_id
+        $scopedWhere
         LEFT JOIN unit_stats us
           ON us.exam_unit_id = u.id
         LEFT JOIN conflicts cf
@@ -174,4 +186,10 @@ final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
             )
             .toList(),
       );
+}
+
+final reviewQueueProvider = StreamProvider<List<ReviewQueueItem>>((ref) {
+  final db = ref.watch(databaseProvider);
+  final examProfileId = ref.watch(activeExamProfileIdProvider);
+  return watchReviewQueue(db, examProfileId: examProfileId);
 });

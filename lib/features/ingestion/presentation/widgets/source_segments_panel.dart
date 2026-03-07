@@ -4,6 +4,7 @@ import '../../../../db/database.dart';
 import '../../../../db/database.provider.dart';
 import '../../../../db/daos/sources_dao.dart';
 import '../../../../db/daos/exam_units_dao.dart';
+import '../../../../shared/providers/exam_profile.provider.dart';
 import '../../../../shared/providers/navigation.provider.dart';
 import '../../../exam_units/providers/exam_units.provider.dart';
 import '../../providers/ingestion.provider.dart';
@@ -334,7 +335,10 @@ class _AutoGenerateUnitsDialogState
         final duplicates = await ref
             .read(databaseProvider)
             .examUnitsDao
-            .findDuplicateCandidates(limit: 20);
+            .findDuplicateCandidates(
+              limit: 20,
+              examProfileId: ref.read(activeExamProfileIdProvider),
+            );
         final related = duplicates
             .where(
               (p) =>
