@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, Variable;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../db/database.dart';
@@ -242,6 +242,14 @@ class QuickGeneratePipeline {
     final storedPath = await _copyToAppStorage(srcPath, fileName);
     final extraction = await _pipeline.extract(storedPath);
 
+    final existingRow = await _db.customSelect(
+      'SELECT id FROM sources WHERE file_path = ?',
+      variables: [Variable<String>(storedPath)],
+    ).getSingleOrNull();
+    if (existingRow != null) {
+      return existingRow.read<int>('id');
+    }
+
     final sourceId = await _db.sourcesDao.insertSource(
       SourcesCompanion.insert(
         fileName: fileName,
@@ -280,12 +288,17 @@ class QuickGeneratePipeline {
       await pdfsDir.create(recursive: true);
     }
 
-    final destPath = '${pdfsDir.path}/$fileName';
-    final dest = File(destPath);
-    if (!dest.existsSync()) {
-      await File(srcPath).copy(destPath);
+    var candidateName = fileName;
+    var dest = File('${pdfsDir.path}/$candidateName');
+    var suffix = 0;
+    while (dest.existsSync()) {
+      suffix++;
+      candidateName = _fileNameWithSuffix(fileName, suffix);
+      dest = File('${pdfsDir.path}/$candidateName');
     }
-    return destPath;
+
+    await File(srcPath).copy(dest.path);
+    return dest.path;
   }
 
   Future<List<AutoMergedPair>> _autoMergeHighSimilarityUnits(
@@ -374,6 +387,13 @@ class QuickGeneratePipeline {
     final normalized = path.replaceAll('\\\\', '/');
     final idx = normalized.lastIndexOf('/');
     return idx >= 0 ? normalized.substring(idx + 1) : normalized;
+  }
+
+  String _fileNameWithSuffix(String original, int index) {
+    final dot = original.lastIndexOf('.');
+    final name = dot >= 0 ? original.substring(0, dot) : original;
+    final ext = dot >= 0 ? original.substring(dot) : '';
+    return '$name ($index)$ext';
   }
 
   String _inferSourceType(String fileName) {
