@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../db/database.dart';
 import '../../../db/database.provider.dart';
@@ -12,6 +13,7 @@ import '../../../shared/constants/source_weights.dart';
 import '../../../shared/providers/exam_profile.provider.dart';
 import '../../../shared/providers/navigation.provider.dart';
 import '../../exam_units/providers/exam_units.provider.dart';
+import '../../master_sheet/services/exam_pack_generator.dart';
 import '../services/quick_generate_pipeline.dart';
 
 // ============================================================
@@ -611,9 +613,55 @@ class _ResultPanel extends ConsumerStatefulWidget {
 
 class _ResultPanelState extends ConsumerState<_ResultPanel> {
   bool _unitsExpanded = false;
+  bool _packRunning = false;
+  ExamPackResult? _packResult;
+  Object? _packError;
 
   static const _readyConflictThreshold = 5;
   static const _readyLowConfidenceThreshold = 10;
+
+  Future<void> _generatePack() async {
+    setState(() {
+      _packRunning = true;
+      _packError = null;
+      _packResult = null;
+    });
+
+    try {
+      final db = ref.read(databaseProvider);
+      final result = widget.result;
+      final appSupport = await getApplicationSupportDirectory();
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final outputDir =
+          '${appSupport.path}/exam_packs/${result.examProfileId}_$ts';
+
+      final generator = ExamPackGenerator(db);
+      final packResult = await generator.generateAndSave(
+        examProfileId: result.examProfileId,
+        examName: _examName(),
+        outputDir: outputDir,
+      );
+
+      if (!mounted) return;
+      setState(() => _packResult = packResult);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _packError = e);
+    } finally {
+      if (mounted) setState(() => _packRunning = false);
+    }
+  }
+
+  String _examName() {
+    // ExamPackResult does not embed examName, derive from path or use fallback
+    final profileId = widget.result.examProfileId;
+    return '試験プロファイル #$profileId';
+  }
+
+  Future<void> _openPackFolder() async {
+    if (_packResult == null) return;
+    await Process.run('open', [_packResult!.outputDir]);
+  }
 
   Future<void> _openMarkdown() async {
     try {
@@ -847,8 +895,101 @@ class _ResultPanelState extends ConsumerState<_ResultPanel> {
                 icon: const Icon(Icons.copy, size: 14),
                 label: const Text('パスをコピー'),
               ),
+              FilledButton.icon(
+                onPressed: _packRunning ? null : _generatePack,
+                icon: _packRunning
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.folder_zip_outlined, size: 14),
+                label: const Text('網羅資料パックを生成'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF1F3A5F),
+                  foregroundColor: const Color(0xFF80BFFF),
+                ),
+              ),
             ],
           ),
+
+          // ---- Pack result ----
+          if (_packError != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'パック生成エラー: $_packError',
+              style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+            ),
+          ],
+          if (_packResult != null) ...[
+            const SizedBox(height: 10),
+            const Divider(color: Color(0xFF2D3440), height: 1),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(
+                  Icons.folder_open_outlined,
+                  size: 14,
+                  color: Color(0xFF80BFFF),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  '網羅資料パック生成完了',
+                  style: TextStyle(
+                    color: Color(0xFF80BFFF),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _openPackFolder,
+                  icon: const Icon(Icons.open_in_new, size: 13),
+                  label: const Text('フォルダを開く', style: TextStyle(fontSize: 11)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF80BFFF),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 0,
+                    ),
+                    minimumSize: const Size(0, 28),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            ..._packResult!.files.map(
+              (f) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.description_outlined,
+                      size: 12,
+                      color: Colors.white38,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        f.fileName,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${(f.markdown.length / 1024).toStringAsFixed(1)} KB',
+                      style: const TextStyle(
+                        color: Colors.white24,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

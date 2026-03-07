@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' show Value, Variable;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../db/database.dart';
-import '../../ingestion/services/text_extraction/models.dart';
 import '../../ingestion/services/text_extraction/poppler_extractor.dart';
 import '../../ingestion/services/text_extraction/syncfusion_extractor.dart';
 import '../../ingestion/services/text_extraction/text_extraction_pipeline.dart';
@@ -250,11 +249,13 @@ class QuickGeneratePipeline {
       return existingRow.read<int>('id');
     }
 
+    final inferredType = sourceType ?? _inferSourceType(fileName);
     final sourceId = await _db.sourcesDao.insertSource(
       SourcesCompanion.insert(
         fileName: fileName,
         filePath: storedPath,
-        sourceType: Value(sourceType ?? _inferSourceType(fileName)),
+        sourceType: Value(inferredType),
+        sourceGroup: Value(_inferSourceGroup(fileName, inferredType)),
         fileSize: Value(file.lengthSync()),
         pageCount: Value(extraction.pages.length),
         lastExtractionMethod: Value(extraction.method),
@@ -394,6 +395,24 @@ class QuickGeneratePipeline {
     final name = dot >= 0 ? original.substring(0, dot) : original;
     final ext = dot >= 0 ? original.substring(dot) : '';
     return '$name ($index)$ext';
+  }
+
+  String _inferSourceGroup(String fileName, String sourceType) {
+    final lower = fileName.toLowerCase();
+    // pool / practice は source_type にない広い分類
+    if (lower.contains('pool') || fileName.contains('プール')) {
+      return 'pool';
+    }
+    if (lower.contains('practice') ||
+        lower.contains('drill') ||
+        fileName.contains('演習') ||
+        fileName.contains('練習')) {
+      return 'practice';
+    }
+    // assignment は practice グループに統合
+    if (sourceType == 'assignment') return 'practice';
+    // それ以外は source_type をそのままグループ名に使う
+    return sourceType;
   }
 
   String _inferSourceType(String fileName) {

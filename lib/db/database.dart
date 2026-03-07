@@ -95,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -241,6 +241,18 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 17) {
         await _createExamProfileTables();
+      }
+      if (from < 18) {
+        await m.addColumn(sources, sources.sourceGroup);
+        // sourceType から source_group を初期化
+        // assignment→practice に変換、それ以外は sourceType と同じ値
+        await customStatement('''
+          UPDATE sources
+          SET source_group = CASE source_type
+            WHEN 'assignment' THEN 'practice'
+            ELSE source_type
+          END
+        ''');
       }
     },
   );

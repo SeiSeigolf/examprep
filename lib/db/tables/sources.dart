@@ -25,4 +25,8 @@ class Sources extends Table {
   RealColumn get lastQualityScore => real().nullable()();
   DateTimeColumn get extractionUpdatedAt => dateTime().nullable()();
   DateTimeColumn get importedAt => dateTime().withDefault(currentDateAndTime)();
+  // source_group: source_type より広い分類（pool / practice は新しい値）
+  // CHECK 制約なし（pool / practice を追加するため）
+  TextColumn get sourceGroup =>
+      text().withDefault(const Constant('lecture'))();
 }

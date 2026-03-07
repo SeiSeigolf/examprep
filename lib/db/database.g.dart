@@ -141,6 +141,18 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _sourceGroupMeta = const VerificationMeta(
+    'sourceGroup',
+  );
+  @override
+  late final GeneratedColumn<String> sourceGroup = GeneratedColumn<String>(
+    'source_group',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('lecture'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -154,6 +166,7 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
     lastQualityScore,
     extractionUpdatedAt,
     importedAt,
+    sourceGroup,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -243,6 +256,15 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
         importedAt.isAcceptableOrUnknown(data['imported_at']!, _importedAtMeta),
       );
     }
+    if (data.containsKey('source_group')) {
+      context.handle(
+        _sourceGroupMeta,
+        sourceGroup.isAcceptableOrUnknown(
+          data['source_group']!,
+          _sourceGroupMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -296,6 +318,10 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, Source> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}imported_at'],
       )!,
+      sourceGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_group'],
+      )!,
     );
   }
 
@@ -317,6 +343,7 @@ class Source extends DataClass implements Insertable<Source> {
   final double? lastQualityScore;
   final DateTime? extractionUpdatedAt;
   final DateTime importedAt;
+  final String sourceGroup;
   const Source({
     required this.id,
     required this.fileName,
@@ -329,6 +356,7 @@ class Source extends DataClass implements Insertable<Source> {
     this.lastQualityScore,
     this.extractionUpdatedAt,
     required this.importedAt,
+    required this.sourceGroup,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -356,6 +384,7 @@ class Source extends DataClass implements Insertable<Source> {
       map['extraction_updated_at'] = Variable<DateTime>(extractionUpdatedAt);
     }
     map['imported_at'] = Variable<DateTime>(importedAt);
+    map['source_group'] = Variable<String>(sourceGroup);
     return map;
   }
 
@@ -384,6 +413,7 @@ class Source extends DataClass implements Insertable<Source> {
           ? const Value.absent()
           : Value(extractionUpdatedAt),
       importedAt: Value(importedAt),
+      sourceGroup: Value(sourceGroup),
     );
   }
 
@@ -408,6 +438,7 @@ class Source extends DataClass implements Insertable<Source> {
         json['extractionUpdatedAt'],
       ),
       importedAt: serializer.fromJson<DateTime>(json['importedAt']),
+      sourceGroup: serializer.fromJson<String>(json['sourceGroup']),
     );
   }
   @override
@@ -425,6 +456,7 @@ class Source extends DataClass implements Insertable<Source> {
       'lastQualityScore': serializer.toJson<double?>(lastQualityScore),
       'extractionUpdatedAt': serializer.toJson<DateTime?>(extractionUpdatedAt),
       'importedAt': serializer.toJson<DateTime>(importedAt),
+      'sourceGroup': serializer.toJson<String>(sourceGroup),
     };
   }
 
@@ -440,6 +472,7 @@ class Source extends DataClass implements Insertable<Source> {
     Value<double?> lastQualityScore = const Value.absent(),
     Value<DateTime?> extractionUpdatedAt = const Value.absent(),
     DateTime? importedAt,
+    String? sourceGroup,
   }) => Source(
     id: id ?? this.id,
     fileName: fileName ?? this.fileName,
@@ -458,6 +491,7 @@ class Source extends DataClass implements Insertable<Source> {
         ? extractionUpdatedAt.value
         : this.extractionUpdatedAt,
     importedAt: importedAt ?? this.importedAt,
+    sourceGroup: sourceGroup ?? this.sourceGroup,
   );
   Source copyWithCompanion(SourcesCompanion data) {
     return Source(
@@ -482,6 +516,9 @@ class Source extends DataClass implements Insertable<Source> {
       importedAt: data.importedAt.present
           ? data.importedAt.value
           : this.importedAt,
+      sourceGroup: data.sourceGroup.present
+          ? data.sourceGroup.value
+          : this.sourceGroup,
     );
   }
 
@@ -498,7 +535,8 @@ class Source extends DataClass implements Insertable<Source> {
           ..write('lastExtractionMethod: $lastExtractionMethod, ')
           ..write('lastQualityScore: $lastQualityScore, ')
           ..write('extractionUpdatedAt: $extractionUpdatedAt, ')
-          ..write('importedAt: $importedAt')
+          ..write('importedAt: $importedAt, ')
+          ..write('sourceGroup: $sourceGroup')
           ..write(')'))
         .toString();
   }
@@ -516,6 +554,7 @@ class Source extends DataClass implements Insertable<Source> {
     lastQualityScore,
     extractionUpdatedAt,
     importedAt,
+    sourceGroup,
   );
   @override
   bool operator ==(Object other) =>
@@ -531,7 +570,8 @@ class Source extends DataClass implements Insertable<Source> {
           other.lastExtractionMethod == this.lastExtractionMethod &&
           other.lastQualityScore == this.lastQualityScore &&
           other.extractionUpdatedAt == this.extractionUpdatedAt &&
-          other.importedAt == this.importedAt);
+          other.importedAt == this.importedAt &&
+          other.sourceGroup == this.sourceGroup);
 }
 
 class SourcesCompanion extends UpdateCompanion<Source> {
@@ -546,6 +586,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
   final Value<double?> lastQualityScore;
   final Value<DateTime?> extractionUpdatedAt;
   final Value<DateTime> importedAt;
+  final Value<String> sourceGroup;
   const SourcesCompanion({
     this.id = const Value.absent(),
     this.fileName = const Value.absent(),
@@ -558,6 +599,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     this.lastQualityScore = const Value.absent(),
     this.extractionUpdatedAt = const Value.absent(),
     this.importedAt = const Value.absent(),
+    this.sourceGroup = const Value.absent(),
   });
   SourcesCompanion.insert({
     this.id = const Value.absent(),
@@ -571,6 +613,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     this.lastQualityScore = const Value.absent(),
     this.extractionUpdatedAt = const Value.absent(),
     this.importedAt = const Value.absent(),
+    this.sourceGroup = const Value.absent(),
   }) : fileName = Value(fileName),
        filePath = Value(filePath);
   static Insertable<Source> custom({
@@ -585,6 +628,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     Expression<double>? lastQualityScore,
     Expression<DateTime>? extractionUpdatedAt,
     Expression<DateTime>? importedAt,
+    Expression<String>? sourceGroup,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -600,6 +644,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       if (extractionUpdatedAt != null)
         'extraction_updated_at': extractionUpdatedAt,
       if (importedAt != null) 'imported_at': importedAt,
+      if (sourceGroup != null) 'source_group': sourceGroup,
     });
   }
 
@@ -615,6 +660,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     Value<double?>? lastQualityScore,
     Value<DateTime?>? extractionUpdatedAt,
     Value<DateTime>? importedAt,
+    Value<String>? sourceGroup,
   }) {
     return SourcesCompanion(
       id: id ?? this.id,
@@ -628,6 +674,7 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       lastQualityScore: lastQualityScore ?? this.lastQualityScore,
       extractionUpdatedAt: extractionUpdatedAt ?? this.extractionUpdatedAt,
       importedAt: importedAt ?? this.importedAt,
+      sourceGroup: sourceGroup ?? this.sourceGroup,
     );
   }
 
@@ -671,6 +718,9 @@ class SourcesCompanion extends UpdateCompanion<Source> {
     if (importedAt.present) {
       map['imported_at'] = Variable<DateTime>(importedAt.value);
     }
+    if (sourceGroup.present) {
+      map['source_group'] = Variable<String>(sourceGroup.value);
+    }
     return map;
   }
 
@@ -687,7 +737,8 @@ class SourcesCompanion extends UpdateCompanion<Source> {
           ..write('lastExtractionMethod: $lastExtractionMethod, ')
           ..write('lastQualityScore: $lastQualityScore, ')
           ..write('extractionUpdatedAt: $extractionUpdatedAt, ')
-          ..write('importedAt: $importedAt')
+          ..write('importedAt: $importedAt, ')
+          ..write('sourceGroup: $sourceGroup')
           ..write(')'))
         .toString();
   }
@@ -9482,6 +9533,7 @@ typedef $$SourcesTableCreateCompanionBuilder =
       Value<double?> lastQualityScore,
       Value<DateTime?> extractionUpdatedAt,
       Value<DateTime> importedAt,
+      Value<String> sourceGroup,
     });
 typedef $$SourcesTableUpdateCompanionBuilder =
     SourcesCompanion Function({
@@ -9496,6 +9548,7 @@ typedef $$SourcesTableUpdateCompanionBuilder =
       Value<double?> lastQualityScore,
       Value<DateTime?> extractionUpdatedAt,
       Value<DateTime> importedAt,
+      Value<String> sourceGroup,
     });
 
 final class $$SourcesTableReferences
@@ -9600,6 +9653,11 @@ class $$SourcesTableFilterComposer
 
   ColumnFilters<DateTime> get importedAt => $composableBuilder(
     column: $table.importedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceGroup => $composableBuilder(
+    column: $table.sourceGroup,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9717,6 +9775,11 @@ class $$SourcesTableOrderingComposer
     column: $table.importedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get sourceGroup => $composableBuilder(
+    column: $table.sourceGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SourcesTableAnnotationComposer
@@ -9768,6 +9831,11 @@ class $$SourcesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get importedAt => $composableBuilder(
     column: $table.importedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceGroup => $composableBuilder(
+    column: $table.sourceGroup,
     builder: (column) => column,
   );
 
@@ -9861,6 +9929,7 @@ class $$SourcesTableTableManager
                 Value<double?> lastQualityScore = const Value.absent(),
                 Value<DateTime?> extractionUpdatedAt = const Value.absent(),
                 Value<DateTime> importedAt = const Value.absent(),
+                Value<String> sourceGroup = const Value.absent(),
               }) => SourcesCompanion(
                 id: id,
                 fileName: fileName,
@@ -9873,6 +9942,7 @@ class $$SourcesTableTableManager
                 lastQualityScore: lastQualityScore,
                 extractionUpdatedAt: extractionUpdatedAt,
                 importedAt: importedAt,
+                sourceGroup: sourceGroup,
               ),
           createCompanionCallback:
               ({
@@ -9887,6 +9957,7 @@ class $$SourcesTableTableManager
                 Value<double?> lastQualityScore = const Value.absent(),
                 Value<DateTime?> extractionUpdatedAt = const Value.absent(),
                 Value<DateTime> importedAt = const Value.absent(),
+                Value<String> sourceGroup = const Value.absent(),
               }) => SourcesCompanion.insert(
                 id: id,
                 fileName: fileName,
@@ -9899,6 +9970,7 @@ class $$SourcesTableTableManager
                 lastQualityScore: lastQualityScore,
                 extractionUpdatedAt: extractionUpdatedAt,
                 importedAt: importedAt,
+                sourceGroup: sourceGroup,
               ),
           withReferenceMapper: (p0) => p0
               .map(
