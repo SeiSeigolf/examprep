@@ -10,22 +10,36 @@ class PopplerMissingException implements Exception {
 }
 
 class PopplerExtractor implements PageTextExtractor {
-  static Future<bool> isAvailable() async {
-    try {
-      final result = await Process.run('which', ['pdftotext']);
-      return result.exitCode == 0 &&
-          (result.stdout ?? '').toString().trim().isNotEmpty;
-    } catch (_) {
-      return false;
+  // macOSのGUIアプリはシェルのPATHを継承しないため、固定パスで探す
+  static const _candidatePaths = [
+    '/opt/homebrew/bin/pdftotext', // Apple Silicon Homebrew
+    '/usr/local/bin/pdftotext',    // Intel Homebrew
+    'pdftotext',                    // PATH経由（fallback）
+  ];
+
+  static Future<String?> _resolvedPath() async {
+    for (final candidate in _candidatePaths) {
+      try {
+        final result = await Process.run(candidate, ['--version']);
+        if (result.exitCode == 0 || result.exitCode == 99) return candidate;
+      } catch (_) {}
     }
+    return null;
+  }
+
+  static Future<bool> isAvailable() async {
+    return await _resolvedPath() != null;
   }
 
   @override
   Future<List<ExtractedPage>> extract(String pdfPath) async {
+    final executable = await _resolvedPath();
+    if (executable == null) throw const PopplerMissingException();
+
     final tempDir = await Directory.systemTemp.createTemp('exam_os_poppler_');
     try {
       final outPath = '${tempDir.path}/out.txt';
-      final result = await Process.run('pdftotext', [
+      final result = await Process.run(executable, [
         '-layout',
         pdfPath,
         outPath,

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide Column;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../db/database.dart';
 import '../../../db/database.provider.dart';
 import '../services/text_extraction/syncfusion_extractor.dart';
@@ -88,8 +89,11 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
       }
 
       for (final file in result.files) {
-        final path = file.path;
-        if (path == null) continue;
+        final srcPath = file.path;
+        if (srcPath == null) continue;
+
+        // ---- サンドボックス外ファイルをApplicationSupportへコピー ----
+        final storedPath = await _copyToAppStorage(srcPath, file.name);
 
         // ---- テキスト抽出（別 isolate で実行） ----
         state = state.copyWith(
@@ -103,19 +107,19 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         );
 
         const oldQuality = 0.0;
-        final extraction = await _pipeline.extract(path);
+        final extraction = await _pipeline.extract(storedPath);
         final pages = extraction.pages;
 
         // ---- DB 保存 ----
         state = state.copyWith(status: IngestionStatus.inserting);
 
-        final fileSize = File(path).lengthSync();
+        final fileSize = File(storedPath).lengthSync();
         final sourceType = _inferSourceType(file.name);
 
         final sourceId = await _db.sourcesDao.insertSource(
           SourcesCompanion.insert(
             fileName: file.name,
-            filePath: path,
+            filePath: storedPath,
             sourceType: Value(sourceType),
             fileSize: Value(fileSize),
             pageCount: Value(pages.length),
@@ -256,6 +260,21 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         ocrTotalPages: null,
       );
     }
+  }
+
+  /// ファイルをApplicationSupportのpdfsフォルダにコピーし、コピー先パスを返す。
+  /// 同名ファイルが既に存在する場合は上書きしない（既存パスを返す）。
+  Future<String> _copyToAppStorage(String srcPath, String fileName) async {
+    final appSupport = await getApplicationSupportDirectory();
+    final pdfsDir = Directory('${appSupport.path}/pdfs');
+    if (!pdfsDir.existsSync()) await pdfsDir.create(recursive: true);
+
+    final destPath = '${pdfsDir.path}/$fileName';
+    final dest = File(destPath);
+    if (!dest.existsSync()) {
+      await File(srcPath).copy(destPath);
+    }
+    return destPath;
   }
 
   String _inferSourceType(String fileName) {
