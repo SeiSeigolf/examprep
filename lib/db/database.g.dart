@@ -8415,6 +8415,17 @@ class $ExamSectionsTable extends ExamSections
     requiredDuringInsert: false,
     defaultValue: const Constant('暗記'),
   );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
   );
@@ -8434,6 +8445,7 @@ class $ExamSectionsTable extends ExamSections
     name,
     points,
     studyApproach,
+    description,
     sortOrder,
   ];
   @override
@@ -8482,6 +8494,15 @@ class $ExamSectionsTable extends ExamSections
         ),
       );
     }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
     if (data.containsKey('sort_order')) {
       context.handle(
         _sortOrderMeta,
@@ -8517,6 +8538,10 @@ class $ExamSectionsTable extends ExamSections
         DriftSqlType.string,
         data['${effectivePrefix}study_approach'],
       )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
       sortOrder: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
@@ -8536,6 +8561,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
   final String name;
   final int points;
   final String studyApproach;
+  final String? description;
   final int sortOrder;
   const ExamSection({
     required this.id,
@@ -8543,6 +8569,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
     required this.name,
     required this.points,
     required this.studyApproach,
+    this.description,
     required this.sortOrder,
   });
   @override
@@ -8553,6 +8580,9 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
     map['name'] = Variable<String>(name);
     map['points'] = Variable<int>(points);
     map['study_approach'] = Variable<String>(studyApproach);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
     map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
@@ -8564,6 +8594,9 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
       name: Value(name),
       points: Value(points),
       studyApproach: Value(studyApproach),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
       sortOrder: Value(sortOrder),
     );
   }
@@ -8579,6 +8612,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
       name: serializer.fromJson<String>(json['name']),
       points: serializer.fromJson<int>(json['points']),
       studyApproach: serializer.fromJson<String>(json['studyApproach']),
+      description: serializer.fromJson<String?>(json['description']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
@@ -8591,6 +8625,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
       'name': serializer.toJson<String>(name),
       'points': serializer.toJson<int>(points),
       'studyApproach': serializer.toJson<String>(studyApproach),
+      'description': serializer.toJson<String?>(description),
       'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
@@ -8601,6 +8636,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
     String? name,
     int? points,
     String? studyApproach,
+    Value<String?> description = const Value.absent(),
     int? sortOrder,
   }) => ExamSection(
     id: id ?? this.id,
@@ -8608,6 +8644,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
     name: name ?? this.name,
     points: points ?? this.points,
     studyApproach: studyApproach ?? this.studyApproach,
+    description: description.present ? description.value : this.description,
     sortOrder: sortOrder ?? this.sortOrder,
   );
   ExamSection copyWithCompanion(ExamSectionsCompanion data) {
@@ -8619,6 +8656,9 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
       studyApproach: data.studyApproach.present
           ? data.studyApproach.value
           : this.studyApproach,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
@@ -8631,14 +8671,22 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
           ..write('name: $name, ')
           ..write('points: $points, ')
           ..write('studyApproach: $studyApproach, ')
+          ..write('description: $description, ')
           ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, examId, name, points, studyApproach, sortOrder);
+  int get hashCode => Object.hash(
+    id,
+    examId,
+    name,
+    points,
+    studyApproach,
+    description,
+    sortOrder,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8648,6 +8696,7 @@ class ExamSection extends DataClass implements Insertable<ExamSection> {
           other.name == this.name &&
           other.points == this.points &&
           other.studyApproach == this.studyApproach &&
+          other.description == this.description &&
           other.sortOrder == this.sortOrder);
 }
 
@@ -8657,6 +8706,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
   final Value<String> name;
   final Value<int> points;
   final Value<String> studyApproach;
+  final Value<String?> description;
   final Value<int> sortOrder;
   const ExamSectionsCompanion({
     this.id = const Value.absent(),
@@ -8664,6 +8714,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
     this.name = const Value.absent(),
     this.points = const Value.absent(),
     this.studyApproach = const Value.absent(),
+    this.description = const Value.absent(),
     this.sortOrder = const Value.absent(),
   });
   ExamSectionsCompanion.insert({
@@ -8672,6 +8723,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
     required String name,
     this.points = const Value.absent(),
     this.studyApproach = const Value.absent(),
+    this.description = const Value.absent(),
     this.sortOrder = const Value.absent(),
   }) : examId = Value(examId),
        name = Value(name);
@@ -8681,6 +8733,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
     Expression<String>? name,
     Expression<int>? points,
     Expression<String>? studyApproach,
+    Expression<String>? description,
     Expression<int>? sortOrder,
   }) {
     return RawValuesInsertable({
@@ -8689,6 +8742,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
       if (name != null) 'name': name,
       if (points != null) 'points': points,
       if (studyApproach != null) 'study_approach': studyApproach,
+      if (description != null) 'description': description,
       if (sortOrder != null) 'sort_order': sortOrder,
     });
   }
@@ -8699,6 +8753,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
     Value<String>? name,
     Value<int>? points,
     Value<String>? studyApproach,
+    Value<String?>? description,
     Value<int>? sortOrder,
   }) {
     return ExamSectionsCompanion(
@@ -8707,6 +8762,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
       name: name ?? this.name,
       points: points ?? this.points,
       studyApproach: studyApproach ?? this.studyApproach,
+      description: description ?? this.description,
       sortOrder: sortOrder ?? this.sortOrder,
     );
   }
@@ -8729,6 +8785,9 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
     if (studyApproach.present) {
       map['study_approach'] = Variable<String>(studyApproach.value);
     }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
@@ -8743,6 +8802,7 @@ class ExamSectionsCompanion extends UpdateCompanion<ExamSection> {
           ..write('name: $name, ')
           ..write('points: $points, ')
           ..write('studyApproach: $studyApproach, ')
+          ..write('description: $description, ')
           ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
@@ -8817,6 +8877,15 @@ class $ExamPoolsTable extends ExamPools
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sourceIdMeta = const VerificationMeta(
     'sourceId',
   );
@@ -8838,6 +8907,7 @@ class $ExamPoolsTable extends ExamPools
     description,
     totalItems,
     guaranteedItems,
+    note,
     sourceId,
   ];
   @override
@@ -8889,6 +8959,12 @@ class $ExamPoolsTable extends ExamPools
         ),
       );
     }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
     if (data.containsKey('source_id')) {
       context.handle(
         _sourceIdMeta,
@@ -8924,6 +9000,10 @@ class $ExamPoolsTable extends ExamPools
         DriftSqlType.int,
         data['${effectivePrefix}guaranteed_items'],
       )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
       sourceId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}source_id'],
@@ -8943,6 +9023,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
   final String description;
   final int totalItems;
   final int guaranteedItems;
+  final String? note;
   final int? sourceId;
   const ExamPool({
     required this.id,
@@ -8950,6 +9031,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
     required this.description,
     required this.totalItems,
     required this.guaranteedItems,
+    this.note,
     this.sourceId,
   });
   @override
@@ -8960,6 +9042,9 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
     map['description'] = Variable<String>(description);
     map['total_items'] = Variable<int>(totalItems);
     map['guaranteed_items'] = Variable<int>(guaranteedItems);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
     if (!nullToAbsent || sourceId != null) {
       map['source_id'] = Variable<int>(sourceId);
     }
@@ -8973,6 +9058,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
       description: Value(description),
       totalItems: Value(totalItems),
       guaranteedItems: Value(guaranteedItems),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       sourceId: sourceId == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceId),
@@ -8990,6 +9076,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
       description: serializer.fromJson<String>(json['description']),
       totalItems: serializer.fromJson<int>(json['totalItems']),
       guaranteedItems: serializer.fromJson<int>(json['guaranteedItems']),
+      note: serializer.fromJson<String?>(json['note']),
       sourceId: serializer.fromJson<int?>(json['sourceId']),
     );
   }
@@ -9002,6 +9089,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
       'description': serializer.toJson<String>(description),
       'totalItems': serializer.toJson<int>(totalItems),
       'guaranteedItems': serializer.toJson<int>(guaranteedItems),
+      'note': serializer.toJson<String?>(note),
       'sourceId': serializer.toJson<int?>(sourceId),
     };
   }
@@ -9012,6 +9100,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
     String? description,
     int? totalItems,
     int? guaranteedItems,
+    Value<String?> note = const Value.absent(),
     Value<int?> sourceId = const Value.absent(),
   }) => ExamPool(
     id: id ?? this.id,
@@ -9019,6 +9108,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
     description: description ?? this.description,
     totalItems: totalItems ?? this.totalItems,
     guaranteedItems: guaranteedItems ?? this.guaranteedItems,
+    note: note.present ? note.value : this.note,
     sourceId: sourceId.present ? sourceId.value : this.sourceId,
   );
   ExamPool copyWithCompanion(ExamPoolsCompanion data) {
@@ -9034,6 +9124,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
       guaranteedItems: data.guaranteedItems.present
           ? data.guaranteedItems.value
           : this.guaranteedItems,
+      note: data.note.present ? data.note.value : this.note,
       sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
     );
   }
@@ -9046,6 +9137,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
           ..write('description: $description, ')
           ..write('totalItems: $totalItems, ')
           ..write('guaranteedItems: $guaranteedItems, ')
+          ..write('note: $note, ')
           ..write('sourceId: $sourceId')
           ..write(')'))
         .toString();
@@ -9058,6 +9150,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
     description,
     totalItems,
     guaranteedItems,
+    note,
     sourceId,
   );
   @override
@@ -9069,6 +9162,7 @@ class ExamPool extends DataClass implements Insertable<ExamPool> {
           other.description == this.description &&
           other.totalItems == this.totalItems &&
           other.guaranteedItems == this.guaranteedItems &&
+          other.note == this.note &&
           other.sourceId == this.sourceId);
 }
 
@@ -9078,6 +9172,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
   final Value<String> description;
   final Value<int> totalItems;
   final Value<int> guaranteedItems;
+  final Value<String?> note;
   final Value<int?> sourceId;
   const ExamPoolsCompanion({
     this.id = const Value.absent(),
@@ -9085,6 +9180,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
     this.description = const Value.absent(),
     this.totalItems = const Value.absent(),
     this.guaranteedItems = const Value.absent(),
+    this.note = const Value.absent(),
     this.sourceId = const Value.absent(),
   });
   ExamPoolsCompanion.insert({
@@ -9093,6 +9189,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
     required String description,
     this.totalItems = const Value.absent(),
     this.guaranteedItems = const Value.absent(),
+    this.note = const Value.absent(),
     this.sourceId = const Value.absent(),
   }) : sectionId = Value(sectionId),
        description = Value(description);
@@ -9102,6 +9199,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
     Expression<String>? description,
     Expression<int>? totalItems,
     Expression<int>? guaranteedItems,
+    Expression<String>? note,
     Expression<int>? sourceId,
   }) {
     return RawValuesInsertable({
@@ -9110,6 +9208,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
       if (description != null) 'description': description,
       if (totalItems != null) 'total_items': totalItems,
       if (guaranteedItems != null) 'guaranteed_items': guaranteedItems,
+      if (note != null) 'note': note,
       if (sourceId != null) 'source_id': sourceId,
     });
   }
@@ -9120,6 +9219,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
     Value<String>? description,
     Value<int>? totalItems,
     Value<int>? guaranteedItems,
+    Value<String?>? note,
     Value<int?>? sourceId,
   }) {
     return ExamPoolsCompanion(
@@ -9128,6 +9228,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
       description: description ?? this.description,
       totalItems: totalItems ?? this.totalItems,
       guaranteedItems: guaranteedItems ?? this.guaranteedItems,
+      note: note ?? this.note,
       sourceId: sourceId ?? this.sourceId,
     );
   }
@@ -9150,6 +9251,9 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
     if (guaranteedItems.present) {
       map['guaranteed_items'] = Variable<int>(guaranteedItems.value);
     }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
     if (sourceId.present) {
       map['source_id'] = Variable<int>(sourceId.value);
     }
@@ -9164,6 +9268,7 @@ class ExamPoolsCompanion extends UpdateCompanion<ExamPool> {
           ..write('description: $description, ')
           ..write('totalItems: $totalItems, ')
           ..write('guaranteedItems: $guaranteedItems, ')
+          ..write('note: $note, ')
           ..write('sourceId: $sourceId')
           ..write(')'))
         .toString();
@@ -17599,6 +17704,7 @@ typedef $$ExamSectionsTableCreateCompanionBuilder =
       required String name,
       Value<int> points,
       Value<String> studyApproach,
+      Value<String?> description,
       Value<int> sortOrder,
     });
 typedef $$ExamSectionsTableUpdateCompanionBuilder =
@@ -17608,6 +17714,7 @@ typedef $$ExamSectionsTableUpdateCompanionBuilder =
       Value<String> name,
       Value<int> points,
       Value<String> studyApproach,
+      Value<String?> description,
       Value<int> sortOrder,
     });
 
@@ -17678,6 +17785,11 @@ class $$ExamSectionsTableFilterComposer
 
   ColumnFilters<String> get studyApproach => $composableBuilder(
     column: $table.studyApproach,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17764,6 +17876,11 @@ class $$ExamSectionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
@@ -17813,6 +17930,11 @@ class $$ExamSectionsTableAnnotationComposer
 
   GeneratedColumn<String> get studyApproach => $composableBuilder(
     column: $table.studyApproach,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => column,
   );
 
@@ -17901,6 +18023,7 @@ class $$ExamSectionsTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<int> points = const Value.absent(),
                 Value<String> studyApproach = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
               }) => ExamSectionsCompanion(
                 id: id,
@@ -17908,6 +18031,7 @@ class $$ExamSectionsTableTableManager
                 name: name,
                 points: points,
                 studyApproach: studyApproach,
+                description: description,
                 sortOrder: sortOrder,
               ),
           createCompanionCallback:
@@ -17917,6 +18041,7 @@ class $$ExamSectionsTableTableManager
                 required String name,
                 Value<int> points = const Value.absent(),
                 Value<String> studyApproach = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
               }) => ExamSectionsCompanion.insert(
                 id: id,
@@ -17924,6 +18049,7 @@ class $$ExamSectionsTableTableManager
                 name: name,
                 points: points,
                 studyApproach: studyApproach,
+                description: description,
                 sortOrder: sortOrder,
               ),
           withReferenceMapper: (p0) => p0
@@ -18020,6 +18146,7 @@ typedef $$ExamPoolsTableCreateCompanionBuilder =
       required String description,
       Value<int> totalItems,
       Value<int> guaranteedItems,
+      Value<String?> note,
       Value<int?> sourceId,
     });
 typedef $$ExamPoolsTableUpdateCompanionBuilder =
@@ -18029,6 +18156,7 @@ typedef $$ExamPoolsTableUpdateCompanionBuilder =
       Value<String> description,
       Value<int> totalItems,
       Value<int> guaranteedItems,
+      Value<String?> note,
       Value<int?> sourceId,
     });
 
@@ -18099,6 +18227,11 @@ class $$ExamPoolsTableFilterComposer
 
   ColumnFilters<int> get guaranteedItems => $composableBuilder(
     column: $table.guaranteedItems,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18178,6 +18311,11 @@ class $$ExamPoolsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ExamSectionsTableOrderingComposer get sectionId {
     final $$ExamSectionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -18251,6 +18389,9 @@ class $$ExamPoolsTableAnnotationComposer
     column: $table.guaranteedItems,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
 
   $$ExamSectionsTableAnnotationComposer get sectionId {
     final $$ExamSectionsTableAnnotationComposer composer = $composerBuilder(
@@ -18332,6 +18473,7 @@ class $$ExamPoolsTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<int> totalItems = const Value.absent(),
                 Value<int> guaranteedItems = const Value.absent(),
+                Value<String?> note = const Value.absent(),
                 Value<int?> sourceId = const Value.absent(),
               }) => ExamPoolsCompanion(
                 id: id,
@@ -18339,6 +18481,7 @@ class $$ExamPoolsTableTableManager
                 description: description,
                 totalItems: totalItems,
                 guaranteedItems: guaranteedItems,
+                note: note,
                 sourceId: sourceId,
               ),
           createCompanionCallback:
@@ -18348,6 +18491,7 @@ class $$ExamPoolsTableTableManager
                 required String description,
                 Value<int> totalItems = const Value.absent(),
                 Value<int> guaranteedItems = const Value.absent(),
+                Value<String?> note = const Value.absent(),
                 Value<int?> sourceId = const Value.absent(),
               }) => ExamPoolsCompanion.insert(
                 id: id,
@@ -18355,6 +18499,7 @@ class $$ExamPoolsTableTableManager
                 description: description,
                 totalItems: totalItems,
                 guaranteedItems: guaranteedItems,
+                note: note,
                 sourceId: sourceId,
               ),
           withReferenceMapper: (p0) => p0

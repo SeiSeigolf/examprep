@@ -19,6 +19,7 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
   late final TextEditingController _descCtrl;
   late final TextEditingController _totalCtrl;
   late final TextEditingController _guaranteedCtrl;
+  late final TextEditingController _noteCtrl;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
     _guaranteedCtrl = TextEditingController(
       text: (widget.pool?.guaranteedItems ?? 0).toString(),
     );
+    _noteCtrl = TextEditingController(text: widget.pool?.note ?? '');
   }
 
   @override
@@ -39,6 +41,7 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
     _descCtrl.dispose();
     _totalCtrl.dispose();
     _guaranteedCtrl.dispose();
+    _noteCtrl.dispose();
     super.dispose();
   }
 
@@ -47,6 +50,7 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
     if (desc.isEmpty) return;
     final total = int.tryParse(_totalCtrl.text) ?? 0;
     final guaranteed = int.tryParse(_guaranteedCtrl.text) ?? 0;
+    final note = _noteCtrl.text.trim();
     final db = ref.read(databaseProvider);
 
     if (widget.pool == null) {
@@ -56,6 +60,7 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
           description: desc,
           totalItems: Value(total),
           guaranteedItems: Value(guaranteed),
+          note: Value(note.isEmpty ? null : note),
         ),
       );
     } else {
@@ -66,6 +71,7 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
           description: Value(desc),
           totalItems: Value(total),
           guaranteedItems: Value(guaranteed),
+          note: Value(note.isEmpty ? null : note),
         ),
       );
     }
@@ -111,6 +117,15 @@ class _PoolDialogState extends ConsumerState<PoolDialog> {
           const Text(
             '全N個を習得すると最低M問が確実に得点できる設定です',
             style: TextStyle(fontSize: 11, color: Colors.white38),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _noteCtrl,
+            decoration: const InputDecoration(
+              labelText: 'メモ（任意）',
+              hintText: '例: 教授が毎年必ず出すと言っていた',
+            ),
+            maxLines: 2,
           ),
         ],
       ),

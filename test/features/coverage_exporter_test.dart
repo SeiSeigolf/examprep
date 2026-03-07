@@ -57,7 +57,7 @@ void main() {
       now: DateTime(2026, 3, 4, 9),
     );
 
-    expect(md, contains('# これだけ見れば合格'));
+    expect(md, contains('# 解剖学期末 網羅資料'));
     expect(md, contains('解剖学期末'));
     expect(md, contains('骨格系'));
     expect(md, contains('暗記'));
@@ -65,7 +65,7 @@ void main() {
     expect(md, contains('骨格名称100文'));
     expect(md, contains('全100個暗記で30問保証'));
     expect(md, contains('大腿骨の解剖'));
-    expect(md, contains('優先学習 Unit'));
+    expect(md, contains('学習ユニット（優先度順）'));
   });
 
   test('CoverageExporter: セクション未割り当てUnitが末尾に出る', () async {
@@ -121,7 +121,7 @@ void main() {
       now: DateTime(2026, 3, 4),
     );
 
-    expect(md, contains('# これだけ見れば合格'));
+    expect(md, contains('# プールなし試験 網羅資料'));
     expect(md, contains('プールなし試験'));
     expect(md, contains('セクションA'));
     // 「全N個暗記」は出ない

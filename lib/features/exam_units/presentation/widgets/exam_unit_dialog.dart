@@ -4,6 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../db/database.dart';
 import '../../../../db/database.provider.dart';
 
+// 全セクション一覧プロバイダ（ExamUnitDialog用）
+final _allSectionsProvider = FutureProvider<List<ExamSection>>((ref) async {
+  return ref.watch(databaseProvider).examsDao.getAllSections();
+});
+
 const _unitTypes = ['定義', '機序', '鑑別', '画像所見', 'その他'];
 
 /// 新規作成 or 編集ダイアログ。[unit] が null なら新規作成。
@@ -21,6 +26,7 @@ class _ExamUnitDialogState extends ConsumerState<ExamUnitDialog> {
   late final TextEditingController _descCtrl;
   late String _unitType;
   late String _confidenceLevel;
+  int? _sectionId;
   bool _saving = false;
 
   @override
@@ -30,6 +36,7 @@ class _ExamUnitDialogState extends ConsumerState<ExamUnitDialog> {
     _descCtrl = TextEditingController(text: widget.unit?.description ?? '');
     _unitType = widget.unit?.unitType ?? '定義';
     _confidenceLevel = widget.unit?.confidenceLevel ?? 'medium';
+    _sectionId = widget.unit?.sectionId;
   }
 
   @override
@@ -53,6 +60,7 @@ class _ExamUnitDialogState extends ConsumerState<ExamUnitDialog> {
             ? null
             : _descCtrl.text.trim()),
         confidenceLevel: Value(_confidenceLevel),
+        sectionId: Value(_sectionId),
         updatedAt: Value(now),
         sortOrder: Value(maxOrder + 1),
       ));
@@ -65,6 +73,7 @@ class _ExamUnitDialogState extends ConsumerState<ExamUnitDialog> {
             ? null
             : _descCtrl.text.trim()),
         confidenceLevel: Value(_confidenceLevel),
+        sectionId: Value(_sectionId),
         updatedAt: Value(now),
       ));
     }
@@ -74,6 +83,7 @@ class _ExamUnitDialogState extends ConsumerState<ExamUnitDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.unit != null;
+    final sectionsAsync = ref.watch(_allSectionsProvider);
     return AlertDialog(
       title: Text(isEdit ? 'Exam Unit を編集' : '新規 Exam Unit'),
       content: SizedBox(
@@ -116,6 +126,32 @@ class _ExamUnitDialogState extends ConsumerState<ExamUnitDialog> {
                   DropdownMenuItem(value: 'low', child: Text('Low (L)')),
                 ],
                 onChanged: (v) => setState(() => _confidenceLevel = v!),
+              ),
+              const SizedBox(height: 16),
+              // セクション選択
+              const SizedBox(height: 16),
+              sectionsAsync.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (sections) => DropdownButtonFormField<int?>(
+                  value: sections.any((s) => s.id == _sectionId)
+                      ? _sectionId
+                      : null,
+                  decoration: const InputDecoration(labelText: 'セクション（任意）'),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('未割り当て'),
+                    ),
+                    ...sections.map(
+                      (s) => DropdownMenuItem<int?>(
+                        value: s.id,
+                        child: Text(s.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _sectionId = v),
+                ),
               ),
               const SizedBox(height: 16),
               // 説明

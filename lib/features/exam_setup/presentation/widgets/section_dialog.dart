@@ -18,6 +18,7 @@ class SectionDialog extends ConsumerStatefulWidget {
 class _SectionDialogState extends ConsumerState<SectionDialog> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _pointsCtrl;
+  late final TextEditingController _descCtrl;
   late String _approach;
 
   @override
@@ -27,6 +28,9 @@ class _SectionDialogState extends ConsumerState<SectionDialog> {
     _pointsCtrl = TextEditingController(
       text: (widget.section?.points ?? 0).toString(),
     );
+    _descCtrl = TextEditingController(
+      text: widget.section?.description ?? '',
+    );
     _approach = widget.section?.studyApproach ?? '暗記';
   }
 
@@ -34,6 +38,7 @@ class _SectionDialogState extends ConsumerState<SectionDialog> {
   void dispose() {
     _nameCtrl.dispose();
     _pointsCtrl.dispose();
+    _descCtrl.dispose();
     super.dispose();
   }
 
@@ -41,6 +46,7 @@ class _SectionDialogState extends ConsumerState<SectionDialog> {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
     final points = int.tryParse(_pointsCtrl.text) ?? 0;
+    final desc = _descCtrl.text.trim();
     final db = ref.read(databaseProvider);
 
     if (widget.section == null) {
@@ -50,6 +56,7 @@ class _SectionDialogState extends ConsumerState<SectionDialog> {
           name: name,
           points: Value(points),
           studyApproach: Value(_approach),
+          description: Value(desc.isEmpty ? null : desc),
         ),
       );
     } else {
@@ -60,6 +67,7 @@ class _SectionDialogState extends ConsumerState<SectionDialog> {
           name: Value(name),
           points: Value(points),
           studyApproach: Value(_approach),
+          description: Value(desc.isEmpty ? null : desc),
         ),
       );
     }
@@ -95,6 +103,15 @@ class _SectionDialogState extends ConsumerState<SectionDialog> {
             onChanged: (v) {
               if (v != null) setState(() => _approach = v);
             },
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _descCtrl,
+            decoration: const InputDecoration(
+              labelText: '説明（任意）',
+              hintText: '例: 心臓の構造と機能に関する問題',
+            ),
+            maxLines: 2,
           ),
         ],
       ),

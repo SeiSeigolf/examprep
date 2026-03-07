@@ -8,5 +8,6 @@ class ExamPools extends Table {
   TextColumn get description => text()();
   IntColumn get totalItems => integer().withDefault(const Constant(0))();
   IntColumn get guaranteedItems => integer().withDefault(const Constant(0))();
+  TextColumn get note => text().nullable()();
   IntColumn get sourceId => integer().nullable().references(Sources, #id)();
 }

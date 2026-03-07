@@ -95,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -233,6 +233,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(sourceSegments, sourceSegments.extractionMethod);
         await m.addColumn(sourceSegments, sourceSegments.qualityScore);
         await m.addColumn(sourceSegments, sourceSegments.ocrConfidence);
+      }
+      if (from < 16) {
+        await m.addColumn(examSections, examSections.description);
+        await m.addColumn(examPools, examPools.note);
       }
     },
   );

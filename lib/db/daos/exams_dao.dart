@@ -68,6 +68,15 @@ class ExamsDao extends DatabaseAccessor<AppDatabase> with _$ExamsDaoMixin {
             ]))
           .get();
 
+  Future<List<ExamSection>> getAllSections() =>
+      (select(examSections)
+            ..orderBy([
+              (t) => OrderingTerm.asc(t.examId),
+              (t) => OrderingTerm.asc(t.sortOrder),
+              (t) => OrderingTerm.asc(t.id),
+            ]))
+          .get();
+
   Future<int> insertSection(ExamSectionsCompanion c) =>
       into(examSections).insert(c);
 

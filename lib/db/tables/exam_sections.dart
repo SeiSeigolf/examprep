@@ -10,5 +10,6 @@ class ExamSections extends Table {
   TextColumn get studyApproach => text()
       .withDefault(const Constant('暗記'))
       .check(studyApproach.isIn(const ['暗記', '理解', '計算']))();
+  TextColumn get description => text().nullable()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }

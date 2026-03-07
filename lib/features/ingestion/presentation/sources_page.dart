@@ -9,6 +9,7 @@ import '../services/text_extraction/models.dart';
 import '../services/text_extraction/quality_score.dart';
 import '../../../db/database.dart';
 import '../../../db/database.provider.dart';
+import '../../../shared/constants/source_weights.dart';
 import 'widgets/source_segments_panel.dart';
 
 class SourcesPage extends ConsumerWidget {
@@ -30,11 +31,18 @@ class SourcesPage extends ConsumerWidget {
 
 // ---- 左列: ソース一覧 ----
 
-class _SourceListPanel extends ConsumerWidget {
+class _SourceListPanel extends ConsumerStatefulWidget {
   const _SourceListPanel();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SourceListPanel> createState() => _SourceListPanelState();
+}
+
+class _SourceListPanelState extends ConsumerState<_SourceListPanel> {
+  String _selectedSourceType = 'lecture';
+
+  @override
+  Widget build(BuildContext context) {
     final ingestion = ref.watch(ingestionProvider);
     final sourcesAsync = ref.watch(sourcesListProvider);
     final selectedId = ref.watch(selectedSourceIdProvider);
@@ -79,6 +87,36 @@ class _SourceListPanel extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedSourceType,
+                decoration: const InputDecoration(
+                  labelText: 'ソース種別',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                ),
+                items: sourceTypeValues.map((t) {
+                  final label = sourceTypeLabels[t] ?? t;
+                  final weight = sourceTypeWeights[t] ?? 0.5;
+                  return DropdownMenuItem<String>(
+                    value: t,
+                    child: Text(
+                      '$label ★${weight.toStringAsFixed(1)}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  );
+                }).toList(),
+                onChanged: isLoading
+                    ? null
+                    : (v) {
+                        if (v != null) {
+                          setState(() => _selectedSourceType = v);
+                        }
+                      },
+              ),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -86,7 +124,7 @@ class _SourceListPanel extends ConsumerWidget {
                       ? null
                       : () => ref
                             .read(ingestionProvider.notifier)
-                            .pickAndImport(),
+                            .pickAndImport(sourceType: _selectedSourceType),
                   icon: isLoading
                       ? const SizedBox(
                           width: 14,

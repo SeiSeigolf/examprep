@@ -20,9 +20,13 @@ class PopplerExtractor implements PageTextExtractor {
   static Future<String?> _resolvedPath() async {
     for (final candidate in _candidatePaths) {
       try {
-        final result = await Process.run(candidate, ['--version']);
-        if (result.exitCode == 0 || result.exitCode == 99) return candidate;
-      } catch (_) {}
+        // 引数なしで実行: Usage表示してexit!=0で終わるがProcessExceptionは投げない
+        // ProcessExceptionが投げられなければバイナリが存在する
+        await Process.run(candidate, []);
+        return candidate;
+      } on ProcessException {
+        // バイナリが見つからない場合は次を試す
+      }
     }
     return null;
   }

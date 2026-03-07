@@ -73,7 +73,7 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
     ),
   );
 
-  Future<void> pickAndImport() async {
+  Future<void> pickAndImport({String? sourceType}) async {
     state = state.copyWith(status: IngestionStatus.picking);
 
     try {
@@ -114,13 +114,14 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
         state = state.copyWith(status: IngestionStatus.inserting);
 
         final fileSize = File(storedPath).lengthSync();
-        final sourceType = _inferSourceType(file.name);
+        // sourceType が明示指定されていればそれを使い、なければファイル名から推定
+        final resolvedSourceType = sourceType ?? _inferSourceType(file.name);
 
         final sourceId = await _db.sourcesDao.insertSource(
           SourcesCompanion.insert(
             fileName: file.name,
             filePath: storedPath,
-            sourceType: Value(sourceType),
+            sourceType: Value(resolvedSourceType),
             fileSize: Value(fileSize),
             pageCount: Value(pages.length),
             lastExtractionMethod: Value(extraction.method),
