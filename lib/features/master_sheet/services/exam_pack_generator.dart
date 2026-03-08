@@ -3,10 +3,32 @@ import 'dart:io';
 import '../../../db/database.dart';
 import 'exporters/exam_pack_exporter.dart';
 import 'exporters/index_exporter.dart';
-import 'exporters/master_exporter.dart';
+import 'exporters/master_audit_exporter.dart';
+import 'exporters/master_study_exporter.dart';
 import 'exporters/score_strategy_exporter.dart';
 import 'exporters/source_coverage_exporter.dart';
 import 'exporters/unsure_exporter.dart';
+import 'pack_renderers/docx_renderer.dart';
+import 'pack_renderers/pdf_renderer.dart';
+
+/// 出力形式の選択肢
+enum ExportFormat {
+  markdown,
+  pdf,
+  docx;
+
+  String get label => switch (this) {
+    ExportFormat.markdown => 'Markdown (.md)',
+    ExportFormat.pdf => 'PDF (.pdf)',
+    ExportFormat.docx => 'Word (.docx)',
+  };
+
+  String fileExtension(String baseName) => switch (this) {
+    ExportFormat.markdown => '$baseName.md',
+    ExportFormat.pdf => '$baseName.pdf',
+    ExportFormat.docx => '$baseName.docx',
+  };
+}
 
 // ============================================================
 // 結果クラス
@@ -80,6 +102,7 @@ class ExamPackGenerator {
     DateTime? examDate,
     String? subject,
     DateTime? now,
+    ExportFormat format = ExportFormat.markdown,
   }) async {
     final dir = Directory(outputDir);
     if (!dir.existsSync()) {
@@ -100,11 +123,22 @@ class ExamPackGenerator {
 
     final files = <ExamPackFile>[];
     for (final r in results) {
-      final filePath = '$outputDir/${r.fileName}';
-      await File(filePath).writeAsString(r.markdown);
+      final baseName = r.fileName.replaceAll(RegExp(r'\.\w+$'), '');
+      final fileName = format.fileExtension(baseName);
+      final filePath = '$outputDir/$fileName';
+
+      switch (format) {
+        case ExportFormat.markdown:
+          await File(filePath).writeAsString(r.markdown);
+        case ExportFormat.pdf:
+          await renderMarkdownToPdf(r.markdown, filePath);
+        case ExportFormat.docx:
+          await renderMarkdownToDocx(r.markdown, filePath);
+      }
+
       files.add(
         ExamPackFile(
-          fileName: r.fileName,
+          fileName: fileName,
           path: filePath,
           markdown: r.markdown,
           summaryJson: r.summaryJson,
@@ -130,14 +164,16 @@ class ExamPackGenerator {
       return results;
     }
 
-    // デフォルトの7ファイル構成
+    // デフォルトの8ファイル構成
+    // MASTER_COVERAGE.md は MASTER_STUDY.md + MASTER_AUDIT.md に分割
     const contentExporterFileNames = [
       'SCORE_STRATEGY.md',
       'PAST_EXAM_COVERAGE.md',
       'POOL_100_COVERAGE.md',
       'PRACTICE_COVERAGE.md',
       'UNSURE_AND_CONFLICTS.md',
-      'MASTER_COVERAGE.md',
+      'MASTER_STUDY.md',
+      'MASTER_AUDIT.md',
     ];
 
     final contentExporters = <ExamPackExporter>[
@@ -146,7 +182,8 @@ class ExamPackGenerator {
       const SourceCoverageExporter('pool'),
       const SourceCoverageExporter('practice'),
       const UnsureExporter(),
-      const MasterExporter(),
+      const MasterStudyExporter(),
+      const MasterAuditExporter(),
     ];
 
     final contentResults = <ExportResult>[];

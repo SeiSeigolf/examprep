@@ -8,7 +8,9 @@
       "Bash(brew install:*)",
       "Bash(dart run:*)",
       "Bash(xcodebuild -version)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git -C /Users/s/examprep/examprep status --short)",
+      "Bash(dart pub add archive)"
     ]
   }
 }

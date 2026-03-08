@@ -10,6 +10,7 @@ import '../services/text_extraction/poppler_extractor.dart';
 import '../services/text_extraction/text_extraction_pipeline.dart';
 import '../services/text_extraction/vision_ocr_extractor.dart';
 import '../services/text_extraction/models.dart';
+import '../services/segment_kind_classifier.dart';
 
 enum IngestionStatus { idle, picking, extracting, inserting, done, error }
 
@@ -141,6 +142,7 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
                   extractionMethod: Value(extraction.method),
                   qualityScore: Value(p.qualityScore),
                   ocrConfidence: Value(p.ocrConfidence),
+                  segmentKind: Value(classifySegmentKind(p.text)),
                 ),
               )
               .toList(),

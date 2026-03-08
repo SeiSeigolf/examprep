@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show Value, Variable;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../db/database.dart';
+import '../../ingestion/services/segment_kind_classifier.dart';
 import '../../ingestion/services/text_extraction/poppler_extractor.dart';
 import '../../ingestion/services/text_extraction/syncfusion_extractor.dart';
 import '../../ingestion/services/text_extraction/text_extraction_pipeline.dart';
@@ -274,6 +275,7 @@ class QuickGeneratePipeline {
               extractionMethod: Value(extraction.method),
               qualityScore: Value(p.qualityScore),
               ocrConfidence: Value(p.ocrConfidence),
+              segmentKind: Value(classifySegmentKind(p.text)),
             ),
           )
           .toList(),

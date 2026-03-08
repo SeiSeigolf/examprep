@@ -859,6 +859,18 @@ class $SourceSegmentsTable extends SourceSegments
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _segmentKindMeta = const VerificationMeta(
+    'segmentKind',
+  );
+  @override
+  late final GeneratedColumn<String> segmentKind = GeneratedColumn<String>(
+    'segment_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('content'),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -882,6 +894,7 @@ class $SourceSegmentsTable extends SourceSegments
     extractionMethod,
     qualityScore,
     ocrConfidence,
+    segmentKind,
     createdAt,
   ];
   @override
@@ -966,6 +979,15 @@ class $SourceSegmentsTable extends SourceSegments
         ),
       );
     }
+    if (data.containsKey('segment_kind')) {
+      context.handle(
+        _segmentKindMeta,
+        segmentKind.isAcceptableOrUnknown(
+          data['segment_kind']!,
+          _segmentKindMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1017,6 +1039,10 @@ class $SourceSegmentsTable extends SourceSegments
         DriftSqlType.double,
         data['${effectivePrefix}ocr_confidence'],
       ),
+      segmentKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}segment_kind'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1040,6 +1066,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
   final String? extractionMethod;
   final double? qualityScore;
   final double? ocrConfidence;
+  final String segmentKind;
   final DateTime createdAt;
   const SourceSegment({
     required this.id,
@@ -1051,6 +1078,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     this.extractionMethod,
     this.qualityScore,
     this.ocrConfidence,
+    required this.segmentKind,
     required this.createdAt,
   });
   @override
@@ -1071,6 +1099,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     if (!nullToAbsent || ocrConfidence != null) {
       map['ocr_confidence'] = Variable<double>(ocrConfidence);
     }
+    map['segment_kind'] = Variable<String>(segmentKind);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1092,6 +1121,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       ocrConfidence: ocrConfidence == null && nullToAbsent
           ? const Value.absent()
           : Value(ocrConfidence),
+      segmentKind: Value(segmentKind),
       createdAt: Value(createdAt),
     );
   }
@@ -1111,6 +1141,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       extractionMethod: serializer.fromJson<String?>(json['extractionMethod']),
       qualityScore: serializer.fromJson<double?>(json['qualityScore']),
       ocrConfidence: serializer.fromJson<double?>(json['ocrConfidence']),
+      segmentKind: serializer.fromJson<String>(json['segmentKind']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1127,6 +1158,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       'extractionMethod': serializer.toJson<String?>(extractionMethod),
       'qualityScore': serializer.toJson<double?>(qualityScore),
       'ocrConfidence': serializer.toJson<double?>(ocrConfidence),
+      'segmentKind': serializer.toJson<String>(segmentKind),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1141,6 +1173,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     Value<String?> extractionMethod = const Value.absent(),
     Value<double?> qualityScore = const Value.absent(),
     Value<double?> ocrConfidence = const Value.absent(),
+    String? segmentKind,
     DateTime? createdAt,
   }) => SourceSegment(
     id: id ?? this.id,
@@ -1156,6 +1189,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     ocrConfidence: ocrConfidence.present
         ? ocrConfidence.value
         : this.ocrConfidence,
+    segmentKind: segmentKind ?? this.segmentKind,
     createdAt: createdAt ?? this.createdAt,
   );
   SourceSegment copyWithCompanion(SourceSegmentsCompanion data) {
@@ -1181,6 +1215,9 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
       ocrConfidence: data.ocrConfidence.present
           ? data.ocrConfidence.value
           : this.ocrConfidence,
+      segmentKind: data.segmentKind.present
+          ? data.segmentKind.value
+          : this.segmentKind,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1197,6 +1234,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
           ..write('extractionMethod: $extractionMethod, ')
           ..write('qualityScore: $qualityScore, ')
           ..write('ocrConfidence: $ocrConfidence, ')
+          ..write('segmentKind: $segmentKind, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1213,6 +1251,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
     extractionMethod,
     qualityScore,
     ocrConfidence,
+    segmentKind,
     createdAt,
   );
   @override
@@ -1228,6 +1267,7 @@ class SourceSegment extends DataClass implements Insertable<SourceSegment> {
           other.extractionMethod == this.extractionMethod &&
           other.qualityScore == this.qualityScore &&
           other.ocrConfidence == this.ocrConfidence &&
+          other.segmentKind == this.segmentKind &&
           other.createdAt == this.createdAt);
 }
 
@@ -1241,6 +1281,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
   final Value<String?> extractionMethod;
   final Value<double?> qualityScore;
   final Value<double?> ocrConfidence;
+  final Value<String> segmentKind;
   final Value<DateTime> createdAt;
   const SourceSegmentsCompanion({
     this.id = const Value.absent(),
@@ -1252,6 +1293,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     this.extractionMethod = const Value.absent(),
     this.qualityScore = const Value.absent(),
     this.ocrConfidence = const Value.absent(),
+    this.segmentKind = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   SourceSegmentsCompanion.insert({
@@ -1264,6 +1306,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     this.extractionMethod = const Value.absent(),
     this.qualityScore = const Value.absent(),
     this.ocrConfidence = const Value.absent(),
+    this.segmentKind = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : sourceId = Value(sourceId),
        pageNumber = Value(pageNumber);
@@ -1277,6 +1320,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     Expression<String>? extractionMethod,
     Expression<double>? qualityScore,
     Expression<double>? ocrConfidence,
+    Expression<String>? segmentKind,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -1289,6 +1333,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
       if (extractionMethod != null) 'extraction_method': extractionMethod,
       if (qualityScore != null) 'quality_score': qualityScore,
       if (ocrConfidence != null) 'ocr_confidence': ocrConfidence,
+      if (segmentKind != null) 'segment_kind': segmentKind,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -1303,6 +1348,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     Value<String?>? extractionMethod,
     Value<double?>? qualityScore,
     Value<double?>? ocrConfidence,
+    Value<String>? segmentKind,
     Value<DateTime>? createdAt,
   }) {
     return SourceSegmentsCompanion(
@@ -1315,6 +1361,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
       extractionMethod: extractionMethod ?? this.extractionMethod,
       qualityScore: qualityScore ?? this.qualityScore,
       ocrConfidence: ocrConfidence ?? this.ocrConfidence,
+      segmentKind: segmentKind ?? this.segmentKind,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -1349,6 +1396,9 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
     if (ocrConfidence.present) {
       map['ocr_confidence'] = Variable<double>(ocrConfidence.value);
     }
+    if (segmentKind.present) {
+      map['segment_kind'] = Variable<String>(segmentKind.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1367,6 +1417,7 @@ class SourceSegmentsCompanion extends UpdateCompanion<SourceSegment> {
           ..write('extractionMethod: $extractionMethod, ')
           ..write('qualityScore: $qualityScore, ')
           ..write('ocrConfidence: $ocrConfidence, ')
+          ..write('segmentKind: $segmentKind, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -10066,6 +10117,7 @@ typedef $$SourceSegmentsTableCreateCompanionBuilder =
       Value<String?> extractionMethod,
       Value<double?> qualityScore,
       Value<double?> ocrConfidence,
+      Value<String> segmentKind,
       Value<DateTime> createdAt,
     });
 typedef $$SourceSegmentsTableUpdateCompanionBuilder =
@@ -10079,6 +10131,7 @@ typedef $$SourceSegmentsTableUpdateCompanionBuilder =
       Value<String?> extractionMethod,
       Value<double?> qualityScore,
       Value<double?> ocrConfidence,
+      Value<String> segmentKind,
       Value<DateTime> createdAt,
     });
 
@@ -10244,6 +10297,11 @@ class $$SourceSegmentsTableFilterComposer
 
   ColumnFilters<double> get ocrConfidence => $composableBuilder(
     column: $table.ocrConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get segmentKind => $composableBuilder(
+    column: $table.segmentKind,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10425,6 +10483,11 @@ class $$SourceSegmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get segmentKind => $composableBuilder(
+    column: $table.segmentKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -10496,6 +10559,11 @@ class $$SourceSegmentsTableAnnotationComposer
 
   GeneratedColumn<double> get ocrConfidence => $composableBuilder(
     column: $table.ocrConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get segmentKind => $composableBuilder(
+    column: $table.segmentKind,
     builder: (column) => column,
   );
 
@@ -10672,6 +10740,7 @@ class $$SourceSegmentsTableTableManager
                 Value<String?> extractionMethod = const Value.absent(),
                 Value<double?> qualityScore = const Value.absent(),
                 Value<double?> ocrConfidence = const Value.absent(),
+                Value<String> segmentKind = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SourceSegmentsCompanion(
                 id: id,
@@ -10683,6 +10752,7 @@ class $$SourceSegmentsTableTableManager
                 extractionMethod: extractionMethod,
                 qualityScore: qualityScore,
                 ocrConfidence: ocrConfidence,
+                segmentKind: segmentKind,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -10696,6 +10766,7 @@ class $$SourceSegmentsTableTableManager
                 Value<String?> extractionMethod = const Value.absent(),
                 Value<double?> qualityScore = const Value.absent(),
                 Value<double?> ocrConfidence = const Value.absent(),
+                Value<String> segmentKind = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SourceSegmentsCompanion.insert(
                 id: id,
@@ -10707,6 +10778,7 @@ class $$SourceSegmentsTableTableManager
                 extractionMethod: extractionMethod,
                 qualityScore: qualityScore,
                 ocrConfidence: ocrConfidence,
+                segmentKind: segmentKind,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0

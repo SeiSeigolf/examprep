@@ -17,5 +17,9 @@ class SourceSegments extends Table {
   TextColumn get extractionMethod => text().nullable()();
   RealColumn get qualityScore => real().nullable()();
   RealColumn get ocrConfidence => real().nullable()();
+  // ノイズ除去用分類:
+  // content | header | syllabus | assignment_meta | references | boilerplate
+  TextColumn get segmentKind =>
+      text().withDefault(const Constant('content'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

@@ -273,6 +273,7 @@ class CoverageMetricsService {
     int unitId, {
     int limit = 3,
   }) async {
+    // content セグメントのみ優先。0件なら fallback でノイズ込みを許可（[NOISY] ラベル付き）
     final rows = await db
         .customSelect(
           '''
@@ -282,7 +283,45 @@ class CoverageMetricsService {
             s.source_group,
             COALESCE(epi.page_number, ss.page_number) AS page_number,
             COALESCE(epi.snippet, SUBSTR(ss.content, 1, 200)) AS snippet,
-            s.last_quality_score AS quality
+            s.last_quality_score AS quality,
+            ss.segment_kind
+          FROM claims c
+          JOIN evidence_packs ep ON ep.claim_id = c.id
+          JOIN evidence_pack_items epi ON epi.evidence_pack_id = ep.id
+          JOIN source_segments ss ON ss.id = epi.source_segment_id
+          JOIN sources s ON s.id = ss.source_id
+          WHERE c.exam_unit_id = ?1
+            AND ss.segment_kind = 'content'
+          ORDER BY COALESCE(epi.weight, 1) DESC
+          LIMIT ?2
+          ''',
+          variables: [Variable.withInt(unitId), Variable.withInt(limit)],
+          readsFrom: {
+            db.claims,
+            db.evidencePacks,
+            db.evidencePackItems,
+            db.sourceSegments,
+            db.sources,
+          },
+        )
+        .get();
+
+    if (rows.isNotEmpty) {
+      return _toEvidenceList(rows, noisy: false);
+    }
+
+    // fallback 1: evidence_packs（segment_kind 制限なし → [NOISY]ラベル付き）
+    final noisyRows = await db
+        .customSelect(
+          '''
+          SELECT
+            s.file_name,
+            s.file_path,
+            s.source_group,
+            COALESCE(epi.page_number, ss.page_number) AS page_number,
+            COALESCE(epi.snippet, SUBSTR(ss.content, 1, 200)) AS snippet,
+            s.last_quality_score AS quality,
+            ss.segment_kind
           FROM claims c
           JOIN evidence_packs ep ON ep.claim_id = c.id
           JOIN evidence_pack_items epi ON epi.evidence_pack_id = ep.id
@@ -303,11 +342,11 @@ class CoverageMetricsService {
         )
         .get();
 
-    if (rows.isNotEmpty) {
-      return _toEvidenceList(rows);
+    if (noisyRows.isNotEmpty) {
+      return _toEvidenceList(noisyRows, noisy: true);
     }
 
-    // fallback: evidence_links
+    // fallback 2: evidence_links（segment_kind 制限なし → [NOISY]ラベル付き）
     final fallback = await db
         .customSelect(
           '''
@@ -317,7 +356,8 @@ class CoverageMetricsService {
             s.source_group,
             ss.page_number,
             SUBSTR(ss.content, 1, 200) AS snippet,
-            s.last_quality_score AS quality
+            s.last_quality_score AS quality,
+            ss.segment_kind
           FROM claims c
           JOIN evidence_links el ON el.claim_id = c.id
           JOIN source_segments ss ON ss.id = el.source_segment_id
@@ -336,12 +376,13 @@ class CoverageMetricsService {
         )
         .get();
 
-    return _toEvidenceList(fallback);
+    return _toEvidenceList(fallback, noisy: true);
   }
 
   static List<EvidenceRecord> _toEvidenceList(
-    List<dynamic> rows,
-  ) {
+    List<dynamic> rows, {
+    bool noisy = false,
+  }) {
     final seen = <String>{};
     final out = <EvidenceRecord>[];
     for (final r in rows) {
@@ -349,12 +390,17 @@ class CoverageMetricsService {
           '${r.read<String>('file_path')}:${r.read<int>('page_number')}';
       if (seen.contains(key)) continue;
       seen.add(key);
+      var snippet = _normalizeSnippet(r.read<String>('snippet'));
+      final kind = r.readNullable<String>('segment_kind') ?? 'content';
+      if (noisy && kind != 'content') {
+        snippet = '[NOISY:$kind] $snippet';
+      }
       out.add(
         EvidenceRecord(
           fileName: r.read<String>('file_name'),
           filePath: r.read<String>('file_path'),
           pageNumber: r.read<int>('page_number'),
-          snippet: _normalizeSnippet(r.read<String>('snippet')),
+          snippet: snippet,
           quality: r.readNullable<double>('quality'),
           sourceGroup: r.readNullable<String>('source_group'),
         ),

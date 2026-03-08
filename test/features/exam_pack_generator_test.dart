@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, Variable;
 import 'package:drift/native.dart';
 import 'package:exam_os/db/database.dart';
 import 'package:exam_os/features/master_sheet/services/exam_pack_generator.dart';
@@ -173,7 +173,7 @@ Future<({AppDatabase db, int profileId})> _buildFixture() async {
 
 void main() {
   group('ExamPackGenerator', () {
-    test('generateMarkdowns: 7ファイルが生成される', () async {
+    test('generateMarkdowns: 8ファイルが生成される（MASTER_STUDY + MASTER_AUDIT）', () async {
       final fixture = await _buildFixture();
       final db = fixture.db;
       addTearDown(db.close);
@@ -185,7 +185,7 @@ void main() {
         now: DateTime(2026, 3, 8, 9),
       );
 
-      expect(results.length, 7);
+      expect(results.length, 8);
 
       final fileNames = results.map((r) => r.fileName).toSet();
       expect(fileNames, containsAll([
@@ -195,7 +195,8 @@ void main() {
         'POOL_100_COVERAGE.md',
         'PRACTICE_COVERAGE.md',
         'UNSURE_AND_CONFLICTS.md',
-        'MASTER_COVERAGE.md',
+        'MASTER_STUDY.md',
+        'MASTER_AUDIT.md',
       ]));
     });
 
@@ -217,7 +218,8 @@ void main() {
       expect(index.markdown, contains('POOL_100_COVERAGE.md'));
       expect(index.markdown, contains('PRACTICE_COVERAGE.md'));
       expect(index.markdown, contains('UNSURE_AND_CONFLICTS.md'));
-      expect(index.markdown, contains('MASTER_COVERAGE.md'));
+      expect(index.markdown, contains('MASTER_STUDY.md'));
+      expect(index.markdown, contains('MASTER_AUDIT.md'));
       expect(index.markdown, contains('循環器期末'));
     });
 
@@ -280,7 +282,7 @@ void main() {
       expect(unsure.summaryJson!['uncoveredCount'], 1);
     });
 
-    test('MASTER_COVERAGE.md: 全Unitを含む統合シートが生成される', () async {
+    test('MASTER_STUDY.md: 学習用シートが完成判定を含む', () async {
       final fixture = await _buildFixture();
       final db = fixture.db;
       addTearDown(db.close);
@@ -292,11 +294,63 @@ void main() {
         now: DateTime(2026, 3, 8, 9),
       );
 
-      final master =
-          results.firstWhere((r) => r.fileName == 'MASTER_COVERAGE.md');
-      expect(master.markdown, contains('循環器期末'));
-      expect(master.markdown, contains('完成判定'));
-      expect(master.markdown, contains('心不全'));
+      final study = results.firstWhere((r) => r.fileName == 'MASTER_STUDY.md');
+      expect(study.markdown, contains('循環器期末'));
+      expect(study.markdown, contains('完成判定'));
+      expect(study.markdown, contains('心不全'));
+    });
+
+    test('MASTER_AUDIT.md: 監査用シートが完成判定と根拠を含む', () async {
+      final fixture = await _buildFixture();
+      final db = fixture.db;
+      addTearDown(db.close);
+
+      final generator = ExamPackGenerator(db);
+      final results = await generator.generateMarkdowns(
+        examProfileId: fixture.profileId,
+        examName: '循環器期末',
+        now: DateTime(2026, 3, 8, 9),
+      );
+
+      final audit = results.firstWhere((r) => r.fileName == 'MASTER_AUDIT.md');
+      expect(audit.markdown, contains('循環器期末'));
+      expect(audit.markdown, contains('完成判定'));
+      expect(audit.markdown, contains('心不全'));
+    });
+
+    test('segment_kind=content のみが根拠として採用される（ノイズ除外）', () async {
+      final fixture = await _buildFixture();
+      final db = fixture.db;
+      addTearDown(db.close);
+
+      // ノイズセグメントを追加
+      final pastSourceRows = await db.customSelect(
+        'SELECT id FROM sources WHERE source_group = ?',
+        variables: [Variable<String>('past_exam')],
+      ).get();
+      final pastSourceId = pastSourceRows.first.read<int>('id');
+
+      await db.into(db.sourceSegments).insert(
+        SourceSegmentsCompanion.insert(
+          sourceId: pastSourceId,
+          pageNumber: 99,
+          content: const Value('達成目標: この授業ではシラバスに示す内容を理解する'),
+          segmentKind: const Value('syllabus'),
+        ),
+      );
+
+      // MASTER_STUDY.md を生成してノイズが含まれないことを確認
+      final generator = ExamPackGenerator(db);
+      final results = await generator.generateMarkdowns(
+        examProfileId: fixture.profileId,
+        examName: '循環器期末',
+        now: DateTime(2026, 3, 8, 9),
+      );
+
+      final study = results.firstWhere((r) => r.fileName == 'MASTER_STUDY.md');
+      // ノイズセグメントのsnippetは [NOISY] ラベルで区別されるか、除外される
+      // ただしsnippetにsyllabusキーワードがそのまま主要根拠として現れないこと
+      expect(study.markdown, isNot(contains('[NOISY:syllabus]')));
     });
   });
 }

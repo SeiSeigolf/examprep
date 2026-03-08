@@ -185,14 +185,19 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
     final drafts = <SegmentUnitDraft>[];
     final seenTitles = <String>{}; // normalized title
     for (final seg in segments) {
+      // ノイズ系セグメントはUnit候補から除外
+      if (seg.segmentKind != 'content' && seg.segmentKind != 'header') {
+        continue;
+      }
       final text = seg.content.trim();
       if (text.length < 8) continue;
 
       final headingLines = _extractHeadingLikeLines(text);
       if (headingLines.isNotEmpty) {
         for (final heading in headingLines.take(5)) {
-          final title = _extractCandidateTitle(heading);
-          if (title.length < 2) continue;
+          final rawTitle = _extractCandidateTitle(heading);
+          final title = normalizeUnitTitle(rawTitle);
+          if (!_isValidUnitTitle(title)) continue;
           final norm = _normalizeTitle(title);
           if (seenTitles.contains(norm)) continue;
           seenTitles.add(norm);
@@ -217,8 +222,9 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
             .where((e) => e.length >= 8)
             .take(3);
         for (final chunk in chunks) {
-          final title = _extractCandidateTitle(chunk);
-          if (title.length < 2) continue;
+          final rawTitle = _extractCandidateTitle(chunk);
+          final title = normalizeUnitTitle(rawTitle);
+          if (!_isValidUnitTitle(title)) continue;
           final norm = _normalizeTitle(title);
           if (seenTitles.contains(norm)) continue;
           seenTitles.add(norm);
@@ -472,5 +478,49 @@ class SourcesDao extends DatabaseAccessor<AppDatabase> with _$SourcesDaoMixin {
       return '選択肢';
     }
     return '選択肢';
+  }
+
+  /// タイトル候補を「学習対象として有効か」確認する。
+  /// noisy キーワードを含む候補は draft 生成しない。
+  bool _isValidUnitTitle(String title) {
+    if (title.length < 2 || title.length > 50) return false;
+    final t = title;
+    // ノイズキーワード
+    const noisy = [
+      '提出', '締切', '期限', '課題', '参考書', '教科書', '参考文献',
+      'シラバス', '達成目標', '到達目標', '評価方法', '成績評価',
+      'http', 'URL', '@', 'メール', 'mail',
+      '注意事項', 'オフィスアワー', '氏名', '学籍番号',
+      '遅刻', '出席点', '著作権',
+    ];
+    for (final kw in noisy) {
+      if (t.contains(kw)) return false;
+    }
+    return true;
+  }
+
+  /// 生成したタイトルを名詞句寄りに正規化する。
+  static String normalizeUnitTitle(String raw) {
+    var s = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    // 先頭の装飾記号を除去
+    s = s.replaceAll(RegExp(r'^[■▶●◆▼★☆□△○※・\-–—]+\s*'), '');
+    // 番号付き見出し (1. / (1) / ① / 【1】) を除去
+    s = s.replaceAll(
+      RegExp(r'^(\d+[\.\)）]|[（(]\d+[）)]|【\d+】|[①-⑳])\s*'),
+      '',
+    );
+    // 冗長な語尾を削る（〜について、〜できるように、〜する、〜に関して）
+    s = s.replaceAll(
+      RegExp(
+        r'(について学ぶ?|について理解する?|できるようになる?|に関する?|に関して|をする|のこと)$',
+      ),
+      '',
+    );
+    // URL/メールを消す
+    s = s.replaceAll(RegExp(r'https?://\S+'), '').trim();
+    s = s.replaceAll(RegExp(r'\S+@\S+\.\S+'), '').trim();
+    // 40文字に切り詰め
+    if (s.length > 40) s = s.substring(0, 40).trimRight();
+    return s.trim();
   }
 }

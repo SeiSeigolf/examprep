@@ -24,7 +24,8 @@ class IndexExporter extends ExamPackExporter {
     b.writeln('2. **PAST_EXAM_COVERAGE.md** で過去問カバー率を把握');
     b.writeln('3. **POOL_100_COVERAGE.md / PRACTICE_COVERAGE.md** で演習問題の確認');
     b.writeln('4. **UNSURE_AND_CONFLICTS.md** で曖昧・矛盾を解消');
-    b.writeln('5. **MASTER_COVERAGE.md** で全体を統合確認');
+    b.writeln('5. **MASTER_STUDY.md** で学習用まとめを確認（ノイズ除去・勉強法付き）');
+    b.writeln('6. **MASTER_AUDIT.md** で根拠・監査ログを確認（詳細版）');
 
     return ExportResult(fileName: 'INDEX.md', markdown: b.toString());
   }
@@ -36,6 +37,8 @@ class IndexExporter extends ExamPackExporter {
       'POOL_100_COVERAGE.md' => 'プール100問カバー率',
       'PRACTICE_COVERAGE.md' => '演習問題カバー率',
       'UNSURE_AND_CONFLICTS.md' => '曖昧・Conflict一覧',
+      'MASTER_STUDY.md' => '学習用 Master Coverage（ノイズ除去）',
+      'MASTER_AUDIT.md' => '監査用 Master Coverage（根拠詳細）',
       'MASTER_COVERAGE.md' => 'Master Coverage Sheet',
       _ => fileName,
     };

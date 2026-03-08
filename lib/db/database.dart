@@ -95,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -253,6 +253,10 @@ class AppDatabase extends _$AppDatabase {
             ELSE source_type
           END
         ''');
+      }
+      if (from < 19) {
+        await m.addColumn(sourceSegments, sourceSegments.segmentKind);
+        // 既存セグメントは全て content 扱い（デフォルト値で補填）
       }
     },
   );

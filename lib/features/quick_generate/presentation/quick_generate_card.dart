@@ -13,7 +13,8 @@ import '../../../shared/constants/source_weights.dart';
 import '../../../shared/providers/exam_profile.provider.dart';
 import '../../../shared/providers/navigation.provider.dart';
 import '../../exam_units/providers/exam_units.provider.dart';
-import '../../master_sheet/services/exam_pack_generator.dart';
+import '../../master_sheet/services/exam_pack_generator.dart'
+    show ExamPackGenerator, ExamPackResult, ExportFormat;
 import '../services/quick_generate_pipeline.dart';
 
 // ============================================================
@@ -616,6 +617,7 @@ class _ResultPanelState extends ConsumerState<_ResultPanel> {
   bool _packRunning = false;
   ExamPackResult? _packResult;
   Object? _packError;
+  ExportFormat _exportFormat = ExportFormat.markdown;
 
   static const _readyConflictThreshold = 5;
   static const _readyLowConfidenceThreshold = 10;
@@ -640,6 +642,7 @@ class _ResultPanelState extends ConsumerState<_ResultPanel> {
         examProfileId: result.examProfileId,
         examName: _examName(),
         outputDir: outputDir,
+        format: _exportFormat,
       );
 
       if (!mounted) return;
@@ -858,7 +861,37 @@ class _ResultPanelState extends ConsumerState<_ResultPanel> {
           const Divider(color: Color(0xFF2D3440), height: 1),
           const SizedBox(height: 10),
 
-          // ---- Action buttons ----
+          // ---- 出力形式 + Action buttons ----
+          Row(
+            children: [
+              const Text(
+                '出力形式:',
+                style: TextStyle(color: Colors.white54, fontSize: 11),
+              ),
+              const SizedBox(width: 6),
+              DropdownButton<ExportFormat>(
+                value: _exportFormat,
+                isDense: true,
+                underline: const SizedBox(),
+                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                dropdownColor: const Color(0xFF1E2330),
+                items: ExportFormat.values
+                    .map(
+                      (f) => DropdownMenuItem(
+                        value: f,
+                        child: Text(f.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _packRunning
+                    ? null
+                    : (f) {
+                        if (f != null) setState(() => _exportFormat = f);
+                      },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
