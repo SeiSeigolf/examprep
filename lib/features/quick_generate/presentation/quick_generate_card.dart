@@ -107,6 +107,13 @@ class _QuickGenerateCardState extends ConsumerState<QuickGenerateCard> {
 
   bool _settingsExpanded = false;
   bool _running = false;
+
+  // Ollama 設定
+  bool _useOllama = false;
+  String _ollamaModel = 'qwen3:4b';
+  final _ollamaBaseUrlController = TextEditingController(
+    text: 'http://localhost:11434',
+  );
   QuickGenerateProgress? _progress;
   QuickGenerateResult? _result;
   Object? _error;
@@ -116,6 +123,7 @@ class _QuickGenerateCardState extends ConsumerState<QuickGenerateCard> {
   void dispose() {
     _examNameController.dispose();
     _subjectController.dispose();
+    _ollamaBaseUrlController.dispose();
     super.dispose();
   }
 
@@ -187,6 +195,11 @@ class _QuickGenerateCardState extends ConsumerState<QuickGenerateCard> {
               : _subjectController.text.trim(),
           pdfPaths: _pdfPaths,
           sourceType: _selectedSourceType,
+          useOllama: _useOllama,
+          ollamaModel: _ollamaModel,
+          ollamaBaseUrl: _ollamaBaseUrlController.text.trim().isEmpty
+              ? 'http://localhost:11434'
+              : _ollamaBaseUrlController.text.trim(),
         ),
         onProgress: (p) {
           if (!mounted) return;
@@ -415,6 +428,90 @@ class _QuickGenerateCardState extends ConsumerState<QuickGenerateCard> {
                                     setState(() => _selectedSourceType = v),
                         ),
                       ),
+                    ],
+                  ),
+                  // ---- Ollama 設定 ----
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _useOllama,
+                        onChanged: _running
+                            ? null
+                            : (v) =>
+                                  setState(() => _useOllama = v ?? false),
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      const Text(
+                        'Ollamaを使う',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (_useOllama) ...[
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 140,
+                          child: DropdownButtonFormField<String>(
+                            value: _ollamaModel,
+                            isDense: true,
+                            decoration: const InputDecoration(
+                              labelText: 'モデル',
+                              labelStyle: TextStyle(fontSize: 11),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'qwen3:4b',
+                                child: Text(
+                                  'qwen3:4b',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'gpt-oss:20b',
+                                child: Text(
+                                  'gpt-oss:20b',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                              ),
+                            ],
+                            onChanged: _running
+                                ? null
+                                : (v) {
+                                    if (v != null) {
+                                      setState(() => _ollamaModel = v);
+                                    }
+                                  },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 200,
+                          child: TextField(
+                            controller: _ollamaBaseUrlController,
+                            enabled: !_running,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                            decoration: const InputDecoration(
+                              labelText: 'baseUrl',
+                              labelStyle: TextStyle(fontSize: 11),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],

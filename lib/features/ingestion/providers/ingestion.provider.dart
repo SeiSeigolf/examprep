@@ -10,6 +10,8 @@ import '../services/text_extraction/poppler_extractor.dart';
 import '../services/text_extraction/text_extraction_pipeline.dart';
 import '../services/text_extraction/vision_ocr_extractor.dart';
 import '../services/text_extraction/models.dart';
+import '../services/llm_text_repair_service.dart';
+import '../services/ollama_client.dart';
 import '../services/segment_kind_classifier.dart';
 
 enum IngestionStatus { idle, picking, extracting, inserting, done, error }
@@ -60,6 +62,9 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
   IngestionNotifier(this._db) : super(const IngestionState());
 
   final AppDatabase _db;
+  final LlmTextRepairService _repair = LlmTextRepairService(
+    client: OllamaClient(),
+  );
   late final TextExtractionPipeline _pipeline = TextExtractionPipeline(
     syncfusion: SyncfusionExtractor(),
     poppler: PopplerExtractor(),
@@ -131,22 +136,31 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
           ),
         );
 
-        // ページごとにセグメントを登録（テキスト付き）
-        await _db.sourcesDao.insertSegments(
-          pages
-              .map(
-                (p) => SourceSegmentsCompanion.insert(
-                  sourceId: sourceId,
-                  pageNumber: p.pageNumber,
-                  content: Value(p.text),
-                  extractionMethod: Value(extraction.method),
-                  qualityScore: Value(p.qualityScore),
-                  ocrConfidence: Value(p.ocrConfidence),
-                  segmentKind: Value(classifySegmentKind(p.text)),
-                ),
-              )
-              .toList(),
-        );
+        // LLM repair: ページごとに修復・分類（失敗時は従来動作）
+        final segments = <SourceSegmentsCompanion>[];
+        for (final p in pages) {
+          final repair = await _repair.repairPageText(
+            rawText: p.text,
+            pageNumber: p.pageNumber,
+            sourceFileName: file.name,
+          );
+          final kind = repair.flags.contains('llm_skipped')
+              ? classifySegmentKind(p.text)
+              : repair.suggestedSegmentKind;
+          segments.add(
+            SourceSegmentsCompanion.insert(
+              sourceId: sourceId,
+              pageNumber: p.pageNumber,
+              content: Value(repair.cleanText),
+              extractionMethod: Value(extraction.method),
+              qualityScore: Value(p.qualityScore),
+              ocrConfidence: Value(p.ocrConfidence),
+              contentConfidence: Value(repair.qualityLabel),
+              segmentKind: Value(kind),
+            ),
+          );
+        }
+        await _db.sourcesDao.insertSegments(segments);
 
         await _db.sourcesDao.recalculatePastExamFrequency();
         await _db.auditDao.refreshCoverageAudits();

@@ -10,7 +10,8 @@
       "Bash(xcodebuild -version)",
       "Bash(grep:*)",
       "Bash(git -C /Users/s/examprep/examprep status --short)",
-      "Bash(dart pub add archive)"
+      "Bash(dart pub add archive)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

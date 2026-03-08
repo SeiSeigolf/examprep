@@ -4,7 +4,12 @@ import 'package:drift/drift.dart' show Value, Variable;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../db/database.dart';
+import '../../../db/daos/sources_dao.dart' show SegmentUnitDraft;
+import '../../../shared/llm/ollama_client.dart';
+import '../../ingestion/services/llm_text_repair_service.dart';
+import '../../ingestion/services/ollama_client.dart' as ingestion_ollama;
 import '../../ingestion/services/segment_kind_classifier.dart';
+import 'ollama_unit_draft_service.dart';
 import '../../ingestion/services/text_extraction/poppler_extractor.dart';
 import '../../ingestion/services/text_extraction/syncfusion_extractor.dart';
 import '../../ingestion/services/text_extraction/text_extraction_pipeline.dart';
@@ -19,6 +24,9 @@ class QuickGenerateRequest {
     this.pdfPaths = const [],
     this.sourceType,
     this.existingSourceIds = const [],
+    this.useOllama = false,
+    this.ollamaModel = 'qwen3:4b',
+    this.ollamaBaseUrl = 'http://localhost:11434',
   });
 
   final String examName;
@@ -27,6 +35,15 @@ class QuickGenerateRequest {
   final List<String> pdfPaths;
   final String? sourceType;
   final List<int> existingSourceIds;
+
+  /// true のとき Ollama で Unit 候補を生成する（失敗時はルールベースにフォールバック）
+  final bool useOllama;
+
+  /// 使用するモデル名
+  final String ollamaModel;
+
+  /// Ollama のベースURL（ローカル専用）
+  final String ollamaBaseUrl;
 }
 
 enum QuickGenerateStep {
@@ -99,6 +116,9 @@ class QuickGeneratePipeline {
       MasterCoverageExportInput input,
     )?
     exporter,
+    LlmTextRepairService? repairService,
+    ingestion_ollama.OllamaClient? ollamaClient,
+    OllamaUnitDraftService? unitDraftService,
   }) : _pipeline =
            extractionPipeline ??
            TextExtractionPipeline(
@@ -106,7 +126,13 @@ class QuickGeneratePipeline {
              poppler: PopplerExtractor(),
              ocr: VisionOcrExtractor(),
            ),
-       _exporter = exporter;
+       _exporter = exporter,
+       _repair =
+           repairService ??
+           LlmTextRepairService(
+             client: ollamaClient ?? ingestion_ollama.OllamaClient(),
+           ),
+       _unitDraftService = unitDraftService;
 
   final AppDatabase _db;
   final TextExtractionPipeline _pipeline;
@@ -115,6 +141,10 @@ class QuickGeneratePipeline {
     MasterCoverageExportInput input,
   )?
   _exporter;
+  final LlmTextRepairService _repair;
+
+  /// Ollama Unit候補生成サービス（null=Ollama無効）
+  final OllamaUnitDraftService? _unitDraftService;
 
   Future<QuickGenerateResult> run(
     QuickGenerateRequest request, {
@@ -145,6 +175,17 @@ class QuickGeneratePipeline {
       throw StateError('対象ソースがありません。PDFを追加するか既存ソースを選択してください。');
     }
 
+    // useOllama==true のとき、リクエストの設定でOllamaサービスを構築
+    final ollamaSvc = request.useOllama
+        ? (_unitDraftService ??
+              OllamaUnitDraftService(
+                client: SharedOllamaClient(
+                  baseUrl: request.ollamaBaseUrl,
+                ),
+                model: request.ollamaModel,
+              ))
+        : null;
+
     final createdUnitIds = <int>[];
     for (var i = 0; i < sourceIds.length; i++) {
       final sourceId = sourceIds[i];
@@ -156,9 +197,22 @@ class QuickGeneratePipeline {
           total: sourceIds.length,
         ),
       );
-      final drafts = await _db.sourcesDao.suggestExamUnitDraftsFromSource(
-        sourceId,
-      );
+
+      List<SegmentUnitDraft> drafts = const [];
+
+      // Ollama が有効なら試みる。空/失敗時はルールベースにフォールバック
+      if (ollamaSvc != null) {
+        drafts = await ollamaSvc.generateDrafts(
+          db: _db,
+          sourceId: sourceId,
+        );
+      }
+      if (drafts.isEmpty) {
+        drafts = await _db.sourcesDao.suggestExamUnitDraftsFromSource(
+          sourceId,
+        );
+      }
+
       if (drafts.isEmpty) continue;
       final ids = await _db.sourcesDao.createExamUnitsFromDrafts(drafts);
       createdUnitIds.addAll(ids);
@@ -265,21 +319,34 @@ class QuickGeneratePipeline {
       ),
     );
 
-    await _db.sourcesDao.insertSegments(
-      extraction.pages
-          .map(
-            (p) => SourceSegmentsCompanion.insert(
-              sourceId: sourceId,
-              pageNumber: p.pageNumber,
-              content: Value(p.text),
-              extractionMethod: Value(extraction.method),
-              qualityScore: Value(p.qualityScore),
-              ocrConfidence: Value(p.ocrConfidence),
-              segmentKind: Value(classifySegmentKind(p.text)),
-            ),
-          )
-          .toList(),
-    );
+    // LLM repair: ページごとに修復・分類を試みる（失敗時は従来動作）
+    final segments = <SourceSegmentsCompanion>[];
+    for (final p in extraction.pages) {
+      final repair = await _repair.repairPageText(
+        rawText: p.text,
+        pageNumber: p.pageNumber,
+        sourceFileName: fileName,
+      );
+
+      // segment_kind: LLM 優先。LLM スキップ時は既存分類器を使う
+      final kind = repair.flags.contains('llm_skipped')
+          ? classifySegmentKind(p.text)
+          : repair.suggestedSegmentKind;
+
+      segments.add(
+        SourceSegmentsCompanion.insert(
+          sourceId: sourceId,
+          pageNumber: p.pageNumber,
+          content: Value(repair.cleanText),
+          extractionMethod: Value(extraction.method),
+          qualityScore: Value(p.qualityScore),
+          ocrConfidence: Value(p.ocrConfidence),
+          contentConfidence: Value(repair.qualityLabel),
+          segmentKind: Value(kind),
+        ),
+      );
+    }
+    await _db.sourcesDao.insertSegments(segments);
 
     return sourceId;
   }
