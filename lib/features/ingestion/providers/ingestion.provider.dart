@@ -152,7 +152,7 @@ class IngestionNotifier extends StateNotifier<IngestionState> {
               sourceId: sourceId,
               pageNumber: p.pageNumber,
               content: Value(repair.cleanText),
-              extractionMethod: Value(extraction.method),
+              extractionMethod: Value(repair.suffixedMethod(extraction.method)),
               qualityScore: Value(p.qualityScore),
               ocrConfidence: Value(p.ocrConfidence),
               contentConfidence: Value(repair.qualityLabel),

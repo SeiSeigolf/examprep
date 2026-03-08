@@ -31,6 +31,16 @@ class RepairResult {
     flags: const ['llm_skipped'],
     changed: false,
   );
+
+  /// LLM 適用状況を extraction_method に付与して返す。
+  ///
+  /// - スキップ時: baseMethod のまま（変化なし）
+  /// - LLM適用・変更あり: `baseMethod+llm_changed`
+  /// - LLM適用・変更なし: `baseMethod+llm`
+  String suffixedMethod(String baseMethod) {
+    if (flags.contains('llm_skipped')) return baseMethod;
+    return changed ? '${baseMethod}+llm_changed' : '${baseMethod}+llm';
+  }
 }
 
 /// Ollama を使ってページテキストを修復・分類するサービス。

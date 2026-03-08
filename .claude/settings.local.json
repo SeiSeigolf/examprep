@@ -11,7 +11,10 @@
       "Bash(grep:*)",
       "Bash(git -C /Users/s/examprep/examprep status --short)",
       "Bash(dart pub add archive)",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(dart -e \"const t = ''心不全とは心拍出量が低下し末梢組織の需要を満たせない病態。浮腫・呼吸困難が主症状で、治療は利尿薬・ACE阻害薬が基本です。''; print\\(t.length\\);\")",
+      "Bash(python3 -c \"t=''心不全とは心拍出量が低下し末梢組織の需要を満たせない病態。浮腫・呼吸困難が主症状で、治療は利尿薬・ACE阻害薬が基本です。''; print\\(len\\(t\\)\\)\")"
     ]
   }
 }
